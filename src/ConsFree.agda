@@ -9,7 +9,7 @@ open import Data.Product using (Σ-syntax; _,_; _×_; proj₁; proj₂)
 open import Relation.Binary.PropositionalEquality using (refl)
 
 open import machine-model
-open import resource-monoid
+open import ResourceMonoid
 open import ResourceMonoid.Polynomial
 open import amort-realisers
 open import nat-poly using (ℕ-poly; ⟪_⟫; 0-poly)

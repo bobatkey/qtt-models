@@ -10,7 +10,7 @@ open import Data.Nat.Properties
           +-monoʳ-≤; +-monoˡ-≤; *-zeroʳ)
 open import Data.Product using (_×_; _,_)
 open import Relation.Binary.PropositionalEquality using (_≡_; sym; cong; trans; cong₂; refl)
-open import resource-monoid
+open import ResourceMonoid
 
 record size-algebra : Set where
   field

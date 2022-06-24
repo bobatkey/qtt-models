@@ -11,7 +11,7 @@ open import Data.Product using (Σ-syntax; _×_; Σ; _,_; proj₁; proj₂)
 open import Data.Empty using (⊥)
 open import Relation.Binary.PropositionalEquality as Eq
 
-open import resource-monoid
+open import ResourceMonoid
 open import machine-model
 
 module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where

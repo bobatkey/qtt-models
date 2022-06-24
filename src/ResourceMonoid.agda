@@ -1,6 +1,6 @@
 {-# OPTIONS --postfix-projections --safe --without-K #-}
 
-module resource-monoid where
+module ResourceMonoid where
 
 open import Data.Nat as ℕ using (ℕ; _+_; _≤_; zero; suc; _*_)
 import Data.Nat.Properties as ℕ
