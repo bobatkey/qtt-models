@@ -1,0 +1,3 @@
+name: poly-time
+include: src
+depend: standard-library
