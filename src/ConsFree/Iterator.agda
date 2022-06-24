@@ -1,21 +1,18 @@
 {-# OPTIONS --postfix-projections --safe --without-K #-}
 
-module soft-iterator where
-
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.Fin using (zero; suc)
-open import Data.Nat.Properties
-open import Data.Product
-open import Data.Unit
-open import Data.Empty
+open import Data.Nat.Properties using (module ≤-Reasoning; ≤-reflexive; +-comm)
+open import Data.Product using (_×_; _,_; proj₂)
+open import Data.Empty using (⊥)
 open import Relation.Binary.PropositionalEquality
+
 open import machine-model
 open import resource-monoid
 open import amort-realisers
 
--- we can augment a resource-category with a natural number iterator
--- if the underlying resource monoid supports some extra things.
-module iter-category (M : rmonoid) (M₀ : sub-monoid M)
+module ConsFree.Iterator
+                     (M : rmonoid) (M₀ : sub-monoid M)
                      (open rmonoid using (∣_∣))
                      (open rmonoid M hiding (∣_∣))
                      (size         : ℕ → ∣ M ∣)

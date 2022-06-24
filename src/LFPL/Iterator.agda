@@ -1,10 +1,8 @@
 {-# OPTIONS --postfix-projections --safe --without-K #-}
 
-module lfpl-iterator where
-
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.Fin using (Fin; zero; suc)
-open import Data.Nat.Properties
+open import Data.Nat.Properties using (module ≤-Reasoning)
 open import Data.Product using (_×_; _,_; proj₂)
 open import Data.Empty using (⊥)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
@@ -16,7 +14,7 @@ open import amort-realisers
 -- ultimately would like to prove that for any finitary polynomial
 -- type we have an initial fixpoint when it is augmented by diamonds.
 
-module lfpl-category (M : rmonoid) (M₀ : sub-monoid M)
+module LFPL.Iterator (M : rmonoid) (M₀ : sub-monoid M)
                      (open rmonoid using (∣_∣))
                      (open rmonoid M hiding (∣_∣))
                      (size         : ℕ → ∣ M ∣)
