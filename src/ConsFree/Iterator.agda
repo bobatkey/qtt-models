@@ -22,13 +22,29 @@ module ConsFree.Iterator
                      (raise→scale  : ∀ α n → 0 ≤D⟨ raise α ⊕ size n , scale n α ⊕ size n ⟩)
                      (scale-zero   : ∀ α → 0 ≤D⟨ scale zero α , ∅ ⟩)
                      (scale-suc    : ∀ n α → M₀ .sub-monoid.member α → 0 ≤D⟨ scale (1 + n) α , α ⊕ scale n α ⟩)
+                     (duplicate-size : ∀ n → 0 ≤D⟨ size n , size n ⊕ size n ⟩)
       where
 
-  open amort-indexed-preorder M M₀ public
+  open amort-indexed-preorder M M₀
   open sub-monoid M₀
 
   `nat : ℕ -Obj
   `nat n .realises α v = v ≡ nat-val n × 0 ≤D⟨ α , size n ⟩
+
+  duplicate-nat : ℕ ⊢ `nat ⇒ `nat ⊗ `nat
+  duplicate-nat .realiser .expr _ = zero , zero
+  duplicate-nat .realiser .potential = acct 1
+  duplicate-nat .realiser .potential-ok = `acct
+  duplicate-nat .realises n η α v (refl , α-n) = is-realisable
+    where
+    is-realisable : Eval _ _ _ _
+    is-realisable .result = v , v
+    is-realisable .steps = 1
+    is-realisable .result-potential = size n
+    is-realisable .evaluation = mkpair zero zero
+    is-realisable .result-realises =
+      size n , size n , duplicate-size n , (refl , identity) , (refl , identity)
+    is-realisable .accounted = acct⊕- ⟫ α-n
 
   body-expr : (z s : ∀ n → exp (1 + n)) → ∀ n → exp (3 + n)
   body-expr z s n =

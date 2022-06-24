@@ -115,7 +115,8 @@ module poly-monoid (S : size-algebra) where
     -- the sub-monoid of idempotently sized things
     poly-monoid-idem : sub-monoid poly-monoid
     poly-monoid-idem .member (x , p) = x ⊎ x ≡ x
-    poly-monoid-idem ._`⊕_ {x , _}{y , _} ϕ₁ ϕ₂ = trans (interchange x y x y) (cong₂ _⊎_ ϕ₁ ϕ₂)
+    poly-monoid-idem ._`⊕_ {x , _}{y , _} ϕ₁ ϕ₂ =
+       trans (interchange x y x y) (cong₂ _⊎_ ϕ₁ ϕ₂)
     poly-monoid-idem .`∅ = S .unit 0
     poly-monoid-idem .`acct = S .unit 0
 
@@ -166,3 +167,10 @@ module poly-monoid (S : size-algebra) where
                               ⟪ nat-poly.scale (1 + n) p ⟫ x
                             ∎)
     where open Relation.Binary.PropositionalEquality.≡-Reasoning
+
+  open size-algebra S
+
+  -- If the ⊎ is idempotent, then we can duplicate sizes
+  duplicate-size : (∀ n → n ⊎ n ≤ n) →
+                   ∀ n → 0 ≤D⟨ size n , size n ⊕ size n ⟩
+  duplicate-size idempotent n = idempotent n , λ _ _ → ≤-refl
