@@ -46,7 +46,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
       expr         : ∀ n → exp (suc n)
       potential    : ∣ ℳ ∣
       potential-ok : mor-potential potential
-  open Realiser
+  open Realiser public
 
   -- FIXME: never use this definition on its own
   _⊧_⇒_ : (r : Realiser) (X Y : Elem) → Set
@@ -58,7 +58,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
     field
       realiser : Realiser
       realises : ∀ γ → realiser ⊧ X γ ⇒ Y γ
-  open _⊢_⇒_
+  open _⊢_⇒_ public
 
   infix 21 ⟨_⟩_
   infix 19 _⊢_⇒_
@@ -401,8 +401,11 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   `false .realises γ η α ⋆ r .result-realises = identity
   `false .realises γ η α ⋆ r .accounted = acct⊕- ⟫ r
 
-  κ : ∀ {Γ : Set} → Bool → Γ → Γ × Bool
-  κ b γ = (γ , b)
+  κ : ∀ {Γ A : Set} → A → Γ → Γ × A
+  κ a γ = (γ , a)
+
+  κ-map : ∀ {Γ : Set}{A B : Set} → (A → B) → Γ × A → Γ × B
+  κ-map f (γ , a) = (γ , f a)
 
   `cond : ∀ {Γ : Set}{X : Γ -Obj}{Y : (Γ × Bool) -Obj} →
           Γ ⊢ X ⇒ (⟨ κ true ⟩ Y) →

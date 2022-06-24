@@ -1,3 +1,5 @@
+{-# OPTIONS --postfix-projections --safe --without-K #-}
+
 module soft-iterator where
 
 open import Data.Nat using (ℕ; zero; suc; _+_)
@@ -9,7 +11,7 @@ open import Data.Empty
 open import Relation.Binary.PropositionalEquality
 open import machine-model
 open import resource-monoid
-open import cost-model
+open import amort-realisers
 
 -- we can augment a resource-category with a natural number iterator
 -- if the underlying resource monoid supports some extra things.
@@ -20,29 +22,16 @@ module iter-category (M : rmonoid) (M₀ : sub-monoid M)
                      (raise        : ∣ M ∣ → ∣ M ∣)
                      (raise-ok     : ∀ {α} → M₀ .sub-monoid.member α → M₀ .sub-monoid.member (raise α))
                      (scale        : ℕ → ∣ M ∣ → ∣ M ∣)
-                     (raise→scale : ∀ α n → 0 ≤D⟨ raise α ⊕ size n , scale n α ⊕ size n ⟩)
+                     (raise→scale  : ∀ α n → 0 ≤D⟨ raise α ⊕ size n , scale n α ⊕ size n ⟩)
                      (scale-zero   : ∀ α → 0 ≤D⟨ scale zero α , ∅ ⟩)
                      (scale-suc    : ∀ n α → M₀ .sub-monoid.member α → 0 ≤D⟨ scale (1 + n) α , α ⊕ scale n α ⟩)
       where
 
-  open resource-category M M₀ public
+  open amort-indexed-preorder M M₀ public
   open sub-monoid M₀
 
-  `nat : obj
-  ∥ `nat ∥ = ℕ
-  `nat .realises α v n = v ≡ nat-val n × 0 ≤D⟨ α , size n ⟩
-
-  ◇ : obj
-  ∥ ◇ ∥ = ⊤
-  ◇ .realises α ⋆         tt = 0 ≤D⟨ α , size 1 ⟩
-  ◇ .realises α (_ , _)   tt = ⊥
-  ◇ .realises α true      tt = ⊥
-  ◇ .realises α false     tt = ⊥
-  ◇ .realises α (clo _ _) tt = ⊥
-
-  ℕ-rec : ∀ {A : Set} → A → (A → A) → ℕ → A
-  ℕ-rec z s zero    = z
-  ℕ-rec z s (suc n) = s (ℕ-rec z s n)
+  `nat : ℕ -Obj
+  `nat n .realises α v = v ≡ nat-val n × 0 ≤D⟨ α , size n ⟩
 
   body-expr : (z s : ∀ n → exp (1 + n)) → ∀ n → exp (3 + n)
   body-expr z s n =
@@ -54,48 +43,52 @@ module iter-category (M : rmonoid) (M₀ : sub-monoid M)
   rec-expr : (z s : ∀ n → exp (1 + n)) → ∀ n → exp (suc n)
   rec-expr z s n = seq (ƛ (body-expr z s n)) then (zero · suc zero)
 
-  recursor : ∀ {X} →
-             (z : I ==> X) →
-             (s : X ==> X) →
-             (`nat ==> X)
-  recursor z s .mor = ℕ-rec (z .mor tt) (s .mor)
-  recursor z s .expr = rec-expr (z .expr) (s .expr)
-  recursor z s .potential = acct 3 ⊕ raise (acct 4 ⊕ s .potential) ⊕ (acct 2 ⊕ z .potential)
-  recursor z s .potential-ok = (`acct `⊕ raise-ok (`acct `⊕ s .potential-ok)) `⊕ (`acct `⊕ z .potential-ok)
-  recursor{X} z s .realisable {n₀} η α v n (refl , d) = is-realisable
+  -- Set X : Γ × ℕ → Elem = λ (γ , n) → X' (γ , n , ind z s n)
+
+  recursor : ∀ {Γ : Set}
+               {X : (Γ × ℕ) -Obj} →
+             Γ ⊢ I ⇒ ⟨ κ zero ⟩ X →
+             (Γ × ℕ) ⊢ X ⇒ ⟨ κ-map suc ⟩ X →
+             (Γ × ℕ) ⊢ ⟨ proj₂ ⟩ `nat ⇒ X
+  recursor z s .realiser .expr =
+    rec-expr (z .realiser .expr) (s .realiser .expr)
+  recursor z s .realiser .potential =
+    acct 3 ⊕ raise (acct 4 ⊕ s .realiser .potential) ⊕ (acct 2 ⊕ z .realiser .potential)
+  recursor z s .realiser .potential-ok = (`acct `⊕ raise-ok (`acct `⊕ s .realiser .potential-ok)) `⊕ (`acct `⊕ z .realiser .potential-ok)
+  recursor{Γ}{X} z s .realises (γ , n) {n₀} η α v (refl , d) = is-realisable
     where
       η₀ = η ,- v
-      η₁ = η₀ ,- clo (body-expr (z .expr) (s .expr) n₀) η₀
+      η₁ = η₀ ,- clo (body-expr (z .realiser .expr) (s .realiser .expr) n₀) η₀
 
       loop-potential : ℕ → ∣ M ∣
-      loop-potential n = scale n (acct 4 ⊕ s .potential) ⊕ (acct 2 ⊕ z .potential)
+      loop-potential n = scale n (acct 4 ⊕ s .realiser .potential) ⊕ (acct 2 ⊕ z .realiser .potential)
 
-      loop : (n : ℕ) → Eval X (body-expr (z .expr) (s .expr) n₀) (loop-potential n) (η₁ ,- nat-val n) (recursor z s .mor n)
+      loop : (n : ℕ) → Eval (X (γ , n)) (body-expr (z .realiser .expr) (s .realiser .expr) n₀) (loop-potential n) (η₁ ,- nat-val n)
       loop zero = is-realisable
         where
-          r = z .realisable (η₁ ,- _ ,- _) ∅ ⋆ tt (identity {∅})
+          r = z .realises γ (η₁ ,- _ ,- _) ∅ ⋆ (identity {∅})
 
-          is-realisable : Eval _ _ _ _ _
+          is-realisable : Eval _ _ _ _
           is-realisable .result = r .result
           is-realisable .steps = 2 + r .steps
           is-realisable .result-potential = r .result-potential
           is-realisable .evaluation = letpair zero (cond-true (suc zero) (r .evaluation))
           is-realisable .result-realises = r .result-realises
           is-realisable .accounted =
-            pair (scale-zero (acct 4 ⊕ s .potential)) ⟫ unit' ⟫ acct⊕- ⟫ unit-inv ⟫ r .accounted
+            pair (scale-zero (acct 4 ⊕ s .realiser .potential)) ⟫ unit' ⟫ acct⊕- ⟫ unit-inv ⟫ r .accounted
       loop (suc n) = is-realisable
         where
           r-n = loop n
-          r-s = s .realisable (η₁ ,- _ ,- _ ,- _) (r-n .result-potential) (r-n .result) (recursor z s .mor n) (r-n .result-realises)
+          r-s = s .realises (γ , n) (η₁ ,- _ ,- _ ,- _) (r-n .result-potential) (r-n .result) (r-n .result-realises)
 
-          is-realisable : Eval _ _ _ _ _
+          is-realisable : Eval _ _ _ _
           is-realisable .result = r-s .result
           is-realisable .steps = 3 + r-n .steps + 1 + r-s .steps
           is-realisable .result-potential = r-s .result-potential
           is-realisable .evaluation = letpair zero (cond-false (suc zero) (seq (app (suc (suc (suc zero))) zero (r-n .evaluation)) (r-s .evaluation)))
           is-realisable .result-realises = r-s .result-realises
           is-realisable .accounted =
-            weaken (pair (scale-suc n (acct 4 ⊕ s .potential) (`acct `⊕ s .potential-ok)) ⟫ assoc-inv ⟫ assoc-inv ⟫ acct⊕- ⟫ pair' (r-n .accounted) ⟫ r-s .accounted)
+            weaken (pair (scale-suc n (acct 4 ⊕ s .realiser .potential) (`acct `⊕ s .realiser .potential-ok)) ⟫ assoc-inv ⟫ assoc-inv ⟫ acct⊕- ⟫ pair' (r-n .accounted) ⟫ r-s .accounted)
                    (≤-reflexive (cong (λ □ → suc (suc (suc □))) (cong (λ □ → □ + r-s .steps) (+-comm (loop n .steps) 1))))
              -- Given: k₁ ≤D⟨ loop-potential n , r-n .result-potential ⟩
              --        k₂ ≤D⟨ s .potential ⊕ r-n .result-potential , r-s .result-potential ⟩
@@ -103,14 +96,14 @@ module iter-category (M : rmonoid) (M₀ : sub-monoid M)
              --
              --  lemma : 0 ≤D⟨ loop-potential (suc n) , acct 3 ⊕ loop-potential n ⊕ acct 1 ⊕ s .potential ⟩
 
-      is-realisable : Eval _ _ _ _ _
+      is-realisable : Eval _ _ _ _
       is-realisable .result = loop n .result
       is-realisable .steps = 3 + loop n .steps
       is-realisable .result-potential = loop n .result-potential
       is-realisable .evaluation = seq lam (app zero (suc zero) (loop n .evaluation))
       is-realisable .result-realises = loop n .result-realises
       is-realisable .accounted =
-        pair' d ⟫ assoc-inv ⟫ assoc-inv ⟫ acct⊕- ⟫ pair' symmetry ⟫ assoc ⟫ pair (raise→scale (acct 4 ⊕ s .potential) n) ⟫ pair (pair' term ⟫ unit) ⟫ loop n .accounted
+        pair' d ⟫ assoc-inv ⟫ assoc-inv ⟫ acct⊕- ⟫ pair' symmetry ⟫ assoc ⟫ pair (raise→scale (acct 4 ⊕ s .realiser .potential) n) ⟫ pair (pair' term ⟫ unit) ⟫ loop n .accounted
          -- Given: loop n .steps ≤D⟨ loop-potential n , loop n .result-potential ⟩
          -- 3 + loop n .steps ≤D⟨ γ ⊕ α , loop n .result-potential ⟩
          --                       acct 3 ⊕ raise (acct 4 ⊕ s .potential) ⊕ (acct 2 ⊕ z .potential) ⊕ α
