@@ -48,7 +48,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
       potential-ok : mor-potential potential
   open Realiser public
 
-  -- FIXME: never use this definition on its own
+  -- FIXME: never used this definition on its own
   _⊧_⇒_ : (r : Realiser) (X Y : Elem) → Set
   r ⊧ X ⇒ Y = ∀ {n} (η : env n) (α : ∣ ℳ ∣) v →
               X .realises α v →
@@ -357,10 +357,10 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
       is-realisable .result = v-r .result
       is-realisable .steps = 3 + v-r .steps
       is-realisable .result-potential = v-r .result-potential
-      is-realisable .evaluation = seq mkunit (app (suc zero) zero (v-r .evaluation))
+      is-realisable .evaluation =
+        seq mkunit (app (suc zero) zero (v-r .evaluation))
       is-realisable .result-realises = v-r .result-realises
       is-realisable .accounted = acct⊕- ⟫ v-r .accounted
-
 
   ------------------------------------------------------------------------
   -- Part V : Booleans
@@ -408,8 +408,8 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   κ-map f (γ , a) = (γ , f a)
 
   `cond : ∀ {Γ : Set}{X : Γ -Obj}{Y : (Γ × Bool) -Obj} →
-          Γ ⊢ X ⇒ (⟨ κ true ⟩ Y) →
-          Γ ⊢ X ⇒ (⟨ κ false ⟩ Y) →
+          Γ ⊢ X ⇒ ⟨ κ true ⟩ Y →
+          Γ ⊢ X ⇒ ⟨ κ false ⟩ Y →
           (Γ × Bool) ⊢ ⟨ proj₁ ⟩ X ⊗ ⟨ proj₂ ⟩ `Bool ⇒ Y
   `cond on-true on-false .realiser .expr n =
     letpair zero then
@@ -461,6 +461,8 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   ![ n ] X γ .realises α v =
     Σ[ β ∈ ∣ ℳ ∣ ] (0 ≤D⟨ α , repeat n β ⟩ × X γ .realises β v)
 
+  -- FIXME: this ought to be monoidal too
+
   derelict : ∀ {Γ X} → Γ ⊢ ![ 1 ] X ⇒ X
   derelict .realiser .expr _ = ` zero
   derelict .realiser .potential = acct 1
@@ -503,7 +505,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
     is-realisable .evaluation = mkpair zero zero
     is-realisable .result-realises =
       repeat m β , repeat n β ,
-      (α-m+n-β ⟫ repeat-add-inv m n) ,
+      α-m+n-β ⟫ repeat-add-inv m n ,
       (β , identity , β-v) ,
       (β , identity , β-v)
     is-realisable .accounted = acct⊕-
@@ -523,4 +525,9 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
      is-realisable .accounted = acct⊕-
 
   ------------------------------------------------------------------------
-  -- Part VI : Finitary datatypes, with matching but no recursion
+  -- Part VI : Finitary (indexed?) datatypes, with matching but no recursion
+
+  data Code : Set where
+    _`+_   : Code → Code → Code
+    `⊤     : Code
+    `Rec×_ : Code → Code
