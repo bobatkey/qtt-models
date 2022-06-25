@@ -15,7 +15,7 @@ open import Data.Nat.Solver using (module +-*-Solver)
 open +-*-Solver using (solve; con; _:+_; _:=_)
 
 open import machine-model
-open import resource-monoid
+open import ResourceMonoid
 
 -- Conjecture: if we don't have fancy exponentials, then all the terms
 -- used in the realisers are linear. Then we only need to make sure
