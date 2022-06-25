@@ -8,7 +8,7 @@ open import Data.Fin using (zero; suc)
 open import Data.Product using (Σ-syntax; _,_; _×_; proj₁; proj₂)
 open import Relation.Binary.PropositionalEquality using (refl)
 
-open import machine-model
+open import MachineModel
 open import ResourceMonoid
 open import ResourceMonoid.Polynomial
 open import amort-realisers

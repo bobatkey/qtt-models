@@ -1,9 +1,9 @@
 {-# OPTIONS --postfix-projections --safe --without-K #-}
 
-module machine-model where
+module MachineModel where
 
-open import Data.Nat hiding (_∸_)
-open import Data.Fin hiding (_+_; _≤_; raise)
+open import Data.Fin using (Fin; zero; suc)
+open import Data.Nat using (ℕ; zero; suc; _+_)
 
 data exp : ℕ → Set where
   `_  : ∀{n} → Fin n → exp n

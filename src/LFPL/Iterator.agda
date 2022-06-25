@@ -7,7 +7,7 @@ open import Data.Product using (_×_; _,_; proj₂)
 open import Data.Empty using (⊥)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 
-open import machine-model
+open import MachineModel
 open import ResourceMonoid
 open import amort-realisers
 

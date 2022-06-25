@@ -12,7 +12,7 @@ open import Data.Empty using (⊥)
 open import Relation.Binary.PropositionalEquality as Eq
 
 open import ResourceMonoid
-open import machine-model
+open import MachineModel
 
 module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
 

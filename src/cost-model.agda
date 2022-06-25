@@ -14,7 +14,7 @@ open Eq.≡-Reasoning -- using (begin_; _≡⟨⟩_; _≡⟨_⟩_; _∎)
 open import Data.Nat.Solver using (module +-*-Solver)
 open +-*-Solver using (solve; con; _:+_; _:=_)
 
-open import machine-model
+open import MachineModel
 open import ResourceMonoid
 
 -- Conjecture: if we don't have fancy exponentials, then all the terms
