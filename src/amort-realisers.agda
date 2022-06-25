@@ -461,7 +461,22 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   ![ n ] X γ .realises α v =
     Σ[ β ∈ ∣ ℳ ∣ ] (0 ≤D⟨ α , repeat n β ⟩ × X γ .realises β v)
 
-  -- FIXME: this ought to be monoidal too
+  !-monoidal : ∀ {Γ X Y n} → Γ ⊢ (![ n ] X) ⊗ (![ n ] Y) ⇒ ![ n ] (X ⊗ Y)
+  !-monoidal .realiser .expr _ = ` zero
+  !-monoidal .realiser .potential = acct 1
+  !-monoidal .realiser .potential-ok = `acct
+  !-monoidal {n = n} .realises γ η α (v₁ , v₂) (α₁ , α₂ , α-α₁α₂ , (β₁ , α₁-nβ₁ , β₁v₁) , (β₂ , α₂-nβ₂ , β₂v₂)) = is-realisable
+    where
+    is-realisable : Eval _ _ _ _
+    is-realisable .result = v₁ , v₂
+    is-realisable .steps = 1
+    is-realisable .result-potential = α
+    is-realisable .evaluation = access zero
+    is-realisable .result-realises =
+      β₁ ⊕ β₂ ,
+      (α-α₁α₂ ⟫ pair α₁-nβ₁ ⟫ pair' α₂-nβ₂ ⟫ repeat-monoidal n) ,
+      β₁ , β₂ , identity , β₁v₁ , β₂v₂
+    is-realisable .accounted = acct⊕-
 
   derelict : ∀ {Γ X} → Γ ⊢ ![ 1 ] X ⇒ X
   derelict .realiser .expr _ = ` zero

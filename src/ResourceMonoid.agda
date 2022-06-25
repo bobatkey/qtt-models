@@ -51,6 +51,11 @@ record rmonoid : Set₁ where
   repeat-f zero f = identity
   repeat-f (suc m) f = pair' (repeat-f m f) ⟫ pair f
 
+  repeat-monoidal : ∀ {α β} n → 0 ≤D⟨ repeat n α ⊕ repeat n β , repeat n (α ⊕ β) ⟩
+  repeat-monoidal zero = term
+  repeat-monoidal (suc n) =
+    assoc-inv ⟫ pair' assoc ⟫ pair' (pair symmetry) ⟫ pair' assoc-inv ⟫ assoc ⟫ pair' (repeat-monoidal n)
+
   repeat-add : ∀ {α} m n → 0 ≤D⟨ repeat m α ⊕ repeat n α , repeat (m + n) α ⟩
   repeat-add zero n = unit'
   repeat-add (suc m) n = assoc-inv ⟫ pair' (repeat-add m n)
