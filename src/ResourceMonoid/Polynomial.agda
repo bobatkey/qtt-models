@@ -64,7 +64,7 @@ module poly-monoid (S : size-algebra) where
 
     -- this works for both _+_ and _⊔_: only needs the operation to be a pre-ordered commutative monoid s.t. m·n≤x → m≤x
     -- also, the class of functions only needs to be closed under constants, 0 and +
-    -- and sizes needn't be natural numbers?? Could be trees?
+    -- and sizes needn't be natural numbers?? Could be trees? Ordinals?
     poly-monoid : rmonoid
     ∣ poly-monoid ∣ = ℕ × ℕ-poly
     poly-monoid .∅ = 0 , 0-poly
@@ -152,7 +152,9 @@ module poly-monoid (S : size-algebra) where
     z≤n ,
     λ x _ → z≤n
 
-  scale-suc : ∀ n α → poly-monoid₀ .sub-monoid.member α → 0 ≤D⟨ scale (1 + n) α , α ⊕ scale n α ⟩
+  scale-suc : ∀ n α →
+              poly-monoid₀ .sub-monoid.member α →
+              0 ≤D⟨ scale (1 + n) α , α ⊕ scale n α ⟩
   scale-suc n (m , p) refl =
     ≤-reflexive (S .size-algebra.unit 0) ,
     λ x m≤x → ≤-reflexive (begin
