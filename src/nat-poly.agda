@@ -109,6 +109,7 @@ eval-+ (p₀ ∷ p) (q₀ ∷ q) x =
     ⟪ p₀ ∷ p ⟫ x + ⟪ q₀ ∷ q ⟫ x
   ∎
 
+{-
 dist : ∀ a b c → a * (b ⊔ c) ≡ (a * b) ⊔ (a * c)
 dist a b c with ⊔-sel b c
 ... | inj₁ b⊔c≡b = begin
@@ -125,7 +126,7 @@ dist a b c with ⊔-sel b c
                     ≡⟨ sym (m≤n⇒m⊔n≡n (*-monoʳ-≤ a (m⊔n≡n⇒m≤n b⊔c≡c))) ⟩
                       (a * b) ⊔ (a * c)
                     ∎
-
+-}
 -- Have that p ⊔-poly q is an upper bound of p and q, but not the
 -- least (which isn't necessarily expressible as a polynomial because
 -- it might be discontinuous)

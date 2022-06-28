@@ -57,10 +57,10 @@ record size-algebra : Set where
 module poly-monoid (S : size-algebra) where
 
   open import nat-poly hiding (unit; assoc; comm; scale)
+  open size-algebra S
 
   module monoid-defn where
     open rmonoid
-    open size-algebra S
 
     -- this works for both _+_ and _⊔_: only needs the operation to be a pre-ordered commutative monoid s.t. m·n≤x → m≤x
     -- also, the class of functions only needs to be closed under constants, 0 and +
@@ -167,8 +167,6 @@ module poly-monoid (S : size-algebra) where
                               ⟪ nat-poly.scale (1 + n) p ⟫ x
                             ∎)
     where open Relation.Binary.PropositionalEquality.≡-Reasoning
-
-  open size-algebra S
 
   -- If the ⊎ is idempotent, then we can duplicate sizes
   duplicate-size : (∀ n → n ⊎ n ≤ n) →

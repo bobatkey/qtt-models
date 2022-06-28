@@ -4,17 +4,17 @@ module ResourceMonoid where
 
 open import Data.Nat as ℕ using (ℕ; _+_; _≤_; zero; suc; _*_)
 import Data.Nat.Properties as ℕ
+open import Data.Unit using (⊤; tt)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; trans; cong; subst; sym)
-open import Data.Unit using (⊤; tt)
 
 record rmonoid : Set₁ where
   field
-   ∣_∣       : Set
+   ∣_∣      : Set
    ∅        : ∣_∣
-   _⊕_     : ∣_∣ → ∣_∣ → ∣_∣
+   _⊕_      : ∣_∣ → ∣_∣ → ∣_∣
    _≤D⟨_,_⟩ : ℕ → ∣_∣ → ∣_∣ → Set
-   acct    : ℕ → ∣_∣
+   acct     : ℕ → ∣_∣
 
    identity  : ∀ {m}           → 0 ≤D⟨ m , m ⟩
    _⟫_       : ∀ {k₁ k₂ m n l} → k₁ ≤D⟨ m , n ⟩ → k₂ ≤D⟨ n , l ⟩ → (k₁ + k₂) ≤D⟨ m , l ⟩

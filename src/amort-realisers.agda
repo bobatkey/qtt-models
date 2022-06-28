@@ -133,6 +133,8 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   (X ⊗ Y) γ .realises α true = ⊥
   (X ⊗ Y) γ .realises α false = ⊥
 
+  -- FIXME: _⊗_ commutes with reindexing
+
   swap : ∀ {Γ X Y} → Γ ⊢ (X ⊗ Y) ⇒ (Y ⊗ X)
   swap .realiser .expr _ = letpair zero then (zero , suc zero)
   swap .realiser .potential = acct 2
@@ -269,6 +271,8 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   (X ⊸ Y) γ .realises α true = ⊥
   (X ⊸ Y) γ .realises α false = ⊥
 
+  -- FIXME: commutes with reindexing
+
   Λ : ∀ {Γ X Y Z} → Γ ⊢ X ⊗ Y ⇒ Z → Γ ⊢ X ⇒ Y ⊸ Z
   Λ f .realiser .expr n = ƛ (seq (suc (suc zero) , zero) then f .realiser .expr (3 + n))
   Λ f .realiser .potential = acct 1 ⊕ (acct 2 ⊕ f .realiser .potential)
@@ -313,12 +317,39 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   ------------------------------------------------------------------------
   -- Part V : Products
 
-  `∀ : ∀ {Γ : Set}(A : Γ → Set) → (Σ Γ A) -Obj → Γ -Obj
+  `∀ : ∀ {Γ} A → (Σ Γ A) -Obj → Γ -Obj
   `∀ A X γ .realises α ⋆ = ⊥
   `∀ A X γ .realises α (_ , _) = ⊥
   `∀ A X γ .realises α true = ⊥
   `∀ A X γ .realises α false = ⊥
   `∀ A X γ .realises α (clo E η) = ∀ a v → Eval (X (γ , a)) E α (η ,- v ,- ⋆)
+
+  ⟪_⟫ : ∀ {Γ₁ Γ₂ : Set} → (Γ₁ → Γ₂) → (Γ₂ → Set) → (Γ₁ → Set)
+  ⟪ f ⟫ A γ = A (f γ)
+
+  `∀-subst-1 : ∀ {Γ₁ Γ₂ A X} (f : Γ₁ → Γ₂) →
+               Γ₁ ⊢ ⟨ f ⟩ (`∀ A X) ⇒ `∀ (⟪ f ⟫ A) (⟨ (λ x → (f (x .proj₁)) , x .proj₂) ⟩ X)
+  `∀-subst-1 f .realiser .expr _ = ` zero
+  `∀-subst-1 f .realiser .potential = acct 1
+  `∀-subst-1 f .realiser .potential-ok = `acct
+  `∀-subst-1 f .realises γ η α v x .result = v
+  `∀-subst-1 f .realises γ η α v x .steps = 1
+  `∀-subst-1 f .realises γ η α v x .result-potential = α
+  `∀-subst-1 f .realises γ η α v x .evaluation = access zero
+  `∀-subst-1 f .realises γ η α (clo E η') x .result-realises = x
+  `∀-subst-1 f .realises γ η α v x .accounted = acct⊕-
+
+  `∀-subst-2 : ∀ {Γ₁ Γ₂ A X} (f : Γ₁ → Γ₂) →
+               Γ₁ ⊢ `∀ (⟪ f ⟫ A) (⟨ (λ x → (f (x .proj₁)) , x .proj₂) ⟩ X) ⇒ ⟨ f ⟩ (`∀ A X)
+  `∀-subst-2 f .realiser .expr _ = ` zero
+  `∀-subst-2 f .realiser .potential = acct 1
+  `∀-subst-2 f .realiser .potential-ok = `acct
+  `∀-subst-2 f .realises γ η α v x .result = v
+  `∀-subst-2 f .realises γ η α v x .steps = 1
+  `∀-subst-2 f .realises γ η α v x .result-potential = α
+  `∀-subst-2 f .realises γ η α v x .evaluation = access zero
+  `∀-subst-2 f .realises γ η α (clo E η') x .result-realises = x
+  `∀-subst-2 f .realises γ η α v x .accounted = acct⊕-
 
   `∀-intro : ∀ {Γ A X Y} →
              (Σ Γ A) ⊢ (⟨ proj₁ ⟩ X) ⇒ Y →
@@ -362,8 +393,23 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
       is-realisable .result-realises = v-r .result-realises
       is-realisable .accounted = acct⊕- ⟫ v-r .accounted
 
+  `∃ : ∀ {Γ} A → (Σ Γ A) -Obj → Γ -Obj
+  `∃ A X γ .realises α v = Σ[ a ∈ A γ ] X (γ , a) .realises α v
+
+  `∃-elim : ∀ {Γ A X Y} →
+             (Σ Γ A) ⊢ X ⇒ (⟨ proj₁ ⟩ Y) →
+             Γ ⊢ `∃ A X ⇒ Y
+  `∃-elim f .realiser = f .realiser
+  `∃-elim f .realises γ η α v (a , X-α-v) = f .realises (γ , a) η α v X-α-v
+
+  `∃-intro : ∀ {Γ A X Y} →
+             Γ ⊢ `∃ A X ⇒ Y →
+             (Σ Γ A) ⊢ X ⇒ (⟨ proj₁ ⟩ Y)
+  `∃-intro f .realiser = f .realiser
+  `∃-intro f .realises (γ , a) η α v X-α-v = f .realises γ η α v (a , X-α-v)
+
   ------------------------------------------------------------------------
-  -- Part V : Booleans
+  -- Part VI : Booleans
   `Bool : Bool -Obj
   `Bool false .realises α false = 0 ≤D⟨ α , ∅ ⟩
   `Bool false .realises α ⋆ = ⊥
@@ -406,7 +452,13 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
 
   κ-map : ∀ {Γ : Set}{A B : Set} → (A → B) → Γ × A → Γ × B
   κ-map f (γ , a) = (γ , f a)
-
+{-
+  -- Alternative type, which can give the other one by use of ⊸
+  `cond : ∀ {Γ}{X : (Γ × Bool) -Obj} →
+          Γ ⊢ I ⇒ ⟨ κ true ⟩ X →
+          Γ ⊢ I ⇒ ⟨ κ false ⟩ X →
+          (Γ × Bool) ⊢ ⟨ proj₂ ⟩ `Bool ⇒ X
+-}
   `cond : ∀ {Γ : Set}{X : Γ -Obj}{Y : (Γ × Bool) -Obj} →
           Γ ⊢ X ⇒ ⟨ κ true ⟩ Y →
           Γ ⊢ X ⇒ ⟨ κ false ⟩ Y →
@@ -455,7 +507,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
           d' = d ⟫ pair' b-r ⟫ unit
 
   ------------------------------------------------------------------------
-  -- Part VI : ℕ-graded repetition exponential
+  -- Part VII : ℕ-graded repetition exponential
 
   ![_] : ∀ {Γ} → ℕ → Γ -Obj → Γ -Obj
   ![ n ] X γ .realises α v =
@@ -540,7 +592,8 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
      is-realisable .accounted = acct⊕-
 
   ------------------------------------------------------------------------
-  -- Part VI : Finitary (indexed?) datatypes, with matching but no recursion
+  -- Part VIII : Finitary (indexed?) datatypes, with matching but no
+  -- recursion
 
   data Code : Set where
     _`+_   : Code → Code → Code
