@@ -25,7 +25,8 @@ open import Data.Unit using (⊤; tt)
 -- the interpretation.
 
 -- 8. What does realisable by processes mean? Would we get some kind
--- of session type thing?
+-- of session type thing? If we had a 'Sessions' monad in the indexing
+-- category?
 
 -- TODO:
 -- 1. What relationship do we get with 'Set'? for the category of Contexts?
@@ -233,8 +234,7 @@ module Make (L : IndexedPreorder) where
   ![ n ] X .Hi = X .Hi
   ![ n ] X .Lo = ![ n ]L (X .Lo)
 
-  -- !-monoidal :
-
+  -- !-monoidal
   -- derelict
   -- discard
   -- duplicate
