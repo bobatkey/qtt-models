@@ -197,9 +197,3 @@ assoc p q r x =
   ≡⟨ sym (eval-+ p (q +-poly r) x) ⟩
     ⟪ p +-poly (q +-poly r) ⟫ x
   ∎
-
-{-
-n-sum : ℕ → ℕ-poly → ℕ-poly
-n-sum zero    p = 0-poly
-n-sum (suc n) p = p +-poly n-sum n p
--}
