@@ -222,8 +222,8 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
       is-realisable .accounted = acct⊕-
 
   _⊗m_ : ∀ {Γ X₁ X₂ Y₁ Y₂} →
-         (Γ ⊢ X₁ ⇒ Y₁) →
-         (Γ ⊢ X₂ ⇒ Y₂) →
+         Γ ⊢ X₁ ⇒ Y₁ →
+         Γ ⊢ X₂ ⇒ Y₂ →
          Γ ⊢ X₁ ⊗ X₂ ⇒ Y₁ ⊗ Y₂
   (f ⊗m g) .realiser .expr n =
     letpair zero then

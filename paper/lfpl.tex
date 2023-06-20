@@ -1,0 +1,1551 @@
+\documentclass{workingnote}
+
+\newcommand{\Set}{\mathrm{Set}}
+\newcommand{\account}{\mathrm{acct}}
+\newcommand{\cat}[1]{\mathcal{#1}}
+
+\newcommand{\Ty}{\mathrm{Ty}}
+\newcommand{\Tm}{\mathrm{Tm}}
+\newcommand{\RTm}{\mathrm{RTm}}
+
+\newcommand{\TyNat}{\mathrm{Nat}}
+
+\newcommand{\id}{\mathrm{id}}
+
+\begin{document}
+
+\paragraph{TODO}
+\begin{enumerate}
+\item Try a ``linear time'' one with separate diamonds + decomposable
+  potential functions.
+  $\mathrm{iter}(f) : (x : \mathbf{T}) \otimes \Diamond^{p}(x) \to A$;
+  the $\Diamond^p$ gives the associated potential for powering the
+  iteration. Each $f$ gets the shifted version, minus the overhead of
+  the recursion.
+\item If this is the universe decoder rule in a system where
+  everything is polytime:
+  \begin{displaymath}
+    \inferrule*
+    {\Gamma \vdash M \stackrel1: \mathrm{U}}
+    {\Gamma \vdash \mathsf{El}(M)~\mathrm{type}}
+  \end{displaymath}
+  Then do we get polytime type checking? Would need to formalise the
+  type checking algorithm, and the use of NBE for equivalence checking
+  in particular.
+
+  Update: don't think so, due to the different rules about
+  erasure. Erased stuff still matters for type checking; subtly linked
+  to proof irrelevance.
+\item For the `linear' measure monoid, could have the following
+  natural number iterator:
+  \begin{displaymath}
+    \mathrm{iter} : (z \stackrel1: A(\mathsf{ze})) \to (s \stackrel\omega: (n \stackrel\omega: N) \to (p \stackrel\omega: \Diamond \multimap A(n)) \to A(\mathsf{su}~n)) \to (n \stackrel1: N) \to A(n)
+  \end{displaymath}
+  Then having enough $\Diamond$s is a matter of some dependently typed
+  programming. Should be easy enough to extend this to arbitrary
+  shaped data types.
+
+  This ought to provide a way of \emph{programming} RAML, instead of
+  being beholden to the inference algorithm. Is there an elaboration
+  process from RAML to this language?
+
+  The difference with LFPL is that the resource allocation process is
+  implicit in the construction of the inductive types (same in soft
+  linear logic). In the RAML-esque approach, we can pass round
+  resources as first class entities.
+\end{enumerate}
+
+\tableofcontents
+
+\newpage
+
+\section{Resource Monoids}
+
+\newcommand{\diffcat}{\mathbb{N}_{-\infty}}
+
+Let $\diffcat$ be the preorder category with objects
+$\mathbb{N} \cup \{-\infty\}$ and $m \to n$ if $m \leq n$, with
+$-\infty \leq n$, for all $n$. This is a strict symmetric monoidal
+category with addition as the monoidal operation on objects and $0$ as
+the monoidal unit. We define $-\infty + n = -\infty$.
+
+\subsection{Definition}
+
+% FIXME: ``Subtraction spaces''?
+
+A resource monoid $M$ is a $\diffcat$ enriched category with strict
+symmetric tensor products. That is:
+\begin{enumerate}
+\item There is a collection of objects $|M|$;
+\item For each pair of objects $\alpha,\beta \in |M|$, there is an
+  object $M(\alpha,\beta)$ of $\diffcat$; this satisfies the ``inverse
+  triangle law'':
+  \begin{displaymath}
+    M(\alpha, \beta) + M(\beta, \gamma) \leq M(\alpha, \gamma)
+  \end{displaymath}
+  and the inverse zero distance:
+  \begin{displaymath}
+    0 \leq M(\alpha,\alpha)
+  \end{displaymath}
+\item There is a commutative monoid $(0,+)$ on $|M|$ such that
+  \begin{displaymath}
+    M(\alpha,\beta) \leq M(\alpha+\gamma,\beta+\gamma)
+  \end{displaymath}
+\end{enumerate}
+
+Every resource monoid defines an underlying preorder on $|M|$ defined
+by $\alpha \leq \beta$ iff $0 \leq M(\alpha, \beta)$ (same as the
+underlying category of an enriched category).
+
+We will also need a function $\account : \mathbb{N} \to |M|$ such that
+for all $n$, $n \leq M(0,\account(n))$.
+
+FIXME: sub-resource monoids
+
+\begin{lemma}
+  \label{lem:meas-tensor-pair}
+  \begin{displaymath}
+    M(\alpha_1,\beta_1) + M(\alpha_2,\beta_2) \leq M(\alpha_1+\alpha_2,\beta_1+\beta_2)
+  \end{displaymath}
+\end{lemma}
+\begin{proof}
+  \begin{displaymath}
+    \begin{array}{cl}
+      &M(\alpha_1,\beta_1) + M(\alpha_2,\beta_2) \\
+      \leq&M(\alpha_1 + \alpha_2, \beta_1 + \alpha_2) + M(\alpha_2,\beta_2) \\
+      \leq&M(\alpha_1 + \alpha_2, \beta_1 + \alpha_2) + M(\beta_1 + \alpha_2,\beta_1+\beta_2) \\
+      \leq&M(\alpha_1 + \alpha_2, \beta_1+\beta_2) \\
+    \end{array}
+  \end{displaymath}
+\end{proof}
+
+\subsection{Examples}
+
+\begin{enumerate}
+\item Natural numbers. Let $|M| = \mathbb{N}$. Define:
+  \begin{displaymath}
+    M(m,n) = \left\{\begin{array}{@{}ll} n-m & m \leq n \\ -\infty & \textrm{otherwise} \end{array}\right.
+  \end{displaymath}
+  and $\account(n) = n$. This defines the usual ordering on natural
+  numbers. FIXME: does this give length spaces + constant time
+  computation?
+\item Polynomial potential. Pairs $(n,f)$ of a natural number $n$ and
+  a function $f : \mathbb{N} \to \mathbb{N}$ that is non-decreasing
+  and bounded by a polynomial. Define:
+  \begin{displaymath}
+    (n,f)+(m,g) = (n+m,f+g)
+  \end{displaymath}
+  \begin{displaymath}
+    M((n,f),(m,g)) = \left\{\begin{array}{@{}ll}
+                              g(m) - f(m) & n \leq m\textrm{ and }(g-f)\textrm{ is non-negative and non-decreasing }\geq m \\
+                              -\infty      & \textrm{otherwise}
+                            \end{array}
+                          \right.
+  \end{displaymath}
+  and $\account(n) = (0,\lambda x.n)$.
+
+  (FIXME: why not just have $f$ be a polynomial with natural number
+  coefficients?)
+
+  The rough intuition is that a pair $(n,f)$ is capable of supporting
+  data that contains $n$ actionable elements, and if it is \emph{used}
+  on data of $m$ elements, then it will take less than $f(m)$ time to
+  yield an answer. (what does ``yield an answer'' mean here? sometimes
+  we have leftover potential.)
+\item Max-polynomial potential. FIXME: like the polynomial potential,
+  but with maximum of the sizes instead of addition.
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{A cost-accounted language of realisers}
+
+\newcommand{\cnstLookup}{c_{\mathit{lookup}}}
+\newcommand{\cnstLet}{c_{\mathit{let}}}
+\newcommand{\cnstPair}{c_{\mathit{pair}}}
+\newcommand{\cnstLetPair}{c_{\mathit{letpair}}}
+\newcommand{\cnstLam}{c_{\mathit{lam}}}
+\newcommand{\cnstApp}{c_{\mathit{app}}}
+\newcommand{\cnstBool}{c_{\mathit{bool}}}
+\newcommand{\cnstIf}{c_{\mathit{if}}}
+\newcommand{\cnstUnitVal}{c_\mathit{unit}}
+
+\newcommand{\Let}{\texttt{let}}
+\newcommand{\LetPair}{\texttt{letpair}}
+\newcommand{\Pair}[1]{\texttt{(}#1\texttt{)}}
+\newcommand{\Idx}[1]{\texttt{#1}}
+\newcommand{\True}{\texttt{true}}
+\newcommand{\False}{\texttt{false}}
+\newcommand{\If}{\texttt{if}}
+\newcommand{\Unit}{\texttt{*}}
+\newcommand{\Apply}[2]{\texttt{app(}#1\texttt{,}#2\texttt{)}}
+
+Expressions:
+\begin{displaymath}
+  e \in \mathcal{E} ::= i \mid \Let\,e_1\,e_2 \mid \Pair{i_1, i_2} \mid \LetPair\,e_1\,e_2 \mid \lambda e \mid \Apply{i_1}{i_2} \mid \Unit \mid \True \mid \False \mid \If\,i\,e_t\,e_f
+\end{displaymath}
+Values:
+\begin{displaymath}
+  v \in \mathcal{V} ::= \Pair{v_1, v_2} \mid \Pair{\lambda e, \eta} \mid \Unit \mid \True \mid \False
+\end{displaymath}
+Environments are snoc lists:
+\begin{displaymath}
+  \eta ::= \epsilon \mid \eta :: v
+\end{displaymath}
+Evaluation rules, with costings:
+\begin{mathpar}
+  \inferrule* [right=E-Lookup]
+  { }
+  {i,\eta \Downarrow_{\cnstLookup} \eta(i)}
+
+  \inferrule* [right=E-Let]
+  {e_1,\eta \Downarrow_{k_1} v_1 \\ e_2,\eta :: v_1 \Downarrow_{k_2} v_2}
+  {\Let\,e_1\,e_2,\eta \Downarrow_{k_1+k_2+\cnstLet} v_2}
+
+  \inferrule* [right=E-Pair]
+  { }
+  {\Pair{i_1, i_2},\eta \Downarrow_{\cnstPair} (\eta(i_1), \eta(i_2))}
+
+  \inferrule* [right=E-PairMatch]
+  {\eta(i) = \Pair{v_1,v_2} \\ e_2,(\eta :: v_1 :: v_2) \Downarrow_k v_3}
+  {\LetPair\,i\,e_2,\eta \Downarrow_{k+\cnstLetPair} v_3}
+
+  \inferrule* [right=E-Lam]
+  { }
+  {\lambda e, \eta \Downarrow_{\cnstLam} (\lambda e, \eta)}
+
+  \inferrule* [right=E-App]
+  {\eta(i_1) = (\lambda e, \eta') \\
+    e, \eta' :: (\lambda e, \eta') :: \eta(i_2) \Downarrow_k v}
+  {\Apply{i_1}{i_2}, \eta \Downarrow_{k+\cnstApp} v}
+
+  \inferrule* [right=E-Unit]
+  { }
+  {\Unit, \eta \Downarrow_{\cnstUnitVal} \Unit}
+
+  \inferrule* [right=E-True]
+  { }
+  {\True, \eta \Downarrow_{\cnstBool} \True}
+
+  \inferrule* [right=E-False]
+  { }
+  {\False, \eta \Downarrow_{\cnstBool} \False}
+
+  \inferrule* [right=E-If-True]
+  {\eta(i) = \True \\ e_t, \eta \Downarrow_k v}
+  {\If\,i\,e_t\,e_f,\eta \Downarrow_{k+\cnstIf} v}
+
+  \inferrule* [right=E-If-False]
+  {\eta(i) = \False \\ e_f, \eta \Downarrow_k v}
+  {\If\,i\,e_t\,e_f,\eta \Downarrow_{k+\cnstIf} v}
+\end{mathpar}
+
+\begin{lemma}[Determinism]
+  \label{lem:determinism}
+  If $e, \eta \Downarrow_{k_1} v_1$ and $e, \eta \Downarrow_{k_2} v_2$
+  then $k_1 = k_2$ and $v_1 = v_2$.
+\end{lemma}
+
+\newcommand{\append}{\mathop{+\kern-3pt+}}
+
+Shifting of expressions is as expected for de Bruijn indices. We
+append environments with $\eta_1 \append \eta_2$ like so:
+\begin{displaymath}
+  \begin{array}{lcl}
+    \eta_1 \append \epsilon & = & \eta_1 \\
+    \eta_1 \append (\eta_2 :: v) & = & (\eta_1 \append \eta_2) :: v
+  \end{array}
+\end{displaymath}
+
+\begin{lemma}[Environment weakening]
+  \label{lem:eval-weaken}
+  If $e,\eta \Downarrow_k v$ then $e,(\eta' \mathop{+\kern-3pt+} \eta) \Downarrow_k v$.
+\end{lemma}
+
+\begin{lemma}[Environment shifting]
+  \label{lem:eval-shift}
+  If $e,\eta \Downarrow_k v$ then $\mathord\uparrow^{|\eta'|}e,(\eta \mathop{+\kern-3pt+} \eta') \Downarrow_k v$.
+\end{lemma}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{A Symmetric Monoidal Closed Category}
+
+Objects are pairs
+$A = (|A|, \models_A \subseteq |M| \times \mathcal{V} \times |A|)$
+such that that if $\alpha, v \models_A a$ and $\alpha \leq \beta$,
+then $\beta, v \models_A a$.
+
+% Morphisms $f : (|A|,\models_A) \to (|B|,\models_B)$ are functions
+% $f : |A| \to |B|$ that are \emph{realisable}, meaning that there is a
+% pair $(\phi, v_f)$ such that for all $\alpha, v_a \models_A a$, there
+% exists $(\beta, v_b) \in (\phi, v_f) \cdot (\alpha,v_a)$ such that
+% $\beta, v_b \models_B f(a)$. Or:
+% $\left(\{(\phi,v_f)\} \cdot r_A(a)\right) \cap r_B(f(a)) \not= \emptyset$.
+
+Morphisms $f : (|A|, \models_A) \to (|B|, \models_B)$ are functions
+$f : |A| \to |B|$ for which there exists a realiser
+$(\gamma,e_f) \in |M| \times \mathcal{E}$ such that for all
+$\alpha, v_a \models_A a$, there exists $\beta, v_b$ and $k$ such
+that $e_f,[v_a] \Downarrow_k v_b$ and $\beta, v_b \models_B f(a)$ and
+$k \leq M(\beta, \alpha + \gamma)$.
+
+\subsection{Identities and Composition}
+
+The identity function $\id : |A| \to |A|$ is realised by the
+expression $\Idx{0}$ (i.e., a reference to the $0$th de Bruijn index)
+and resource $\account(\cnstLookup)$. For every
+$\alpha, v_a \models_A a$, we have:
+$\Idx{0}, [v_a] \Downarrow_{\cnstLookup} v_a$ by the rule
+\TirName{E-Lookup}. We have $\alpha, v_a \models_A \id(a) = a$ by
+assumption, and
+$\cnstLookup \leq M(0,\account(\cnstLookup)) \leq M(\alpha, \alpha +
+\account(\cnstLookup))$, as required.
+
+For composition of $A \stackrel{f,e_f,\gamma_f}\longrightarrow B$ and
+$B \stackrel{g,e_g,\gamma_g}\longrightarrow C$, we use the realiser
+$\Let\,e_f\,e_g$ with $\gamma_f + \gamma_g + \account(\cnstLet)$. For
+any $\alpha, v_a \models_A a$, we have:
+\begin{enumerate}
+\item $e_f,[v_a] \Downarrow_{k_1} v_b$ and $\beta_1, v_b \models_B f(a)$ and $k_1 \leq M(\beta_1, \alpha + \gamma_f)$; and
+\item $e_g,[v_b] \Downarrow_{k_2} v_c$ and $\beta_2, v_c \models_C g(f(a))$ and $k_2 \leq M(\beta_2, \beta_1 + \gamma_g)$.
+\end{enumerate}
+By \lemref{lem:eval-weaken}, we have
+$e_g,[v_a,v_b] \Downarrow_{k_2} v_c$ and consequently
+$\Let\,e_f\,e_g,[v_a] \Downarrow_{k_1+k_2+\cnstLet} v_c$. For the
+resource accounting, we have:
+\begin{displaymath}
+  \begin{array}{lcl}
+    k_1 + k_2 + \cnstLet
+    &\leq&M(\beta_1, \alpha+\gamma_f) + M(\beta_2,\beta_1+\gamma_g) + M(0,\account(\cnstLet)) \\
+    &\leq&M(\beta_1+\gamma_g,\alpha+\gamma_f+\gamma_g) + M(\beta_2,\beta_1+\gamma_g) + M(0,\account(\cnstLet))\\
+    &\leq&M(\beta_2,\alpha+\gamma_f+\gamma_g) + M(0,\account(\cnstLet)) \\
+    &\leq&M(\beta_2,\alpha+\gamma_f+\gamma_g) + M(\alpha+\gamma_f+\gamma_g,\alpha+\gamma_f+\gamma_g+\account(\cnstLet)) \\
+    &\leq&M(\beta_2,\alpha+\gamma_f+\gamma_g+\account(\cnstLet)) \\
+  \end{array}
+\end{displaymath}
+as required.
+
+The identity and composition laws are inherited from properties of
+functions, so we have a category.
+
+\subsection{Terminal Object}
+
+Define $I$ as $|I| = \{*\}$ and $\alpha, v \models_I *$ iff $v =
+*$. For any object $A = (|A|, \models_A)$, define a morphism
+$!_A : A \to I$ as $!_A(a) = *$ with realiser $e_{!_A} = \Unit$ and
+associated potential $\gamma_{!_A} = \account(\cnstUnitVal)$. Since
+$\{*\}$ is terminal in $\Set$, it is also terminal here.
+
+\subsection{Symmetric Monoidal Structure}
+
+Given two objects $A = (|A|, \models_A)$ and $B = (|B|, \models_B)$,
+we define their \emph{tensor product} $A \otimes B$ as
+$|A \otimes B| = |A| \times |B|$ and
+$\alpha, v \models_{A\otimes B} (a,b)$ iff there exist
+$\alpha_1, \alpha_2, v_1, v_2$ such that $v = \Pair{v_1, v_2}$ and
+$\alpha_1 + \alpha_2 \leq \alpha$ and $\alpha_1, v_1 \models_A a$ and
+$\alpha_2, v_2 \models_B b$. The terminal object defined above is the
+tensor unit.
+
+The natural transformations required for symmetric monoidal structure
+are all given by the corresponding functions for the cartesian product
+in $\Set$, so the necessary equations will automatically hold. We need
+to check that appropriate realising expressions and potentials
+exist. We do the cases for the pairing of morphisms and symmetry in
+detail. The associativity and left and right unit operations are
+similar to the case for symmetry.
+
+\paragraph{Pairing}
+
+Given $A \stackrel{f,e_f,\gamma_f}\longrightarrow B$ and
+$C \stackrel{g,e_g,\gamma_g}\longrightarrow D$, we form a morphism
+$f \otimes g : A \otimes C \to B \otimes D$ with underlying function
+$(f \otimes f)(a,b) = (f(a),g(b))$, realised by
+$e_{f \otimes g} = \LetPair\,\Idx{0}\,\Let\,\mathord\uparrow^1
+e_f\,\Let\,\mathord\uparrow^1 e_g\,\Pair{\Idx{1},\Idx{0}}$ with
+potential
+$\gamma_{f \otimes g} = \gamma_f + \gamma_g + \account(\cnstLetPair +
+\cnstLet + \cnstLet + \cnstPair)$.
+
+For any $\alpha, v \models_{A \otimes C} (a,c)$, then there exist
+$\alpha_1, \alpha_2,v_a,v_c$ such that
+$\alpha_1 + \alpha_2 \leq \alpha$, $v = \Pair{v_a,v_c}$ and:
+\begin{itemize}
+\item $\alpha_1, v_a \models_A a$;
+\item $\alpha_2, v_c \models_C c$;
+\end{itemize}
+Since $f$ and $g$ are realisable, we have:
+\begin{itemize}
+\item $e_f, [v_a] \Downarrow_{k_1} v_b$ and $\beta_1, v_b \models_B f(a)$ and $k_1 \leq M(\beta_1, \alpha_1 + \gamma_f)$
+\item $e_g, [v_c] \Downarrow_{k_2} v_d$ and $\beta_2, v_d \models_C g(c)$ and $k_2 \leq M(\beta_2, \alpha_2 + \gamma_g)$
+\end{itemize}
+Using these we can use \lemref{lem:eval-shift} twice and
+\lemref{lem:eval-weaken} once to derive derivations $\pi_1$ and
+$\pi_2$ of $\mathord\uparrow^1 e_f, [v_a,v_c] \Downarrow_{k_1} v_b$
+and $\mathord\uparrow^1 e_g, [v_a,v_c,v_b] \Downarrow_{k_2} v_d$, and
+then derive the following evaluation derivation:
+\begin{displaymath}
+  \inferrule*
+  {\inferrule*
+    {\inferrule* {\pi_1}{\mathord\uparrow^1 e_f, [v_a,v_c] \Downarrow_{k_1} v_b}
+      \quad
+      \inferrule*
+      {\inferrule* {\pi_2}{\mathord\uparrow^1 e_g, [v_a,v_c,v_b] \Downarrow_{k_2} v_d}
+        \\
+        \inferrule* { }{\Pair{\Idx{1},\Idx{0}}, [v_a,v_c,v_b,v_d] \Downarrow_{\cnstPair} \Pair{v_b,v_d}}}
+      {\Let\,\mathord\uparrow^1 e_g\,\Pair{\Idx{1},\Idx{0}}, [v_a,v_c,v_b] \Downarrow_{k_2+\cnstPair+\cnstLet} \Pair{v_b,v_d}}
+    }
+    {\Let\,\mathord\uparrow^1 e_f\,\Let\,\mathord\uparrow^1 e_g\,\Pair{\Idx{1},\Idx{0}}, [v_a,v_c] \Downarrow_{k_1+k_2+\cnstPair+2\cnstLet} \Pair{v_b,v_d}}
+  }
+  {\LetPair\,\Idx{0}\,\Let\,\mathord\uparrow^1 e_f\,\Let\,\mathord\uparrow^1 e_g\,\Pair{\Idx{1},\Idx{0}}, [\Pair{v_a,v_c}] \Downarrow_{k_1+k_2+\cnstLetPair+\cnstPair+2\cnstLet} \Pair{v_b,v_d}}
+\end{displaymath}
+We further have $\beta_1 + \beta_2, \Pair{v_b,v_d} \models_{B\otimes D} (f(a),g(b))$, and:
+\begin{displaymath}
+  \begin{array}{cl}
+    & k_1+k_2+\cnstLetPair+\cnstPair+2\cnstLet \\
+    \leq & M(\beta_1, \alpha_1+\gamma_f) + M(\beta_2, \alpha_2 + \gamma_g) + M(1,\account(\cnstLetPair+\cnstPair+2\cnstLet))\\
+    \leq & M(\beta_1 + \beta_2, \alpha_1 + \alpha_2 + \gamma_f + \gamma_g) + M(1,\account(\cnstLetPair+\cnstPair+2\cnstLet))\\
+    \leq & M(\beta_1 + \beta_2, \alpha + \gamma_f + \gamma_g) + M(1,\account(\cnstLetPair+\cnstPair+2\cnstLet))\\
+    \leq & M(\beta_1 + \beta_2, \alpha + \gamma_f + \gamma_g) + M(\alpha + \gamma_f + \gamma_g,\alpha + \gamma_f + \gamma_g+\account(\cnstLetPair+\cnstPair+2\cnstLet))\\
+    \leq & M(\beta_1 + \beta_2, \alpha + \gamma_f + \gamma_g+\account(\cnstLetPair+\cnstPair+2\cnstLet))\\
+  \end{array}
+\end{displaymath}
+
+\paragraph{Symmetry}
+
+Define $\sigma : A \otimes B \to B \otimes A$ with underlying function
+the usual swapping operation, realising expression
+$e_\sigma = \LetPair\,\Idx{0}\,\Pair{\Idx{0},\Idx{1}}$ and potential
+$\gamma_\sigma = \account(\cnstLetPair + \cnstPair)$.
+
+For any $\alpha, v \models_{A \otimes B} (a,b)$, there exist
+$\alpha_1, \alpha_2,v_a,v_b$ such that
+$\alpha_1 + \alpha_2 \leq \alpha$, and $v = \Pair{v_a,v_b}$ and:
+\begin{itemize}
+\item $\alpha_1, v_a \models_A a$;
+\item $\alpha_2, v_b \models_B b$;
+\end{itemize}
+The realising expression computes as expected:
+\begin{displaymath}
+  \inferrule*
+  {\inferrule* { }{\Pair{\Idx{0},\Idx{1}}, [\Pair{v_a,v_c},v_a, v_c] \Downarrow_{\cnstPair} \Pair{v_c,v_a}}}
+  {\LetPair\,\Idx{0}\,\Pair{\Idx{0},\Idx{1}}, [\Pair{v_a,v_c}] \Downarrow_{\cnstPair + \cnstLetPair} \Pair{v_c,v_a}}
+\end{displaymath}
+and the accountancy works out:
+\begin{displaymath}
+  \begin{array}{cl}
+    &\cnstPair + \cnstLetPair \\
+    \leq &M(0,\account(\cnstPair + \cnstLetPair)) \\
+    =    &M(0,\gamma_\sigma) \\
+    \leq &M(\alpha, \alpha + \gamma_\sigma)
+  \end{array}
+\end{displaymath}
+
+\subsection{Closed Structure}
+
+Given two objects $A = (|A|, \models_A)$ and $B = (|B|, \models_B)$,
+we define their \emph{internal hom} $A \multimap B$ as
+$|A \multimap B| = |A| \to |B|$ and
+$\gamma, v \models_{A \multimap B} f$ if $v = (\lambda e, \eta)$ and
+for all $\alpha, v_a \models_A a$, we have
+$e,\eta :: (\lambda e, \eta) :: v_a \Downarrow_k v_b$ and
+$\beta, v_b \models_B f(a)$ and $k \leq M(\beta,\alpha+\gamma)$.
+
+\paragraph{Abstraction}
+
+Given a morphism
+$A \otimes B \stackrel{f,e_f,\gamma_g}\longrightarrow C$, form a
+morphism $\Lambda(f) : A \longrightarrow (B \multimap C)$ with
+$\Lambda(f)(a) = \lambda b. f(a,b)$. The realising expression
+$e_{\Lambda(f)}$ is:
+\begin{displaymath}
+  \lambda \Let\,\Pair{\Idx{2},\Idx{0}}\,e_f
+\end{displaymath}
+with potential
+$\gamma_{\Lambda(f)} = \account(\cnstLam) + \gamma_f +
+\account(\cnstPair+\cnstLet)$. The first summand pays for the creation
+of the closure, and the second and third pay in advance for the
+evaluation of the closure.
+
+Given $\alpha_1, v_a \models_A a$, we have:
+\begin{displaymath}
+  \inferrule*
+  { }
+  {\lambda \Let\,\Pair{\Idx{2},\Idx{0}}\,e_f, [v_a] \Downarrow_{\cnstLam} \Pair{\lambda \Let\,\Pair{\Idx{2},\Idx{0}}\,e_f, [v_a]}}
+\end{displaymath}
+Which we can pay for:
+\begin{displaymath}
+  \begin{array}{cl}
+    &\cnstLam\\
+    \leq&M(0,\account(\cnstLam)) \\
+    \leq&M(\alpha_1 + \gamma_f + \account(\cnstPair+\cnstLet), \alpha_1 + \account(\cnstLam) + \gamma_f + \account(\cnstPair+\cnstLet))\\
+    =   &M(\alpha_1 + \gamma_f + \account(\cnstPair+\cnstLet), \alpha_1 + \gamma_{\Lambda(f)})
+  \end{array}
+\end{displaymath}
+Let $v_{f(a,-)} = \Pair{\lambda \Let\,\Pair{\Idx{2},\Idx{0}}\,e_f, [v_a]}$.
+
+Now we want to show that
+$\alpha_1 + \gamma_f + \account(\cnstPair + \cnstLet), v_{f(a,-)}
+\models_{A \multimap B} \lambda b. f(a,b)$.
+
+For any $\alpha_2, v_b \models_B b$, we have that
+$\alpha_1+\alpha_2, \Pair{v_a,v_b} \models_{A \otimes B} (a,b)$, so by
+the realisability of $f$ have a $k, \beta, v_c$ such that
+$e_f, [\Pair{v_a,v_b}] \Downarrow_k v_c$ and
+$\beta, v_c \models_C f(a,b)$ and
+$k \leq M(\beta, \alpha_1+\alpha_2+\gamma_f)$. We form the derivation
+$\pi$ of $e_f, [v_a,v_{f(a,-)},v_b,\Pair{v_a,v_b}] \Downarrow_k v_c$
+by \lemref{lem:eval-weaken}, and derive:
+\begin{displaymath}
+  \inferrule*
+  {\inferrule*
+    { }
+    {\Pair{\Idx{2},\Idx{0}}, [v_a,v_{f(a,-)},v_b] \Downarrow_{\cnstPair} \Pair{v_a,v_b}}
+    \\
+    \inferrule*
+    {\pi}
+    {e_f, [v_a,v_{f(a,-)},v_b,\Pair{v_a,v_b}] \Downarrow_k v_c}
+  }
+  {\Let\,\Pair{\Idx{2},\Idx{0}}\,e_f, [v_a,v_{f(a,-)},v_b] \Downarrow_{k+\cnstPair+\cnstLet} v_c}
+\end{displaymath}
+and we have:
+\begin{displaymath}
+  \begin{array}{cl}
+    &k+\cnstPair+\cnstLet \\
+    \leq&M(\beta,\alpha_1+\alpha_2+\gamma_f) + M(0,\account(\cnstPair + \cnstLet))\\
+    \leq&M(\beta,\alpha_1+\alpha_2+\gamma_f) + M(\alpha_1+\alpha_2+\gamma_f,\alpha_1+\alpha_2+\gamma_f + \account(\cnstPair + \cnstLet))\\
+    \leq&M(\beta,\alpha_1+\alpha_2+\gamma_f + \account(\cnstPair + \cnstLet))\\
+    =   &M(\beta,\alpha_2 + (\alpha_1+\gamma_f + \account(\cnstPair + \cnstLet)))\\
+  \end{array}
+\end{displaymath}
+
+\paragraph{Evaluation}
+
+The evaluation morphism
+$A \otimes (A \multimap B) \stackrel{\mathit{ev}}\longrightarrow B$ is
+the function $\mathit{ev}(a,f) = f(a)$, which is realised by the
+expression
+$e_{\mathit{ev}} = \LetPair\,\Idx{0}\,\Apply{\Idx{0}}{\Idx{1}}$ with
+potential $\gamma_{\mathit{ev}} = \account(\cnstLetPair +
+\cnstApp)$. Given
+$\alpha, v \models_{A \otimes (A \multimap B)} (a,f)$, we know that
+there must exist $\alpha_a,v_a,\alpha_f,v_f$ such that
+$\alpha_a, v_a \models_A a$ and
+$\alpha_f, v_f \models_{A \multimap B} f$ and $v = \Pair{v_a,v_f}$ and
+$\alpha_a+\alpha_f \leq \alpha$. Since $v_f$ realises a function, it
+must be of the form $(\lambda e_f, \eta_f)$. By the definition of
+realisability at function type, we know that there exist
+$\beta, v_b, k$ such that
+$e_f, [\eta_f, (\lambda e_f, \eta_f), v_a] \Downarrow_k v_b$ and
+$\beta, v_b \models_B f(a)$ and
+$k \leq M(\beta, \alpha_f + \alpha_a)$. With this, we can build the
+following evaluation derivation:
+\begin{displaymath}
+  \inferrule*
+  {\inferrule*
+    { {\begin{array}{c} \vdots \\
+         e_f, [\eta_f, (\lambda e_f, \eta_f), v_a] \Downarrow_k v_b
+       \end{array}}}
+   {\Apply{\Idx{0}}{\Idx{1}}, [\Pair{v_a,(\lambda e_f, \eta_f)}, v_a, (\lambda e_f, \eta_f)] \Downarrow_{k + \cnstApp} v_b}}
+  {\LetPair\,\Idx{0}\,\Apply{\Idx{0}}{\Idx{1}}, [\Pair{v_a,(\lambda e_f, \eta_f)}] \Downarrow_{k + \cnstApp + \cnstLetPair} v'}
+\end{displaymath}
+and the accountancy works out:
+\begin{displaymath}
+  \begin{array}{cl}
+    &k + \cnstApp + \cnstLetPair \\
+    \leq&M(\beta, \alpha_f + \alpha_a) + M(0,\account(\cnstApp + \cnstLetPair)) \\
+    \leq&M(\beta, \alpha) + M(0,\gamma_{\mathit{ev}}) \\
+    \leq&M(\beta, \alpha + \gamma_{\mathit{ev}})
+  \end{array}
+\end{displaymath}
+as required.
+
+\subsection{Products}
+
+Define $|A \times B| = |A| \times |B|$ and
+$\alpha, v \models_{A \times B} (a,b)$ iff:
+\begin{enumerate}
+\item there exist $\beta_a, k_a, v_a$ such that
+  $\Apply{\Idx{1}}{\Idx{0}},[v,\False] \Downarrow_{k_a} v_a$ and
+  $\beta_a, v_a \models_A a$ and $k_a \leq M(\beta_a, \alpha)$; and
+\item there exist $\beta_b, k_b, v_b$ such that
+  $\Apply{\Idx{1}}{\Idx{0}},[v,\True] \Downarrow_{k_b} v_b$ and
+  $\beta_b, v_b \models_B b$ and $k_b \leq M(\beta_b, \alpha)$.
+\end{enumerate}
+
+\paragraph{Pairing} Given
+$A \stackrel{f,e_f,\gamma_f}\longrightarrow B$ and
+$A \stackrel{g,e_g,\gamma_g}\longrightarrow C$, define a morphism
+$\langle f,g \rangle : A \to B \times C$ with function
+$\langle f,g \rangle(a) = (f(a),g(a))$ realised by
+$e_{\langle f, g \rangle} = \lambda \If\,\Idx{0}\,(\uparrow^2
+e_g)\,(\uparrow^2 e_f)$ with resource
+$\gamma_{\langle f, g \rangle} = \gamma_f + \gamma_g +
+\account(\cnstLam + \cnstIf + \cnstApp)$.
+
+Given $\alpha, v_a \models_A a$, we have the following evaluation:
+\begin{displaymath}
+  \inferrule*
+  { }
+  {\lambda \If\,\Idx{0}\,(\uparrow^2 e_g)\,(\uparrow^2 e_f), [v_a] \Downarrow_{\cnstLam}
+    (\lambda \If\,\Idx{0}\,(\uparrow^2 e_g)\,(\uparrow^2 e_f), [v_a])}
+\end{displaymath}
+We will use $\beta = \alpha + \gamma_f + \gamma_g + \account(\cnstIf + \cnstApp)$
+as the resource assigned to the result. Note that
+$\beta + \account(\cnstLam) \leq \alpha + \gamma_{\langle f, g \rangle}$ This makes the
+accounting of the building of the closure work out:
+\begin{displaymath}
+  \begin{array}{cl}
+    &\cnstLam \\
+    \leq & M(\beta, \beta) + M(0, \account(\cnstLam)) \\
+    \leq & M(\beta, \beta + \account(\cnstLam)) \\
+    \leq & M(\beta, \alpha + \gamma_{\langle f, g \rangle})
+  \end{array}
+\end{displaymath}
+Now, we need to show that
+$\beta, (\lambda \If\,\Idx{0}\,(\uparrow^2 e_g)\,(\uparrow^2 e_f),
+[v_a]) \models_{A \times B} (f(a),g(a))$. We only do the case of the
+first projection. By assumption, we know that there exist
+$\beta_b, k_b, v_b$ such that $e_f, [v_a] \Downarrow_{k_b} v_b$ and
+$\beta_b, v_b \models_B f(a)$ and
+$k_b \leq M(\beta_b, \alpha + \gamma_f)$. We can build the following
+evaluation:
+\begin{displaymath}
+  \inferrule*
+  {\inferrule*
+    { {\begin{array}{c} \vdots \\ \uparrow^2 e_f, [v_a,(\lambda \If\,\Idx{0}\,(\uparrow^2 e_f)\,(\uparrow^2 e_g),[v_a]), \False] \Downarrow_{k_b} v_b \end{array}}
+    }
+    {\If\,\Idx{0}\,(\uparrow^2 e_g)\,(\uparrow^2 e_f),
+      [v_a,(\lambda \If\,\Idx{0}\,(\uparrow^2 e_f)\,(\uparrow^2 e_g),[v_a]), \False]
+      \Downarrow_{\cnstIf + k_b} v_b}
+  }
+  {\Apply{\Idx{1}}{\Idx{0}}, [(\lambda \If\,\Idx{0}\,(\uparrow^2 e_f)\,(\uparrow^2 e_g),[v_a]), \False]
+    \Downarrow_{\cnstApp + \cnstIf + k_b} v_b}
+\end{displaymath}
+and the accountancy works out:
+\begin{displaymath}
+  \begin{array}{cl}
+    &\cnstApp + \cnstIf + k_b \\
+    \leq & M(0, \account(\cnstApp + \cnstIf)) + M(\beta_b, \alpha + \gamma_f) \\
+    \leq & M(\beta_b, \alpha + \gamma_f + \account(\cnstApp + \cnstIf)) \\
+    \leq & M(\beta_b, \alpha + \gamma_f + \gamma_g + \account(\cnstApp + \cnstIf)) \\
+    =    & M(\beta_b, \beta) \\
+  \end{array}
+\end{displaymath}
+The case for the other projection is similar.
+
+\paragraph{Projection} The first projection $\pi_0 : A \times B \to A$
+is realised by $e_{\pi_0} = \Let\,\False\,\Apply{\Idx{1}}{\Idx{0}}$,
+with $\gamma_{\pi_0} = \cnstLet + \cnstBool$. Given
+$\alpha, v \models_{A \times B} (a,b)$, we can build the following
+evaluation:
+\begin{displaymath}
+  \inferrule*
+  { \inferrule*
+    { }
+    {\False, [v] \Downarrow_{\cnstBool} \False} \\
+    {\begin{array}[b]{c} \vdots \\ \Apply{\Idx{1}}{\Idx{0}}, [v, \False] \Downarrow_{k_a} v_a\end{array}}
+  }
+  {\Let\,\False\,\Apply{\Idx{1},\Idx{0}}, [v] \Downarrow_{\cnstLet + \cnstBool + k_a} v_a}
+\end{displaymath}
+and we know that $k_b \leq M(\beta_a, \alpha)$, so the accountancy
+works out:
+\begin{displaymath}
+  \begin{array}{cl}
+    &\cnstLet + \cnstBool + k_a \\
+    \leq & M(0,\account(\cnstLet + \cnstBool)) + M(\beta_b, \alpha) \\
+    \leq & M(\beta_b, \alpha + \account(\cnstLet + \cnstBool))
+  \end{array}
+\end{displaymath}
+
+
+% \subsubsection{Broken version}
+
+% Define $|A \times B| = |A| \times |B|$ and
+% $\alpha, \Pair{v_a,v_b} \models_{A \times B} (a,b)$ iff
+% $\alpha, v_a \models_A a$ and $\alpha, v_b \models_B b$.
+
+% \paragraph{Pairing} Given
+% $A \stackrel{f,e_f,\gamma_f}\longrightarrow B$ and
+% $A \stackrel{g,e_g,\gamma_g}\longrightarrow C$, define a morphism
+% $\langle f,g \rangle : A \to B \times C$ with function
+% $\langle f,g \rangle(a) = (f(a),g(a))$ realised by
+% $e_{\langle f, g \rangle} = \Let\,e_f\,\Let\,\uparrow
+% e_g\,\Pair{\Idx{1},\Idx{0}}$ with potential
+% $\gamma_f + \gamma_g + \account(2\cnstLet + \cnstPair)$.
+
+% Given $\alpha, v_a \models_A a$, we know that:
+% \begin{enumerate}
+% \item there exist $\beta_b, v_b, k_b$ such that
+%   $e_f, [v_a] \Downarrow_{k_b} v_b$ and $\beta_b, v_b \models_B f(a)$
+%   and $k_b \leq M(\beta_b, \alpha + \gamma_f)$; and
+% \item there exist $\beta_c, v_c, k_c$ such that
+%   $e_g, [v_c] \Downarrow_{k_c} v_c$ and $\beta_c, v_c \models_C g(a)$
+%   and $k_c \leq M(\beta_c, \alpha + \gamma_f)$.
+% \end{enumerate}
+% Now we have:
+% \begin{displaymath}
+%   \inferrule*
+%   { {\begin{array}[b]{c} \vdots \\ e_f, [v_a] \Downarrow_{k_b} v_b \end{array}}
+%     \\
+%     \inferrule*
+%     { {\begin{array}[b]{c} \vdots \\ \uparrow e_g, [v_a,v_b] \Downarrow_{k_c} v_c \end{array}}
+%       \\
+%       \inferrule*
+%       { }
+%       {\Pair{\Idx{1},\Idx{0}}, [v_a,v_b,v_c] \Downarrow_{\cnstPair} \Pair{v_b,v_c}}
+%     }
+%     {\Let\,\uparrow e_g\,\Pair{\Idx{1},\Idx{0}}, [v_a,v_b] \Downarrow_{\cnstLet + k_c + \cnstPair} \Pair{v_b,v_c}}
+%   }
+%   {\Let\,e_f\,\Let\,\uparrow e_g\,\Pair{\Idx{1},\Idx{0}}, [v_a] \Downarrow_{2\cnstLet + k_c + k_b + \cnstPair} \Pair{v_b,v_c}}
+% \end{displaymath}
+% We let $\beta = \beta_b + \beta_c$, so that
+% $\beta, \Pair{v_b,v_c} \models_{B \times C} (b,c)$ (because
+% $\beta_b \leq \beta$, and $\beta_b, v_b \models_B b$ and similar for
+% $c$). The resource accounting works out:
+% \begin{displaymath}
+%   \begin{array}{cl}
+%          &k_c + k_b + 2\cnstLet + \cnstPair \\
+%     \leq &M(\beta_b, \alpha + \gamma_f) + M(\beta_c, \alpha + \gamma_g) + M(0,\account(2\cnstLet + \cnstPair)) \\
+%     \leq &M(\beta_b+\beta_c, 2\cdot\alpha + \gamma)
+%   \end{array}
+% \end{displaymath}
+% \todo{This doesn't work out! Need lazy pairs so that we don't need
+%   $\alpha$ twice.}
+
+
+
+
+
+
+% \paragraph{Projections} The projection $\pi_0 : A \times B \to A$ is
+% realised by $e_{\pi_0} = \LetPair\,\Idx{0}\,\Idx{1}$ with resource
+% $\gamma_{\pi_0} = \account(\cnstLetPair + \cnstLookup)$.
+
+% Given $\alpha, \Pair{v_a,v_b} \models_{A \times B} (a,b)$, we know
+% that $\alpha, v_a \models_A a$. Projection evaluates correctly:
+% \begin{displaymath}
+%   \inferrule*
+%   {\inferrule*
+%     { }
+%     {\Idx{1}, [\Pair{v_a,v_b}, v_a, v_b] \Downarrow_{\cnstLookup} v_a}
+%   }
+%   {\LetPair\,\Idx{0}\,\Idx{1}, [\Pair{v_a,v_b}] \Downarrow_{\cnstLookup + \cnstLetPair} v_a}
+% \end{displaymath}
+% We have $\alpha, v_a \models_A \pi_0(a,b) = a$, and the accounting
+% works out:
+% \begin{displaymath}
+%   \begin{array}{cl}
+%     &\cnstLookup + \cnstLetPair \\
+%     \leq & M(\alpha, \alpha) + M(0,\account(\cnstLookup + \cnstLetPair)) \\
+%     \leq & M(\alpha, \alpha + \account(\cnstLookup + \cnstLetPair))
+%   \end{array}
+% \end{displaymath}
+% The case for the other projection $\pi_1 : A \times B \to B$ is almost
+% identical.
+
+\subsection{Coproducts}
+
+Define $|A + B| = |A| + |B|$ and $\alpha, v \models_{A + B} x$ iff one of
+\begin{enumerate}
+\item $v = \Pair{\False,v_a}$, $x = \iota_0(a)$ and
+  $\alpha, v_a \models_A a$; or
+\item $v = \Pair{\True,v_b}$, $x = \iota_1(b)$ and
+  $\alpha, v_b \models_B b$
+\end{enumerate}
+holds, where $\iota_0$ and $\iota_1$ are the injections into the
+disjoint sum $|A| + |B|$.
+
+\paragraph{Injections} We realise $\iota_0 : A \to A+B$ with
+$e_{\iota_0} = \Let\,\False\,\Pair{\Idx{0},\Idx{1}}$ and potential
+$\gamma_{\iota_0} = \cnstLet + \cnstBool + \cnstPair$. The
+$\iota_1 : B \to A+B$ injection is almost identical.
+
+\paragraph{Case Analysis} Given
+$A \stackrel{f,e_f,\gamma_f}\longrightarrow C$ and
+$B \stackrel{f,e_g,\gamma_g}\longrightarrow C$, we construct their
+co-pairing $[f,g] : A+B \to C$ with function
+$[f,g](\iota_0(a)) = f(a)$ and $[f,g](\iota_1(b)) = g(b)$. We use the
+realising expression:
+$e_{[f,g]} = \LetPair\,\Idx{0}\,\If\,\Idx{1}\,e_f\,e_g$ and resource
+potential
+$\gamma_{[f,g]} = \gamma_f + \gamma_g + \account(\cnstLetPair +
+\cnstIf)$.
+
+Given $\alpha, v \models_{A+B} x$, there are two cases. Either:
+\begin{enumerate}
+\item $x = \iota_o(a)$ and $v = \Pair{\False,v_a}$ and
+  $\alpha, v_a \models_A a$. By assumption, we know that there exist
+  $\beta, k, v'$ such that $e_f, [v_a] \Downarrow_k v'$ and
+  $\beta, v' \models_C f(a)$ and
+  $k \leq M(\beta, \alpha + \gamma_f)$. We use this (with
+  \lemref{lem:eval-weaken}) to show that we have a working realiser:
+  \begin{displaymath}
+    \inferrule*
+    {\inferrule*
+      { {\begin{array}{c} \vdots \\ e_f, [\Pair{\False,v_a}, \False, v_a] \Downarrow_k v' \end{array}}}
+      {\If\,\Idx{1}\,e_f\,e_g, [\Pair{\False,v_a}, \False, v_a] \Downarrow_{k + \cnstIf} v'}
+    }
+    {\LetPair\,\Idx{0}\,\If\,\Idx{1}\,e_f\,e_g, [\Pair{\False,v_a}] \Downarrow_{k + \cnstLetPair + \cnstIf} v'}
+  \end{displaymath}
+  where the costs are accounted for:
+  \begin{displaymath}
+    \begin{array}{cl}
+      &k + \cnstLetPair + \cnstIf \\
+      \leq&M(\beta, \alpha + \gamma_f) + M(0,\account(\cnstLetPair + \cnstIf)) + M(0,\gamma_g) \\
+      \leq&M(\beta, \alpha + \gamma_f + \gamma_g + \account(\cnstLetPair + \cnstIf))
+    \end{array}
+  \end{displaymath}
+\item Alternatively, $x = \iota_1(b)$, $v = \Pair{\True,v_b}$ and
+  $\alpha, v_b \models_B b$. This case is almost identical to the
+  previous.
+\end{enumerate}
+
+
+\subsection{Cartesian Closed?}
+
+Can't be -- how to prove this? Is there a colimit that products don't
+preserve? Infinite ones? $\omega$-colimits won't be preserved, because
+then there is a non-constant amount of work required to reach all the
+components.
+
+try $\alpha, v \models_{A \to B} f$ iff for all $\beta \geq \alpha$
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Inductive Types \`a la LFPL}
+
+Note: somehow want to define ``realisable'' functors
+$F : \mathcal{C} \to \mathcal{C}$ such that there always exists an
+initial $(F(-) \otimes \Diamond)$-algebra.
+
+For any realisable $F$ (meaning that there is a realisable function
+$(A \multimap B) \multimap (FA \multimap FB)$)? I think we have to
+restrict to constant time (i.e. the potential function is a
+constant). Or maybe not?
+
+\newcommand{\unitExpr}{\mathord{*}}
+
+\subsection{Diamonds}
+
+Diamonds control the distribution of potential.
+
+In QTT, we have a $0$-usage introduction rule:
+\begin{displaymath}
+  \inferrule*
+  {\Gamma \vdash}
+  {\Gamma \vdash * \stackrel{0}: \Diamond}
+\end{displaymath}
+And an $\eta$-rule.
+
+Semantically, we have $\alpha, \Unit \models_\Diamond *$ iff
+$(1,0) \leq \alpha$. So we need a resource monoid with some notion of
+latent potential (or ``data'' potential).\todo{Axiomatize data
+  potential?}
+
+\subsection{Inductive Type: Natural Numbers}
+
+Unlike in most work about ICC, we cannot use impredicate encodings of
+inductive data types. Instead, we will directly build inductive
+datatypes, starting with the natural numbers.
+
+The intended rules (in QTT):
+\begin{mathpar}
+  \inferrule*
+  {\Gamma \vdash d \stackrel\sigma: \Diamond}
+  {\Gamma \vdash \mathsf{zero}@d \stackrel\sigma: \TyNat}
+
+  \inferrule*
+  {\Gamma_1 \vdash d \stackrel\sigma: \Diamond \\
+    \Gamma_2 \vdash n \stackrel\sigma: \TyNat \\
+    0\Gamma_1 = 0\Gamma_2}
+  {\Gamma_1 + \Gamma_2 \vdash \mathsf{succ}(n)@d \stackrel\sigma: \TyNat}
+
+  \inferrule*
+  {0\Gamma, x \stackrel0: \TyNat \vdash P\,\mathrm{type} \\
+    0\Gamma, d \stackrel\sigma: \Diamond \vdash M_z \stackrel\sigma: P[\mathsf{zero}@\unitExpr/x] \\
+    0\Gamma, d \stackrel\sigma: \Diamond, x \stackrel0: \TyNat, p \stackrel\sigma: P \vdash M_s \stackrel\sigma: P[\mathsf{succ}(x)@\unitExpr/x] \\
+    \Gamma \vdash N \stackrel\sigma: \TyNat}
+  {\Gamma \vdash \mathrm{fold}_{x.P}(d.\,M_z,d\,x\,p.\,M_s,N) : P[N/x]}
+\end{mathpar}
+Notice that in the $\sigma = 0$ fragment, we are effectively
+unrestricted in our use of natural numbers.
+
+In category theory, we will have:
+\begin{enumerate}
+\item A object $\TyNat$.
+\item A morphism $\mathit{zero} : \Diamond \to \TyNat$.
+\item A morphism $\mathit{succ} : \Diamond \otimes \TyNat \to \TyNat$.
+\item For every object $A$ and morphisms $z : \Diamond \to A$ and
+  $s : \Diamond \otimes A \to A$, a morphism
+  $\mathit{rec}(z,s) : \TyNat \to A$ (so that $\TyNat$ is initial for
+  algebras $(A, z : \Diamond \to A, s : \Diamond \otimes A \to A)$.
+\end{enumerate}
+
+\paragraph{Implementation}
+
+For this section, we will use the polynomial resource monoid, with the
+restriction that morphisms do not have non-zero ``dead'' potential.
+
+Define $\alpha, v \models_{\TyNat} n$ by induction on $n$:
+\begin{displaymath}
+  \begin{array}{lcl}
+    \alpha, \Pair{\True,\Unit} \models_{\TyNat} 0 &\iff&\alpha \geq (1,0)\\
+    \alpha, \Pair{\False,v} \models_{\TyNat} n + 1 &\iff&\exists \alpha'. \alpha' = \alpha + (1,0) \land \alpha', v \models_{\TyNat} n
+  \end{array}
+\end{displaymath}
+This is equivalent to the following definition:
+\begin{definition}
+  $\alpha, v \models_\TyNat n$ iff $(n+1,0) \leq \alpha$ and $v_n$ is
+  the realiser for $n$.
+\end{definition}
+This is evidently hereditary.
+
+\paragraph{$\mathit{zero}$ is realisable} The function $z(*) = 0$ has
+realiser $e_z = \Let\,\True\,\Let\,\Unit\,\Pair{\Idx{1},\Idx{0}}$ with
+$\gamma = \account(\cnstPair + \cnstBool + \cnstUnitVal +
+2\cnstLet)$. Proof: given $\alpha, v \models_\Diamond *$, we know that
+$(1,0) \leq \alpha$, and $v = \Unit$. Let $\beta = \alpha$, then
+$e_z, [\Unit] \Downarrow_{\cnstPair+\cnstBool+\cnstUnitVal+2\cnstLet}
+\Pair{\True, \Unit}$. We have
+$\beta, \Pair{\True, \Unit} \models_{\TyNat} 0$, because
+$\beta = \alpha \geq (1,0)$. Costs are accounted for:
+\begin{displaymath}
+  \begin{array}{cl}
+    &M(\beta, \alpha+\gamma) \\
+    =&M(\alpha, \alpha+\gamma) \\
+    \geq&M(\alpha,\alpha) + M(0,\gamma) \\
+    \geq&M(0,\gamma) \\
+    \geq&\cnstPair + \cnstBool + \cnstUnitVal + 2\cnstLet
+  \end{array}
+\end{displaymath}
+
+
+\paragraph{$\mathit{succ}$ is realisable} The function $s(*,n) = n+1$
+has realiser
+$e_s = \LetPair\,\Idx{0}\,\Let\,\False\,\Pair{\Idx{0},\Idx{1}}$ with
+$\gamma = \account(\cnstLetPair + \cnstLet + \cnstBool +
+\cnstPair)$. Proof: given
+$\alpha, \Pair{\Unit,v} \models_{\Diamond \otimes \TyNat} (*,n)$, we
+have $\alpha_1$, $\alpha_2$ such that
+$\alpha \geq \alpha_1 + \alpha_2$, $\alpha_1 \geq (1,0)$,
+$\alpha_2 \geq (n,0)$ and $\alpha_2, v \models_\TyNat n$. Let
+$\beta = \alpha$, and observe that
+$e_s, [\Pair{\Unit,v}] \Downarrow_{\cnstLetPair + \cnstLet + \cnstBool
+  + \cnstPair} \Pair{\False,v}$. We have
+$\beta, \Pair{\False,v} \models_\TyNat n+1$, because
+$\beta = \alpha \geq (1,0) + \alpha_2$ and
+$\alpha_2, v \models_\TyNat n$. Costs of execution are accounted for:
+\begin{displaymath}
+  \begin{array}{cl}
+    &M(\beta,\alpha+\gamma) \\
+    =&M(\alpha, \alpha+\gamma) \\
+    \geq&M(\alpha,\alpha) + M(0,\gamma) \\
+    \geq&M(0,\gamma) \\
+    \geq&\cnstLetPair + \cnstLet + \cnstBool + \cnstPair
+  \end{array}
+\end{displaymath}
+
+\paragraph{$\mathit{rec}$ is realisable} We assume we are given
+$\Diamond \stackrel{z,e_z,\gamma_z}\longrightarrow A$ and
+$\Diamond \otimes A \stackrel{s,e_s,\gamma_s}\longrightarrow A$.
+
+The function $\mathit{rec}(z,s) : \mathbb{N} \to |A|$ is defined by
+primitive recursion:
+\begin{displaymath}
+  \begin{array}{lcl}
+    \mathit{rec}(z,s)(0)&=&z(*) \\
+    \mathit{rec}(z,s)(n+1)&=&s(*,\mathit{rec}(z,s)(n))
+  \end{array}
+\end{displaymath}
+with realiser
+$e_{\mathit{rec}} = \Let\,(\lambda e_{\mathit{body}})\,\Apply{\Idx{0}}{\Idx{1}}$, where
+\begin{displaymath}
+  e_{\mathit{body}} = \LetPair\,\Idx{0}\,\If\,\Idx{1}\,e_z\,(\Let\,\Apply{\Idx{3}}{\Idx{0}}\,\Let\,\Unit\,\Let\,\Pair{\Idx{0},\Idx{1}}\,e_s)
+\end{displaymath}
+and potential
+$\gamma_{\mathit{rec}} = \gamma_{\mathit{body}} +
+\account(c_{\mathit{rec}})$ where
+$\gamma_{\mathit{body}} = (0, \lambda n. n(\gamma_s(n) + c_s)+
+\gamma_z(n) + c_z)$, $c_s$ and $c_z$ are the overheads for the
+successor and zero cases, and $c_{\mathit{rec}}$ is the startup
+overhead.
+
+We will need the following lemma:
+\begin{lemma}\label{lem:natrec-lemma}
+  For $n \in \mathbb{N}$, let $v_n$ be the representing value for
+  $n$. Let $\eta_f$ be an arbitrary environment. For every $n$,
+  there exist $\beta, k, v$ such that
+  $e_{\mathit{body}}, (\eta_f :: (\lambda e_{\mathit{body}},\eta_f) :: v_n)
+  \Downarrow_k v$ and $\beta, v \models_A \mathit{rec}(z,s)(n)$ and
+  $k \leq M(\beta,(n+1,0) + n(\gamma_s + \account(c_s)) + \gamma_z +
+  \account(c_s))$.
+\end{lemma}
+
+\begin{proof}
+  By induction on $n$. The base case is when $n = 0$. In this case
+  $v_0 = \Pair{\False,\Unit}$. We know that
+  $(0,1), \Unit \models_\Diamond *$. Using this with our assumption on
+  $z$, we have $e_z, [\Unit] \Downarrow_{k_z} v$ such that there
+  exists a $\beta$ with
+  $\beta, v \models_A z(*) = \mathrm{rec}(z,s)(0)$ and
+  $k \leq M(\beta, (1,0)+\gamma_z)$. Using \lemref{lem:eval-weaken},
+  we can build the following derivation:
+  \begin{displaymath}
+    \inferrule*
+    { {\begin{array}{c}
+         \inferrule*
+         {\vdots}
+         {e_z, (\eta_f :: (\lambda e_{\mathit{body}},\eta_f) :: \Pair{\False,\Unit} :: \False :: \Unit) \Downarrow_{k_z} v_a}
+         \\
+         \vdots
+       \end{array}}}
+    {e_{\mathit{body}}, (\eta_f :: (\lambda e_{\mathit{body}},\eta_f) :: \Pair{\False,\Unit}) \Downarrow_{k_z + \cnstLetPair + \cnstIf} v_a}
+  \end{displaymath}
+  Costs are accounted for:
+  \begin{displaymath}
+    \begin{array}{cl}
+      &k_z+\cnstLetPair+\cnstIf \\
+      \leq&M(\beta, (1,0) + \gamma_z) + M(0,\account(\cnstLetPair+\cnstIf)) \\
+      \leq&M(\beta, (1,0) + \gamma_z + \account(\cnstLetPair+\cnstIf))\\
+      =   &M(\beta, (1,0) + 0(\gamma_s + \account(c_s)) + \gamma_z + \account(c_z))
+    \end{array}
+  \end{displaymath}
+
+  When $n = m + 1$, by the induction hypothesis we have
+  $\beta_m, k_m, v'_m$ such that
+  $e_{\mathit{body}}, [(\lambda e_{\mathit{body}},\eta_f), v_m]
+  \Downarrow_{k_m} v'_m$ and
+  $\beta_m, v'_m \models_\TyNat \mathit{rec}(z,s)(m)$ and
+  $k_m \leq M(\beta_m, (m+1,0) + m(\gamma_s + \account(c_s)) +
+  \gamma_z + \account(c_z))$.
+
+  Now we construct
+  $((1,0) + \beta_m), \Pair{\Unit,v'_m} \models_{\Diamond \otimes A}
+  (*,\mathit{rec}(z,s)(m))$ and by realisability of $s$, we get
+  $\beta_n, k_s, v'_n$ such that
+  $e_s, [\Pair{\Unit,v'_m}] \Downarrow_{k_s} v'_n$ and
+  $\beta_n, v'_n \models s(*,\mathit{rec}(z,s)(m)) =
+  \mathit{rec}(z,s)(n)$ and
+  $k_s \leq M(\beta_n, (1,0)+\beta_m+\gamma_s)$. We construct the
+  following derivation using \lemref{lem:eval-weaken}. Let
+  $\eta = \eta_f :: (\lambda e_{\mathit{body}},\eta_f) ::
+  \Pair{\True,v_m} :: \True :: v_m$.
+  \begin{displaymath}
+    \inferrule*
+    { {\begin{array}{c}
+         \inferrule*
+         {\inferrule*
+         {e_{\mathit{body}}, (\eta_f :: (\lambda e_{\mathit{body}},\eta_f) :: v_m) \Downarrow_{k_m} v'_m}
+         {\Apply{\Idx{3}}{\Idx{0}}, (\eta :: v_m) \Downarrow_{k_m + \dots} v'_m}
+         \\
+         \inferrule*
+         { {\begin{array}{c}
+              e_s, (\eta :: v'_m :: \Unit :: \Pair{\Unit,v'_m}) \Downarrow_{k_s} v'_n
+              \\
+              \vdots
+            \end{array}}
+         }
+         {\Let\,\Unit\,\Let\,\Pair{\Idx{0},\Idx{1}}\,e_s, (\eta :: v'_m) \Downarrow_{k_s+\dots} v'_n}}
+         {\Let\,\Apply{\Idx{3}}{\Idx{0}}\,\Let\,\Unit\,\Let\,\Pair{\Idx{0},\Idx{1}}\,e_s, \eta \Downarrow_{k_m + k_s + \dots} v'_n}
+         \\
+         \vdots
+       \end{array}}}
+    {e_{\mathit{body}}, (\eta_f :: (\lambda e_{\mathit{body}}, \eta_f) :: v_n) \Downarrow_{k_m+k_s+c_s} v'_n}
+  \end{displaymath}
+  Now we have:
+  \begin{displaymath}
+    \begin{array}{cl}
+      &k_s + k_m + c_s\\
+      \leq&M(\beta_n, (1,0) + \beta_m + \gamma_s) + M(\beta_m, (n,0) + m(\gamma_s + \account(c_s) + \gamma_z + \account(c_z)) + M(0,\account(c_s)) \\
+      \leq&M(\beta_n, (n+1,0) + \gamma_s + \account(c_s) + m(\gamma_s + \account(c_s)) + \gamma_z + \account(c_z)) \\
+      =   &M(\beta_n, (n+1,0) + n(\gamma_s + \account(c_s)) + \gamma_z + \account(c_z))
+    \end{array}
+  \end{displaymath}
+  as required.
+\end{proof}
+
+To prove the realisability of $\mathit{rec}$, we assume we are given
+$\alpha, v_n \models_\TyNat n$. We know that $(n+1, 0) \leq \alpha$
+and $v_n$ is the realiser of $n$. By \lemref{lem:natrec-lemma}, we
+have $\beta, k, v$ such that
+$e_{\mathit{body}}, [v_n, (\lambda e_{\mathit{body}}, [v_n]), v_n]
+\Downarrow_k v$ and $\beta, v \models_A \mathit{rec}(z,s)(n)$ and
+$k \leq M(\beta, (n+1,0) + n(\gamma_s + c_s) + (\gamma_z +
+c_z))$. Since $(n+1,0) \leq \alpha$, we have
+\begin{displaymath}
+  0 \leq M((n+1,0) + n(\gamma_s + \account(c_z)) + \gamma_z + \account(c_s), \alpha + \gamma_{\mathit{body}})
+\end{displaymath}
+and consequently, $k \leq M(\beta, \alpha +
+\gamma_{\mathit{body}})$. We can build the following derivation:
+\begin{displaymath}
+  \inferrule*
+  {\inferrule*
+    { {\begin{array}{c} \vdots \\ e_{\mathit{body}}, [v_n, (\lambda e_{\mathit{body}}, [v_n]), v_n] \Downarrow_k v \end{array}}}
+    {\Apply{\Idx{0}}{\Idx{1}}, [v_n, (\lambda e_{\mathit{body}}, [v_n])] \Downarrow_{k+\cnstApp} v}}
+  {\Let\,(\lambda e_{\mathit{body}})\,\Apply{\Idx{0}}{\Idx{1}}, [v_n] \Downarrow_{k+\cnstApp+\cnstLam+\cnstLet} v}
+\end{displaymath}
+where the costs are accounted for:
+\begin{displaymath}
+  \begin{array}{cl}
+    &k + c_{\mathit{rec}} \\
+    \leq&M(\beta, \alpha+\gamma_{\mathit{body}}) + M(0,\account(c_{\mathit{rec}})) \\
+    \leq&M(\beta, \alpha+\gamma_{\mathit{body}}+\account(c_{\mathit{rec}})) \\
+    =   &M(\beta, \alpha+\gamma_{\mathit{rec}})
+  \end{array}
+\end{displaymath}
+and we are done.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{An alternate category, with linear padding}
+
+\todo{Problem: this doesn't work}
+Perhaps there is an alternative way of making a category, where we
+include the linear padding in the definition of morphism. So we have a
+class of complexity functions $\mathcal{F}$ that is closed under
+composition, and we define morphisms to be:
+
+Morphisms $f : (|A|, \models_A) \to (|B|, \models_B)$ are functions
+$f : |A| \to |B|$ for which there exists a realising expression $e_f$
+and a linear function $\gamma_f$ such that for all
+$\alpha, v_a \models_A a$, there exist $\beta, v_b, k$ such that
+$e_f, [v_a] \Downarrow_k v_b$ and $\beta, v_b \models_B f(a)$ and
+$k \leq \gamma_f(M(\beta, \alpha))$.
+
+\paragraph{Examples} Examples include the $\mathbb{N}$ resource monoid
+above, with linear or polynomial padding. This corresponds to the RAML
+style, with a linear amount of ``slack'' in the time accounting. We
+could also consider more precise accounting that pays for each step
+individually, or only for recursive calls, but this would require
+annotating the arrows.
+
+Conjecture: LFPL is captured by using natural numbers with
+\begin{displaymath}
+  M(n,m) = \left\{\begin{array}{ll} m & \textrm{if }n \leq m \\ -\infty & \textrm{otherwise} \end{array}\right.
+\end{displaymath}
+PROBLEM: but this doesn't satisfy the inverse triangle law! But it
+does satisfy
+$\max(M(\alpha, \beta), M(\beta, \gamma)) \leq M(\alpha, \gamma)$,
+which might be enough (c.f. the proof for composition below).
+
+LFPL is based on non-size increasing computation with polynomials, not
+potential decreasing computation. What difference does that make? If
+we consumed potential as we proceeded, then we wouldn't be able to do
+the nested repeated iteration to get to polynomial time. There may be
+another way to get to polytime though, but it wouldn't be as
+natural. So I think that the LFPL resource monoid is needed for LFPL
+because the function potential and sizes are intertwined. Also, for
+soft linear logic, the polynomial and the datatypes are more closely
+intertwined.
+
+\subsection{Identities and Composition}
+
+The identity function $\id : |A| \to |A|$ is realised by he expression
+$\Idx{0}$ and $\gamma_\id(x) = \cnstLookup$. For every
+$\alpha, v_a \models_A a$, we have
+$\Idx{0}, [v_a] \Downarrow_{\cnstLookup} v_a$ by the rule
+\TirName{E-Lookup}. We have $\alpha, v_a \models_A \id(a) = a$ by
+assumption, and
+$\cnstLookup = \gamma_\id(0) \leq \gamma_\id(M(\alpha, \alpha))$ as
+required.
+
+Composition relies on the following calculation to show that the costs
+work out. We have
+$k_1 \leq \gamma_f^1\cdot M(\beta_1, \alpha) + \gamma_f^0$ and
+$k_2 \leq \gamma_g^1\cdot M(\beta_2, \beta_1) + \gamma_g^0$, and so:
+\begin{displaymath}
+  \begin{array}{cl}
+    & k_1 + k_2 + \cnstLet \\
+    \leq & \gamma_f^1\cdot M(\beta_1, \alpha) + \gamma_f^0 + \gamma_g^1\cdot M(\beta_2, \beta_1) + \gamma_g^0 + \cnstLet \\
+    \leq & \max(\gamma_f^1, \gamma_g^1)\cdot (M(\beta_1, \alpha) + M(\beta_2,\beta_1)) + (\gamma_f^0 + \gamma_g^0 + \cnstLet) \\
+    \leq & \max(\gamma_f^1, \gamma_g^1)\cdot M(\beta_2, \alpha) + (\gamma_f^0 + \gamma_g^0 + \cnstLet)
+  \end{array}
+\end{displaymath}
+
+\subsection{Symmetric Monoidal Structure}
+
+Given that composition works, and the morphisms for symmetric monoidal
+structure only have constant overhead, the proofs for realisability of
+the symmetric monoidal structure go through as above.
+
+\subsection{Closed Structure}
+
+Define $\alpha, v \models_{A \multimap B} f$ iff there exists an $e_f$
+and $\eta$ such that $v = (\lambda e_f, \eta)$, and a $\gamma$ such
+that for all $\alpha', v_a \models_A a$, there exist $\beta, v_b, k$
+such that $e_f,\eta :: (\lambda e_f, \eta) :: v_a \Downarrow_k v_b$
+and $\beta, v_b \models_B f(a)$ and
+$k \leq \gamma(M(\beta, \alpha + \alpha'))$.
+
+OH NO! This doesn't work.. no way to get evaluation to work.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Recursion \`a la RAML}
+
+I now think that the best we can do is to count the number of
+recursive calls. The maximum size of the bits in between the calls is
+a global property, and not amenable to the compositional approach
+taken here?
+
+
+\newcommand{\Mamort}{M_{\mathrm{amort}}}
+
+We now look at an alternative version that directly connects the
+number of $\Diamond$s in the input with the number of computation
+steps. This makes it more like Hofmann-Jost style analysis, or the
+RAML style. Using dependent types, we can connect $\Diamond$s with
+data structures.
+
+The key difference between this system and LFPL is that in RAML
+$\Diamond$s are used directly as the source of fuel for the
+computation, whereas in LFPL they are measures for the sizes of
+datastructures. Thus in LFPL, computations cannot generate more
+diamonds without affecting the size computations.
+
+\subsection{Typing Rules}
+
+\begin{displaymath}
+  \inferrule*
+  {\Gamma_1 \vdash M_z : A \\
+    x : \mathrm{Nat}, r: (\diamond \multimap A) \vdash M_s : A \\
+    \Gamma_2 \vdash N : \TyNat}
+  {\Gamma_1, \Gamma_2 \vdash \mathrm{iter}(M_z,M_s,N) : A}
+\end{displaymath}
+
+or, more simply:
+\begin{displaymath}
+  \inferrule*
+  {\vdash M_z : A \\ r : \diamond \multimap A \vdash M_s : A \\ \Gamma \vdash N : \TyNat}
+  {\Gamma \vdash \mathrm{iter}(M_z,M_s,N) : A}
+\end{displaymath}
+
+both with
+\begin{mathpar}
+  \inferrule*
+  { }
+  {\vdash \mathrm{zero} : \TyNat}
+
+  \inferrule*
+  {\Gamma \vdash N : \TyNat}
+  {\Gamma \vdash \mathrm{succ}(N) : \TyNat}
+\end{mathpar}
+
+\subsection{Resource Monoid for Amortised Analysis}
+
+Define a resource monoid $\Mamort$ as follows:
+\begin{itemize}
+\item Elements are pairs $(n, c)$, where $n$ is a natural number (the
+  amount of ``fuel'', or $\Diamond$s), and $c$ is an
+  $\mathbb{N}$-linear function (the padding for constant factor
+  overheads).
+\item Addition $(n,c) + (m,d) = (n+m,c+d)$, with the unit $(0,0)$.
+\item Differencing:
+  \begin{displaymath}
+    M((n,c),(m,d)) = \left\{\begin{array}{ll} d \cdot (m-n) & \textrm{if }n\leq m\textrm{ and }c \leq d \\ -\infty & \textrm{otherwise} \end{array}\right.
+  \end{displaymath}
+\item Accounting:
+  \begin{displaymath}
+    \account(n) = (1,n)
+  \end{displaymath}
+\end{itemize}
+Problem with this: the padding ends up being enormous. And I don't
+think it is possible to get the proof of the realisability of the
+natural number iterator below to work with it.
+
+\paragraph{Note} Changing the constant factor bit to be a linear
+function doesn't work: the reverse triangle law bit doesn't
+work. Unless we have...
+
+\paragraph{Another idea}
+\begin{itemize}
+\item Elements are pairs $(n, f)$, where $n$ is a natural number
+  (amount of ``fuel'') and $f$ is a linear function with
+  $\mathbb{N}$-coefficients.
+\item Addition $(n,f) + (m,g) = (n+m,f+g)$
+\item Differencing:
+  \begin{displaymath}
+    M((n,f),(m,g)) = \left\{\begin{array}{ll} g(m) - f(n) & \textrm{if }n \leq m\textrm{ and }f \leq g \\ -\infty & \textrm{otherwise} \end{array}\right.
+  \end{displaymath}
+\item Accounting: $\account(n) = (0, \lambda \_. n)$
+\end{itemize}
+
+\paragraph{Using max}
+\begin{itemize}
+\item Elements are triples $(n, f^1, f^0)$, where $n$ is a natural
+  number (amount of ``fuel'') and $f^1, f^0$ are natural number
+  coefficients.
+\item Addition $(n,f^1,f^0) + (m,g^1,g^0) = (n+m, \max(f^1,g^1), f^0+g^0)$
+\item Differencing:
+  \begin{displaymath}
+    M((n,f^1,f^0),(m,g^1,g^0)) = \left\{\begin{array}{ll} g(m) - f(n) & \textrm{if }n \leq m\textrm{ and }f^1 \leq g^1\textrm{ and }f^0 \leq g^0
+                                          \\
+                                          -\infty & \textrm{otherwise} \end{array}\right.
+  \end{displaymath}
+\end{itemize}
+
+
+We know that $k_m \leq M(\beta_m, \gamma)$
+
+\subsection{In terms of controlled duplication}
+
+Need $\Diamond^n \otimes A \to A^n$, where $A^n$ is defined as
+$\alpha, v \models_{A^n} a$ iff there exists $\alpha'$ such that
+$n \cdot \alpha' \leq \alpha$ and $\alpha', v \models_A a$.
+
+Even simpler might be:
+$\mathit{duplicate} : \Diamond \otimes \oc A \to A \otimes \oc A$.
+\begin{itemize}
+\item $\mathit{duplicate}(*,a) = (a,a)$
+\item Realised by $\LetPair\,\Idx{0}\,\Pair{\Idx{0},\Idx{0}}$.
+\item Given
+  $\alpha, \Pair{\Unit,v} \models_{\Diamond \otimes A} (*,a)$, we know
+  that $(1,0) + \alpha' \leq \alpha$, and that $\alpha' = (0,f)$.
+
+  We have
+  $\LetPair\,\Idx{0}\,\Pair{\Idx{0},\Idx{0}}, [\Pair{\Unit,v}]
+  \Downarrow_{\cnstLetPair+\cnstPair} \Pair{v,v}$.
+
+  Essentially need $(1,0) + \alpha' \leq \alpha$, then
+  $\alpha' + \alpha' \leq \alpha$.
+
+  $(1,0) + (0,f) = (1,f)$
+
+  Need $(0,2\cdot f) \leq (1,f)$.
+
+  $2f(0) \leq f(1)$??
+\end{itemize}
+
+
+FIXME: this can't possibly work, we'd have:
+$\Diamond \otimes (\Diamond \otimes \Diamond) \to \Diamond^4$. Perhaps
+if the $A$ is restricted to have $0$ diamonds?
+
+\subsection{Semantics and Soundness}
+
+\begin{definition}
+  $\alpha, v \models_\TyNat n$ iff $\alpha \geq (0,0)$ and $v = v_n$.
+\end{definition}
+
+Recursor function:
+\begin{displaymath}
+  \begin{array}{lcl}
+    \mathrm{rec}(z,s)(0)   & = & z(*) \\
+    \mathrm{rec}(z,s)(n+1) & = & s(\lambda \mathord{*}.\,\mathrm{rec}(z,s)(n))
+  \end{array}
+\end{displaymath}
+which is realised by
+\begin{displaymath}
+  \Let\,(\lambda \LetPair\,\Idx{0}\,\If\,\Idx{1}\,e_z\,(\Let\,(\lambda\Apply{\Idx{5}}{\Idx{2}})\,e_s))\,\Apply{\Idx{0}}{\Idx{1}}
+\end{displaymath}
+and the costing is (probably)
+$\gamma = \gamma_z + \gamma_s + \account(c)$ where $\gamma_z$ and
+$\gamma_s$ are the costings from the zero and successor.
+
+Conjecture: prove the recursor is realisable by induction on $n$. The
+``juice'' comes from the injection of a $\Diamond$ every time round.
+
+\begin{lemma}
+  Given $I \stackrel{z,e_z,\gamma_z}\longrightarrow A$ and
+  $(\Diamond \multimap A) \stackrel{s,e_s,\gamma_s}\longrightarrow A$,
+  there is an arrow $\mathrm{rec}(z,s) : \TyNat \to A$.
+\end{lemma}
+
+\begin{proof}\todo{This needs fixing for the new resource monoid.}
+  Given $\alpha, v_n \models_\TyNat n$, we know that $\alpha \geq (0,0)$.
+
+  Let
+  $e_{\mathit{body}} =
+  \LetPair\,\Idx{0}\,\If\,\Idx{1}\,e_z\,(\Let\,(\lambda\Apply{\Idx{5}}{\Idx{2}})\,e_s)$. We
+  prove that there exist $\beta, k, v$ such that
+  $e_{\mathit{body}}, (\eta_f :: (\lambda e_{\mathit{body}}, \eta_f)
+  :: v_n) \Downarrow_k v$ and
+  $\beta, v \models_A \mathrm{rec}(z,s)(n)$ and
+  $k \leq M(\beta, \gamma)$. By induction on $n$:
+  \begin{itemize}
+  \item[$n = 0$:] In this case, we know that there exist $\beta, k, v$
+    such that $e_z, [\Unit] \Downarrow_k v$ and
+    $\beta, v \models_A z(*)$ and $k \leq M(\beta, \gamma_z)$. Build
+    the derivation:
+    \begin{displaymath}
+      \inferrule*
+      { }
+      {\dots}
+    \end{displaymath}
+  \item[$n = m + 1$:]
+
+    Going to need to prove that
+    $(0,0), (\lambda \Apply{\Idx{5}}{\Idx{2}}, \eta')
+    \models_{\Diamond \multimap A} (\lambda *. \mathit{rec}(z,s)(m))$,
+    where
+    \begin{displaymath}
+      \eta' = \eta_f :: (\lambda e_{\mathit{body}}, \eta_f ) :: v_n :: \False :: v_m :: \_ :: \_
+    \end{displaymath}
+    Given $\alpha, \Unit \models_\Diamond *$, we know that
+    $\alpha \geq (1,0)$. So we need to prove that
+    $\Apply{\Idx{5}}{\Idx{2}}, \eta' \Downarrow_k v$ such that
+    $\beta, v \models_A \mathit{rec}(z,s)(m)$ and $k \leq ???$.
+
+    By the inductive hypothesis, we know that there exist
+    $\beta, k, v$ such that
+    $e_{\mathit{body}}, \eta_f :: (\lambda e_{\mathit{body}}, \eta_f)
+    :: v_m \Downarrow_k v$ and
+    $\beta, v \models_A \mathrm{rec}(z,s)(m)$ and
+    $k \leq M(\beta, \gamma)$.
+
+    We build the following derivation:
+    \begin{displaymath}
+      \inferrule*
+      { {\begin{array}{c} \vdots \\ e_{\mathit{body}}, \eta_f :: (\lambda e_{\mathit{body}}, \eta_f) :: v_m \Downarrow_k v \end{array}}}
+      {\Apply{\Idx{5}}{\Idx{2}}, \eta' \Downarrow_{k+\cnstApp} v}
+    \end{displaymath}
+  \end{itemize}
+\end{proof}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Soft (Affine) Linear Logic}
+\label{sec:soft-ll}
+
+Soft Linear Logic (LaFont). Annotate with polynomials in $X$ that have
+natural number coefficients, with normal addition and multiplication
+(check that this is suitable for QTT). The natural number eliminator
+is typed as follows:
+\begin{displaymath}
+  \mathrm{iter}_A : (z \stackrel{1}: A)(s \stackrel{X}: A \multimap A)(x \stackrel{X}: \mathrm{Nat}) \to A
+\end{displaymath}
+or
+\begin{displaymath}
+  \inferrule*
+  {\Gamma_1 \vdash z \stackrel{1}: A \\
+    \Gamma_2, x \stackrel1: A \vdash s \stackrel1: A}
+  {\Gamma_1+X\Gamma_2 \vdash \mathrm{iter}(z,s) : (x \stackrel{X}: \mathrm{Nat}) \to A}
+\end{displaymath}
+Pretty sure that the ``soft monoid'' from Hofmann and Dal Lago is
+suitable for this. The polynomial is in terms of the size of the
+maximum thing in the context that can be iterated over. Seems to give
+quite a natural language, and easy to read off the bounds on the
+iteration. Nested iteration over the same number/list is quite easy to
+state, but it is difficult to get per data structure counts.
+
+
+\subsection{Proper SAL}
+
+Let the semiring be polynomials in $X$, with the order generated by
+$X \leq n$.
+
+Multiplication and addition of polynomials are as normal.
+
+For example, we have $5 + 4X \leq 9 \leq 8$
+
+$9 \leq 5 + 4X$
+
+
+
+\paragraph{Exponential}
+Key point here is that there is an exponential modality such that
+\begin{displaymath}
+  \mathrm{dup}_n : \oc A \to \underbrace{A \otimes \cdots \otimes A}_{n \textrm{ times}}
+\end{displaymath}
+
+
+
+\subsection{Iteration SAL}
+
+\paragraph{Actual typing rule} Here's one that would actually work,
+using the model in the Hofmann-Dal Lago paper:
+\begin{displaymath}
+  \inferrule*
+  {\Gamma \vdash z \stackrel{1}: A \\
+    0\Gamma, x \stackrel{1}: A \vdash s \stackrel{1}: A}
+  {\Gamma \vdash \mathrm{rec}(z,s) \stackrel{1}: \TyNat \multimap A}
+\end{displaymath}
+plus the ability to duplicate natural numbers:
+$\mathrm{dup} : \TyNat \to \TyNat \otimes \TyNat$.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{QTT model}
+
+Use the natural number semiring. \todo{partial order?}
+
+\subsection{Category of resourced contexts}
+
+This ought to be the same as above
+
+\subsection{The functor $U$}
+
+The functor $U : \cat{L} \to \Set$ projects out the set/function
+component. It is immediately faithful.
+
+\paragraph{Addition} Given $\Gamma_1, \Gamma_2$ such that
+$U\Gamma_1 = U\Gamma_2$, define $\Gamma_1 + \Gamma_2$ with
+$|\Gamma_1 + \Gamma_2| = |\Gamma_1|$ and
+$\alpha, v \models_{\Gamma_1 + \Gamma_2} \gamma$ iff there exist
+$\alpha_1, \alpha_2, v_1, v_2$ such that
+$\alpha_1 + \alpha_2 \leq \alpha$,$v = \Pair{v_1,v_2}$,
+$\alpha_1, v_1 \models_{\Gamma_1} \gamma$, and
+$\alpha_2, v_2 \models_{\Gamma_2} \gamma$. For morphisms
+$f : \Gamma_1 \to \Gamma'_1$ and $g : \Gamma_2 \to \Gamma'_2$ such
+that $Uf = Ug$, we have that .. FIXME: same as the symmetric monoidal
+structure above.
+
+\paragraph{Scaling} Define $n\Gamma$ to be $|n\Gamma| = |\Gamma|$, and
+$\alpha, v \models_{n\Gamma} \gamma$ iff there exists
+$\alpha_1,\dots,\alpha_n$, $v_1,\dots,v_n$ such that
+$\sum \alpha_i \leq \alpha$, $v = \Pair{v_1,\dots,v_n}$ and for all
+$i$, $\alpha_i, v_i \models_\Gamma \gamma$. So scaling is the $n$-fold
+addition.
+
+\subsection{Types}
+
+For a set $\Delta$, a type $S$ consists of a family of sets
+$|S(\delta)|$, indexed by elements $\delta \in \Delta$, and
+realisability relations
+$\models_{S(\delta)} \subseteq M \times \mathcal{V} \times
+|S(\delta)|$ satisfying the same hereditaryiness condition as objects
+of $\cat{L}$.
+
+\subsection{Terms}
+
+For $\Delta \in \Set$ and $S \in \Ty(\Delta)$, the set $\Tm(\Delta,S)$
+consists of functions $M \in \forall d \in \Delta. |S(d)|$.
+
+\subsection{Unresourced Comprehension}
+
+Same as comprehension in normal CwF for $\Set$.
+
+\subsection{Resourced Terms}
+
+For $\Gamma \in \cat{L}$ and $S \in \Ty(U\Gamma)$, the set
+$\RTm(\Gamma, S)$ consists of functions
+$M \in \forall \gamma \in |\Gamma|. |S(\gamma)|$ for which there
+exists a realiser $(\epsilon, e_M) \in M \times \mathcal{E}$ such that
+for all $\alpha, v_g \models_{|\Gamma|} g$, there exists $\beta, v_s$
+and $k$ such that $e_M, [v_g] \Downarrow_k v_s$ and
+$\beta, v_b \models_{S(g)} M(g)$ and
+$k \leq M(\beta, \alpha + \epsilon)$.
+
+There is an injective function
+$U : \RTm(\Gamma, S) \to \Tm(U\Gamma, S)$ that forgets the
+realisability property.
+
+\subsection{Resourced Comprehension}
+
+Berk.
+
+\subsection{$\Pi$-Types}
+
+\subsection{$\Diamond$s}
+
+\end{document}

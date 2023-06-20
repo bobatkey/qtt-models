@@ -1,10 +1,11 @@
-{-# OPTIONS --postfix-projections --safe --without-K #-}
+{-# OPTIONS --postfix-projections --without-K #-}
 
 module Grothendieck where
 
 open import Data.Nat using (ℕ; zero; _+_; _*_)
 open import Data.Product using (_×_; proj₁; proj₂; Σ; _,_; Σ-syntax)
 open import Data.Unit using (⊤; tt)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; subst; sym)
 
 -- Other instances:
 -- 1. Heap manipulating model
@@ -38,6 +39,10 @@ open import Data.Unit using (⊤; tt)
 -- 2. What about the category of Sets and binary predicates? Does this
 -- model information flow? (if we interpret the relations as
 -- indistinguishability?)
+
+postulate
+  fext : ∀ {A : Set}{B : A → Set} {f g : (a : A) → B a} →
+         (∀ a → f a ≡ g a) → f ≡ g
 
 
 ⟪_⟫ : ∀ {Γ₁ Γ₂ : Set} → (Γ₁ → Γ₂) → (Γ₂ → Set) → (Γ₁ → Set)
@@ -86,6 +91,7 @@ record IndexedPreorder : Set₂ where
     ⟨_⊗⟩ : ∀ {Γ Δ X Y} (f : Γ → Δ) → Γ ⊢ ⟨ f ⟩ (X ⊗ Y) ≅ ((⟨ f ⟩ X) ⊗ (⟨ f ⟩ Y))
 
     -- Closed
+  field
     _⊸_   : ∀ {Γ} → Obj Γ → Obj Γ → Obj Γ
     ⊸-subst : ∀ {Γ₁ Γ₂ X Y} (f : Γ₁ → Γ₂) →
               Γ₁ ⊢ ⟨ f ⟩ (X ⊸ Y) ≅ ((⟨ f ⟩ X) ⊸ (⟨ f ⟩ Y))
@@ -115,7 +121,9 @@ record IndexedPreorder : Set₂ where
   field
     -- FIXME: generalise to any semiring
     ![_] : ∀ {Γ} → ℕ → Obj Γ → Obj Γ   -- FIXME: why not over Γ × ℕ
-    discard : ∀ {Γ X} → Γ ⊢ ![ 0 ] X ⇒ I
+    ![_]-map : ∀ {Γ} n {X Y} → Γ ⊢ X ⇒ Y → Γ ⊢ ![ n ] X ⇒ ![ n ] Y
+    !-subst : ∀ {Γ₁ Γ₂ n A} (f : Γ₁ → Γ₂) → Γ₁ ⊢ ⟨ f ⟩ ![ n ] A ≅ ![ n ] (⟨ f ⟩ A)
+    discard : ∀ {Γ X} → Γ ⊢ ![ 0 ] X ≅ I --- FIXME: any way to do without this being an iso?
     derelict : ∀ {Γ X} → Γ ⊢ ![ 1 ] X ⇒ X
 
 module Make (L : IndexedPreorder) where
@@ -132,6 +140,7 @@ module Make (L : IndexedPreorder) where
                                   ; Λ    to ΛL
                                   ; apply to applyL
                                   ; ![_]  to ![_]L
+                                  ; ![_]-map to ![_]-mapL
                                   ; derelict to derelictL
                                   ; discard to discardL)
 
@@ -146,6 +155,8 @@ module Make (L : IndexedPreorder) where
       mor   : X .Hi → Y .Hi
       morlo : X .Hi ⊢ X .Lo ⇒ (⟨ mor ⟩ Y .Lo)
   open _⇒_
+
+  infix 4 _⇒_
 
   -- FIXME: equality of morphisms
 
@@ -234,6 +245,12 @@ module Make (L : IndexedPreorder) where
   ![ n ] X .Hi = X .Hi
   ![ n ] X .Lo = ![ n ]L (X .Lo)
 
+{-
+  ![_]-map : ∀ n {X Y} → (f : X ⇒ Y) → ![ n ] X ⇒ ![ n ] Y
+  ![ n ]-map f .mor = f .mor
+  ![ n ]-map f .morlo = {!!}
+-}
+
   -- !-monoidal
   -- derelict
   -- discard
@@ -241,12 +258,27 @@ module Make (L : IndexedPreorder) where
   -- comult
 
   ------------------------------------------------------------------------
-  -- Dependent type structure, as a RCwF
-{-
-  -- FIXME: find isomorphisms in the standard library
-  Compat : (Δ₁ Δ₂ : Obj) → Set
-  Compat = Δ₁ .Hi ≅ Δ₂ .Hi
+  -- Part V : Embedding L
+
+{- -- fails due to universe levels :/
+  Em : Obj
+  Em .Hi = {!⊤ -Obj!}
+  Em .Lo = {!!}
 -}
+  ------------------------------------------------------------------------
+  -- Dependent type structure, as a RCwF
+
+  record Iso (X Y : Set) : Set where
+    field
+      fwd : X → Y
+      bwd : Y → X
+      fwd∘bwd : ∀ y → fwd (bwd y) ≡ y
+      bwd∘fwd : ∀ x → bwd (fwd x) ≡ x
+  open Iso
+
+  add : (Δ₁ Δ₂ : Obj) → Iso (Δ₁ .Hi) (Δ₂ .Hi) → Obj
+  add Δ₁ Δ₂ iso .Hi = Δ₁ .Hi
+  add Δ₁ Δ₂ iso .Lo = (Δ₁ .Lo) ⊗L (⟨ iso .fwd ⟩ Δ₂ .Lo)
 
   -- Types only depend on sets, but also include information on the
   -- resource part
@@ -260,8 +292,7 @@ module Make (L : IndexedPreorder) where
   -- doesn't.
   ⟨_⟩Ty : ∀ {Γ₁ Γ₂} → (Γ₁ → Γ₂) → Ty Γ₂ → Ty Γ₁
   ⟨ f ⟩Ty A .Hi γ = A .Hi (f γ)
-  ⟨ f ⟩Ty A .Lo = ⟨ h ⟩ (A .Lo)
-    where h = λ x → (f (x .proj₁) , x .proj₂)
+  ⟨ f ⟩Ty A .Lo = ⟨ (λ x → (f (x .proj₁) , x .proj₂)) ⟩ (A .Lo)
 
   record RTm (Δ : Obj) (A : Ty (Δ .Hi)) : Set where
     field
@@ -282,13 +313,16 @@ module Make (L : IndexedPreorder) where
       mor   : (γ : Γ) → A .Hi γ
   open Tm
 
+  -- Resourced comprehension
   _,[_]_ : (Δ : Obj) → ℕ → Ty (Δ .Hi) → Obj
   (Δ ,[ n ] A) .Hi = Σ[ δ ∈ Δ .Hi ] (A .Hi δ)
   (Δ ,[ n ] A) .Lo = (⟨ proj₁ ⟩ Δ .Lo) ⊗L ![ n ]L (A .Lo)
 
-  p : ∀ {Δ A} → (Δ ,[ 0 ] A) ⇒ Δ
+  infixl 10 _,[_]_
+
+  p : ∀ {Δ A} → Δ ,[ 0 ] A ⇒ Δ
   p .mor = proj₁
-  p .morlo = unit-L .proj₁ ∘-L swap-L ∘-L (id-L ⊗mL discardL)
+  p .morlo = unit-L .proj₁ ∘-L swap-L ∘-L (id-L ⊗mL (discardL .proj₁))
 
   varR : ∀ {Δ A} → RTm ((![ 0 ] Δ) ,[ 1 ] A) (⟨ proj₁ ⟩Ty A)
   varR .mor = proj₂
@@ -296,16 +330,57 @@ module Make (L : IndexedPreorder) where
     ((⟨ (λ x → (proj₁ (x .proj₁) , x .proj₂)) ∘ (λ δ → δ , δ .proj₂) ⟩) .proj₂) ∘-L
     (⟨id⟩ .proj₁) ∘-L
     (unit-L .proj₁) ∘-L
-    ({!discardL!} ⊗mL derelictL)
+    (discardL .proj₁ ⊗mL derelictL) ∘-L
+    (!-subst proj₁ .proj₁ ⊗mL id-L)
 
   -- TODO: wk (7c)
-  -- TODO: resourced term to substitution (7d)
-  -- TODO: unresourced term to substitution (7e)
+  wk : ∀ {Δ₁ Δ₂ A ρ} → (f : Δ₁ ⇒ Δ₂) → (Δ₁ ,[ ρ ] ⟨ f .mor ⟩Ty A) ⇒ Δ₂ ,[ ρ ] A
+  wk f .mor (δ , a) = f .mor δ , a
+  wk f .morlo =
+    (⟨ (λ δ' → f .mor (δ' .proj₁) , δ' .proj₂) ⊗⟩ .proj₂) ∘-L
+     ((⟨ proj₁ ∘ (λ δ' → f .mor (δ' .proj₁) , δ' .proj₂) ⟩) .proj₂ ∘-L
+     (⟨ f .mor ∘ proj₁ ⟩) .proj₁ ∘-L
+     ⟨ proj₁ ⟩-map (f .morlo))
+    ⊗mL
+     !-subst (λ x → f .mor (x .proj₁) , x .proj₂) .proj₂
 
+  eq-pair : ∀ {A : Set}{B : A → Set} →
+              {a a' : A}{b : B a}{b' : B a'} →
+            (e : a ≡ a') →
+            subst B e b ≡ b' →
+            (a , b) ≡ (a' , b')
+  eq-pair refl refl = refl
+
+  -- Resourced term to substitution (7d) which requires context addition
+  1-subst : ∀ {Δ₁ Δ₂ : Obj}{A : Ty (Δ₁ .Hi)} {n : ℕ} (iso : Iso (Δ₁ .Hi) (Δ₂ .Hi)) → RTm Δ₂ (⟨ iso .bwd ⟩Ty A) →
+            add Δ₁ (![ n ] Δ₂) iso ⇒ (Δ₁ ,[ n ] A)
+  1-subst {A = A} iso M .mor δ = δ , subst (A .Hi) (iso .bwd∘fwd δ) (M .mor (iso .fwd δ))
+  1-subst {Δ₁}{A = A} {n} iso M .morlo =
+    ⟨ (λ δ → δ , subst (A .Hi) (iso .bwd∘fwd δ) (M .mor (iso .fwd δ))) ⊗⟩ .proj₂ ∘-L
+    (((⟨ proj₁ ∘ (λ δ → δ , subst (A .Hi) (iso .bwd∘fwd δ) (M .mor (iso .fwd δ))) ⟩) .proj₂) ∘-L ⟨id⟩ .proj₁)
+     ⊗mL  -- Ooft!
+     ((((subst (λ □ → Δ₁ .Hi ⊢ (⟨ □ ⟩ ![ n ]L (A .Lo)) ⇒ (⟨ (λ δ → δ , subst (A .Hi) (iso .bwd∘fwd δ) (M .mor (iso .fwd δ))) ⟩ ![ n ]L (A .Lo))) (sym eq) id-L ∘-L ((⟨ (λ x → iso .bwd x , M .mor x) ∘ iso .fwd ⟩) .proj₁)) ∘-L (⟨ iso .fwd ⟩-map (!-subst (λ x → iso .bwd x , M .mor x) .proj₂))) ∘-L (⟨ iso .fwd ⟩-map (![ n ]-mapL ((⟨ (λ x → iso .bwd (x .proj₁) , x .proj₂) ∘ (λ δ → δ , M .mor δ) ⟩) .proj₁)))) ∘-L (⟨ iso .fwd ⟩-map (![ n ]-mapL (M .morlo))))
+     where eq : (λ x → iso .bwd (iso .fwd x) , M .mor (iso .fwd x))
+                  ≡
+                (λ x → x , subst (A .Hi) (iso .bwd∘fwd x) (M .mor (iso .fwd x)))
+           eq = fext (λ x → eq-pair (iso .bwd∘fwd x) refl)
+
+  -- 7e
+  0-subst : ∀ {Δ A} → Tm (Δ .Hi) A → Δ ⇒ Δ ,[ 0 ] A
+  0-subst tm .mor δ = δ , tm .mor δ
+  0-subst tm .morlo =
+    ⟨ (λ δ → δ , tm .mor δ) ⊗⟩ .proj₂ ∘-L
+    (⟨ proj₁ ∘ (λ δ → δ , tm .mor δ) ⟩) .proj₂ ⊗mL ⟨ (λ δ → δ , tm .mor δ) ⟩-map (discardL .proj₂) ∘-L
+    (⟨id⟩ .proj₁ ⊗mL I-subst (λ δ → δ , tm .mor δ) .proj₂) ∘-L
+    swap-L ∘-L
+    unit-L .proj₂
+
+  -- TODO: pt (6) about emp and ext and scaling and addition
 
   -- Context addition is EVIL! Relies on the underlying sets being
   -- equal, which is only going to work (w.o univalence) if they are
   -- constructed in an identical way. But maybe isomorphism is enough?
+  -- Or I could use cubical?
 
   -- Is there a way of arranging the syntax / semantics so that the
   -- linear part is "an output" of typing, while the non-linear part
@@ -337,10 +412,33 @@ module Make (L : IndexedPreorder) where
         Tm (Δ .Hi) (Π {Δ} ρ S T)
   ΛTm f .mor δ s = f .mor (δ , s)
 
-  -- FIXME: and the inverse, or just apply?
+  ΛTm⁻¹ : ∀ {Δ : Obj}{ρ S T} →
+          Tm (Δ .Hi) (Π {Δ} ρ S T) →
+          Tm (Σ (Δ .Hi) (λ δ → S .Hi δ)) T
+  ΛTm⁻¹ f .mor (δ , s) = f .mor δ s
 
   ΛRTm : ∀ {Δ : Obj}{ρ S T} →
          RTm (Δ ,[ ρ ] S) T →
          RTm Δ (Π {Δ} ρ S T)
   ΛRTm f .mor δ s = f .mor (δ , s)
   ΛRTm f .morlo = {!!}
+
+  ΛRTm⁻¹ : ∀ {Δ : Obj}{ρ S T} →
+           RTm Δ (Π {Δ} ρ S T) →
+           RTm (Δ ,[ ρ ] S) T
+  ΛRTm⁻¹ f .mor (δ , s) = f .mor δ s
+  ΛRTm⁻¹ f .morlo = {!!}
+
+  Σ⊗ : ∀ {Δ : Obj} (S : Ty (Δ .Hi)) (T : Ty (Σ (Δ .Hi) (λ δ → S .Hi δ))) → Ty (Δ .Hi)
+  Σ⊗ S T .Hi δ = Σ (S .Hi δ) (λ s → T .Hi (δ , s))
+  Σ⊗ S T .Lo =
+    (⟨ (λ δ' → (δ' .proj₁ , δ' .proj₂ .proj₁)) ⟩ S .Lo) ⊗L
+    (⟨ (λ δ' → ((δ' .proj₁ , δ' .proj₂ .proj₁) , δ' .proj₂ .proj₂)) ⟩ T .Lo)
+
+  -- FIXME: introduction and elimination of Σ⊗
+
+  ------------------------------------------------------------------------
+  -- TODO: Boolean types
+
+  ------------------------------------------------------------------------------
+  -- TODO: Universe

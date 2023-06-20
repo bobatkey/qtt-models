@@ -1,0 +1,1913 @@
+% -*- TeX-engine: xetex -*-
+
+\documentclass[xetex,serif,mathserif,aspectratio=169]{beamer}
+
+\usepackage{mathpartir}
+\usepackage{stmaryrd}
+\usepackage{attrib}
+\usepackage{rotating}
+\usepackage{multirow}
+\usepackage{colortbl}
+\usepackage{mathpartir}
+\usepackage{tikz}
+\usepackage{cmll}
+
+\usepackage{libertine}
+\usepackage{newtxmath}
+\usepackage{zi4}
+
+\newcommand{\TyBool}{\mathsf{Bool}}
+\newcommand{\TySet}{\mathsf{Set}}
+\newcommand{\TyEl}{\mathsf{El}}
+
+\newcommand{\Ty}{\mathrm{Ty}}
+\newcommand{\Tm}{\mathrm{Tm}}
+\newcommand{\RTm}{\mathrm{RTm}}
+\newcommand{\wk}{\mathsf{wk}}
+\newcommand{\proj}{\mathsf{p}}
+\newcommand{\vartm}{\mathsf{v}}
+\newcommand{\sem}[1]{\llbracket #1 \rrbracket}
+\newcommand{\cat}[1]{\mathcal{#1}}
+\newcommand{\id}{\mathrm{id}}
+
+\newcommand{\op}{\mathsf{op}}
+\newcommand{\Set}{\mathrm{Set}}
+\newcommand{\skw}[1]{\mathit{#1}}
+
+\usepackage{mathtools}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+\newcommand{\tyPrim}[2]{\textup{\texttt{#1}}\langle #2 \rangle}
+
+\newcommand{\sechead}[1]{\textcolor{titlered}{\emph{#1}}}
+
+\newcommand{\typeOfCartSp}[1]{\lbag #1 \rbag}
+
+
+\def\greyuntil<#1>#2{{\temporal<#1>{\color{black!40}}{\color{black}}{\color{black}} #2}}
+\def\greyfrom<#1>#2{{\temporal<#1>{\color{black}}{\color{black!40}}{\color{black!40}} #2}}
+
+\newcommand{\superscript}[1]{\ensuremath{^{\textrm{#1}}}}
+\newcommand{\highlight}{\textbf}
+
+\newcommand{\atomprop}{\mathrm}
+\newcommand{\true}{\mathbf{T}}
+\newcommand{\false}{\mathbf{F}}
+
+\newcommand{\append}{\mathop{+\kern-3pt+}}
+
+\definecolor{titlered}{rgb}{0.8,0.0,0.0}
+
+\newcommand{\hlchange}[1]{\setlength{\fboxsep}{1pt}\colorbox{black!20}{$#1$}}
+\newcommand{\altdiff}[3]{\alt<-#1>{#2}{\hlchange{#3}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% from http://tex.stackexchange.com/questions/118410/highlight-terms-in-equation-mode
+\newlength{\overwritelength}
+\newlength{\minimumoverwritelength}
+\setlength{\minimumoverwritelength}{0.1cm}
+\def\overwrite<#1>#2#3{%
+  \settowidth{\overwritelength}{$#2$}%
+  \ifdim\overwritelength<\minimumoverwritelength%
+    \setlength{\overwritelength}{\minimumoverwritelength}\fi%
+  \temporal<#1>{#2}%
+    {\stackrel%
+      {\begin{minipage}{\overwritelength}%
+          \color{red}\centering\small #3\\%
+          \rule{1pt}{9pt}%
+        \end{minipage}}%
+      {\colorbox{red!50}{\color{black}$\displaystyle#2$}}}%
+    {\stackrel%
+      {\begin{minipage}{\overwritelength}%
+          \color{red}\centering\small #3\\%
+          \rule{1pt}{9pt}%
+        \end{minipage}}%
+      {\colorbox{red!50}{\color{black}$\displaystyle#2$}}}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\setbeamertemplate{navigation symbols}{}
+\usecolortheme[rgb={0.8,0,0}]{structure}
+\usefonttheme{serif}
+\usefonttheme{structurebold}
+\setbeamercolor{description item}{fg=black}
+
+\title{Resource Constrained Programming \\ with Full Dependent Types}
+\author{Robert Atkey \\
+  \emph{Strathclyde University, Glasgow} \\
+  robert.atkey@strath.ac.uk}
+\date{CCS Colloquium, Augusta University\\ 20th November 2020}
+
+\newcommand{\youtem}{\quad \textcolor{titlered!80}{---} \quad}
+
+\newcommand{\titlecard}[1]{\begin{frame}%
+  \begin{center}%
+    \Large \textcolor{titlered}{#1}%
+  \end{center}%
+\end{frame}}
+
+\newcommand{\HEAD}[1]{\textcolor{titlered}{#1}}
+
+\begin{document}
+
+\frame{\titlepage}
+
+% Plan:
+
+% - Implicit computational complexity: programming languages where all
+% programs are in some complexity class (e.g., polynomial time)
+
+% - Plan: to mix this with dependent types to allow (a) reasoning
+% about what the program actually does; (b)direct reasoning about the
+% complexity; and (c) (more speculatively)
+
+
+\begin{frame}
+
+  \HEAD{Dependent Type Theory is both}
+
+  \bigskip
+
+  \youtem Programming Language
+
+  \raggedleft \only<2->{So we can write programs}\only<1>{~}
+
+  \raggedright
+
+  \medskip
+
+  \youtem Proof Language
+
+  \raggedleft \only<3->{and reason about them}\only<-2>{~}
+
+  \only<4->{but only the ``extensional behaviour''}\only<-3>{~}
+
+  \pause \pause \pause
+
+\end{frame}
+
+\begin{frame}
+
+  What if we want to reason about computational complexity?
+
+  \pause
+  \bigskip
+
+  Having predicates for complexity won't work:
+  \begin{displaymath}
+    \mathrm{Ptime} : (\mathrm{Nat} \to \mathrm{Nat}) \to \mathsf{Set}
+  \end{displaymath}
+  Allows the theory to distinguish extensionally equivalent functions.
+
+\end{frame}
+
+\begin{frame}
+
+  What if we want to reason about computational complexity?
+
+  \pause
+  \bigskip
+
+  Two ideas:
+
+  \medskip
+
+  \youtem Implicit: all functions are in a fixed complexity class (e.g., \textsc{Ptime})
+
+  \medskip
+
+  \youtem Explicit: types tell us what the complexity is.
+
+\end{frame}
+
+\begin{frame}
+
+  \HEAD{This talk}
+
+  \medskip
+
+  \youtem Implicit and explicit typed complexity analysis for Dependent Type Theory
+
+  \bigskip
+
+  \HEAD{Challenges}
+
+  \medskip
+
+  \youtem Nice systems for implicit and explicit complexity
+
+  \medskip
+
+  \youtem Integrating them with dependent types
+
+\end{frame}
+
+\titlecard{Two Implicit \textsc{Ptime} systems}
+
+\newcommand{\TyNat}{\textsc{Nat}}
+
+\begin{frame}
+
+  \HEAD{Requirements}
+
+  \medskip
+
+  \youtem Extension of typed $\lambda$-calculus; \emph{higher order}
+
+  \smallskip
+
+  \youtem No impredicative polymorphism (no Church encodings)
+
+  \smallskip
+
+  \youtem Proper datatypes (definitely no Church encodings)
+
+  \bigskip
+
+  \pause
+
+  \HEAD{Forget dependent types for now}
+
+  \medskip
+
+  \youtem{Simply typed $\lambda$-calculus}
+
+  \medskip
+
+  \youtem{A natural number type $\TyNat, \mathsf{zero}, \mathsf{suc}$ with an iterator}
+  \begin{displaymath}
+    \inferrule*
+    {\Gamma \vdash M_z : A \\ \Gamma, x : A \vdash M_s : A \\ \Gamma \vdash N : \TyNat}
+    {\Gamma \vdash \mathrm{iter}(M_z, x.~M_s, N) : A}
+  \end{displaymath}
+
+\end{frame}
+
+\begin{frame}
+  Easily yields exponential time:
+  \begin{displaymath}
+    \mathrm{iter}(\mathsf{suc},f.~\lambda x.~f(f(x)),N)~\mathsf{zero} : \TyNat
+  \end{displaymath}
+  computes $2^N$
+
+  % From “Higher type recursion, rami cation and polynomial time” by
+  % Bellantoni, Niggl and Schwictenberg. Annals of Pure and Applied
+  % Logic 104 (2000) 17–30
+
+  \pause
+
+  \bigskip
+
+  \HEAD{Culprits}
+
+  \medskip
+
+  \youtem Duplication of the higher order value $f$
+
+  \smallskip
+
+  \youtem Construction of new numbers
+
+\end{frame}
+
+\begin{frame}
+
+  \HEAD{Linearity?}
+
+  \medskip
+
+  Disallows:
+  \begin{displaymath}
+    \mathrm{iter}(\mathsf{suc},f.~\lambda x.~f(f(x)),N)~\mathsf{zero} : \TyNat
+  \end{displaymath}
+  because $f$~~is used twice.
+
+  \pause
+
+  \bigskip
+
+  \HEAD{But}
+
+  Can write:
+  \begin{displaymath}
+    \begin{array}{lcl}
+      \mathrm{dup} & : & \TyNat \multimap \TyNat \otimes \TyNat \\
+      \mathrm{dup}~x  &=&\mathrm{iter}((\mathsf{zero},\mathsf{zero}), (m,n). (\mathsf{suc}~m, \mathsf{suc}~n), x)
+    \end{array}
+  \end{displaymath}
+
+  \pause
+  \youtem $\mathsf{add} : \TyNat \multimap \TyNat \multimap \TyNat$ is linear.
+
+  \pause
+  \youtem $\mathsf{mul} : \TyNat \multimap \TyNat \multimap \TyNat$ can be written using $\mathrm{dup}, \mathrm{add}$.
+
+  \pause
+  \youtem $\mathsf{exp} : \TyNat \multimap \TyNat \multimap \TyNat$ can be written using $\mathrm{dup}, \mathrm{mul}$.
+
+  \pause
+  \youtem Get exponential time.
+
+\end{frame}
+
+\begin{frame}
+  \HEAD{Linearity + No constructors}
+
+  \medskip
+
+  \youtem Can't write $\mathrm{dup}$ or $\mathrm{add}$ (or $\mathrm{mul}$ or $\mathrm{exp}$)
+
+  \pause
+  \bigskip
+
+  \youtem Iterable $\TyNat$:
+
+  \quad \youtem Not constructible
+
+  \quad \youtem Has an iterator
+
+  \pause
+  \bigskip
+
+  \youtem Non-iterable $\TyNat^\circ$:
+
+  \quad \youtem Constructible
+
+  \quad \youtem Case analysis
+  \begin{displaymath}
+    \inferrule*
+    {\Gamma_1 \vdash M_z : A \\ \Gamma_2, x : \TyNat^\circ \vdash M_s : A \\ \Gamma_3 \vdash N : \TyNat^\circ}
+    {\Gamma_1, \Gamma_2, \Gamma_3 \vdash \mathrm{case}(M_z, x.~M_s, N) : A}
+  \end{displaymath}
+
+\end{frame}
+
+\begin{frame}
+  \HEAD{Is this enough?}
+
+  \bigskip
+
+  \youtem Only source of iterable $\TyNat$ is the input
+
+  \smallskip
+
+  \youtem So only linear time in the size of the $\TyNat$ ``fuel'' provided
+
+  \smallskip
+
+  \youtem To get polytime, allow duplication of variables of type $\TyNat$.
+
+  \bigskip
+  \pause
+
+  \HEAD{Completeness}
+
+  \medskip
+
+  \youtem Given a step function $s : \textsc{Tape} \multimap \textsc{Tape}$, and a $\mathbb{N}$-polynomial $p(n) = \Sigma a_i n^i$
+
+  \smallskip
+
+  \youtem $n$ iterations: $\mathrm{iter}(\lambda x.x, f~.\lambda x.~s(f~x), n) : \textsc{Tape} \multimap \textsc{Tape}$
+
+  \smallskip
+
+  \youtem $n^2$ iterations: $\mathrm{iter}(\lambda x.x, f~.\lambda x.~\mathrm{iter}(\lambda x.x, f.\lambda x.~s(f~x),n), n) : \textsc{Tape} \multimap \textsc{Tape}$
+
+  \smallskip
+
+  \youtem $n^i$ iterations...
+
+  \smallskip
+
+  \youtem Addition by composition
+\end{frame}
+
+\begin{frame}
+  \HEAD{Recovering Constructibility?}
+
+  \medskip
+
+  \youtem This system works, but is restricted to everything being driven by $\TyNat$-iteration
+
+  \smallskip
+
+  \youtem Some programs are more easily expressible by iteration over trees, etc.
+\end{frame}
+
+\begin{frame}
+  \HEAD{Martin Hofmann's LFPL: principle of ``conservation of iterability''}
+
+  \medskip
+
+  \youtem A special type $\Diamond$, representing a chunk of iterability
+
+  \smallskip
+
+  \youtem Required for construction:
+  \begin{mathpar}
+    \mathsf{zero} : \Diamond \multimap \TyNat
+
+    \mathsf{suc} : \Diamond \multimap \TyNat \multimap \TyNat
+  \end{mathpar}
+
+  \youtem Recovered on iteration:
+  \begin{displaymath}
+    \inferrule*
+    {\Gamma_1, d : \Diamond \vdash M_z : A \\
+      d : \Diamond, x : A \vdash M_s : A \\
+      \Gamma_2 \vdash N : \TyNat}
+    {\Gamma_1, \Gamma_2 \vdash \mathrm{iter}(d.~M_z, d~x.~M_s, N) : A}
+  \end{displaymath}
+
+  \youtem Extends easily to other datatypes
+\end{frame}
+
+\begin{frame}
+  \HEAD{Iterating a step function}
+
+  \bigskip
+
+  \youtem Assume we have a function $s : \textsc{Tape} \multimap \textsc{Tape}$\\
+  \hspace{2cm} \textcolor{black!60}{one step of a Turing machine}
+
+  \medskip
+
+  \youtem Linear $n \choose 1$ iterations:
+  \begin{displaymath}
+    I_1 = \lambda (n,t). \mathrm{iter}(
+    \begin{array}[t]{@{}l}
+      d.~(\mathsf{zero}(d),t), \\
+      d~(n,t).~(\mathsf{suc}(d,n),s~t),\\
+      n)
+    \end{array}
+    : \TyNat \otimes \textsc{Tape} \multimap \TyNat \otimes \textsc{Tape}
+  \end{displaymath}
+%  \quad \qquad Reconstruct the $\TyNat$ on the way through
+
+  \medskip
+
+  \youtem $n \choose 2$ iterations:
+  \begin{displaymath}
+    I_2 = \lambda(n,t).\mathrm{iter}(
+    \begin{array}[t]{@{}l}
+      d.~(\mathsf{zero}(d),t),\\
+      d~(n,t).~\mathrm{let}~(n,t) = I_1(n,t)~\mathrm{in}~(\mathsf{suc}(d,n),s(t)),\\
+      n)
+    \end{array}
+    : \TyNat \otimes \textsc{Tape} \multimap \TyNat \otimes \textsc{Tape}
+  \end{displaymath}
+%  \quad \qquad Reconstruct the $\TyNat$ on the way through\\
+%  \quad \qquad Do a nested linear iteration on the reconstructed number
+
+  \medskip
+
+  \youtem $n \choose 3$ iterations: Iterate the above
+\end{frame}
+
+\begin{frame}
+  \HEAD{Iterating a step function}
+
+  \bigskip
+
+  \youtem Obtain a $n \choose k$ iterator for any $k$
+
+  \medskip
+
+  \youtem And get the original number back as an output
+
+  \medskip
+
+  \youtem Chain them together to get any polynomial:
+  \begin{displaymath}
+    p(n) = \sum_{i=0}^k p_i{n \choose k}
+  \end{displaymath}
+
+  \medskip
+
+  \youtem So we get polytime completeness
+\end{frame}
+
+\titlecard{Explicit Complexity}
+
+\begin{frame}
+  \HEAD{Amortised Resource Analysis} ---
+  \hspace{2cm}{\textcolor{black!60}{(Hofmann \& Jost, POPL 2003)}}
+
+  \bigskip
+
+  \youtem Reinterpret $\Diamond$ as the cost of a step of iteration
+
+  \medskip
+
+  \youtem Inspired by Tarjan's \emph{amortised complexity analyis} \\
+  \qquad \quad \youtem storing potential inside data structures
+
+  \medskip
+
+  \youtem Building a $\TyNat$ still requires $\Diamond$s:
+  \begin{mathpar}
+    \mathsf{zero} : \Diamond \multimap \TyNat
+
+    \mathsf{suc} : \Diamond \multimap \TyNat \multimap \TyNat
+  \end{mathpar}
+
+  \medskip
+
+  \youtem But iteration no longer gives you them back:
+
+  \begin{displaymath}
+    \inferrule*
+    {\Gamma_1 \vdash M_z : A \\
+      x : A \vdash M_s : A \\
+      \Gamma_2 \vdash N : \TyNat}
+    {\Gamma_1, \Gamma_2 \vdash \mathrm{iter}_A(M_z, x.M_s, N) : A}
+  \end{displaymath}
+
+  \medskip
+
+  \youtem Back to linear time...
+
+\end{frame}
+
+\begin{frame}
+  \HEAD{More flexibility}
+
+  \bigskip
+
+  \youtem Annotate data structures with number of $\Diamond$s per constructor
+  \begin{displaymath}
+    \TyNat^p
+  \end{displaymath}
+
+  \smallskip
+
+  \youtem Duplication:
+  \begin{displaymath}
+    \TyNat^{p_1+p_2} \multimap \TyNat^{p_1} \otimes \TyNat^{p_2}
+  \end{displaymath}
+
+  \smallskip
+
+  \youtem Hofmann \& Jost (2001) used linear programming to infer the $p$s
+\end{frame}
+
+\begin{frame}
+  \HEAD{Regaining polynomial time} ---
+  \quad \qquad \textcolor{black!60}{(Hoffmann \& Hofmann, ESOP 2010)}
+
+  \bigskip
+
+  \youtem Annotate with sequences of naturals:
+  \begin{displaymath}
+    \TyNat^{(p_1, \dots, p_k)}
+  \end{displaymath}
+
+  \youtem Interpretation is that
+  \begin{displaymath}
+    \sum_{i=1}^kp_i{n \choose i}
+  \end{displaymath}
+  \qquad \quad is the number of $\Diamond$s is attached to a natural $n$.
+
+  \pause
+  \medskip
+
+  \youtem Iterator:
+  \begin{displaymath}
+    \mprset{flushleft}
+    \inferrule*
+    {\Gamma_1 \vdash M_z : A \\\\
+      n : \TyNat^{(p_1+p_2,p_2+p_3,\dots,p_k)}, d : \Diamond^{p_1}, x : A \vdash M_s : A \\\\
+      \Gamma_2 \vdash N : \TyNat^{(p_1+1,\dots,p_k)}}
+    {\Gamma_1, \Gamma_2 \vdash \mathrm{iter}(M_z, n~d~x.M_s,N) : A}
+  \end{displaymath}
+\end{frame}
+
+\titlecard{Adapting these systems to dependent types}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\titlecard{Dependency and Accountancy}
+
+\begin{frame}
+  \emph{In} Martin-L{\"o}f Type Theory
+
+  \bigskip
+
+  \begin{displaymath}
+    x_1 : S_1, \dots, x_n : S_n \vdash M : T
+  \end{displaymath}
+
+  \pause
+  \bigskip
+
+  \begin{center}
+    variables $x_1, \dots, x_n$ are mixed usage
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \begin{displaymath}
+    n : \mathit{Nat}, x : \mathsf{Fin}(n) \vdash x : \mathsf{Fin}(n)
+  \end{displaymath}
+
+  \pause
+  \bigskip
+
+  \hspace{15.5em}$x$ is used \textcolor{titlered}{\emph{computationally}}
+
+  \pause
+  \bigskip
+
+  \hspace{12em}$n$ is used \textcolor{titlered}{\it logically}
+\end{frame}
+
+\begin{frame}
+  \emph{In} Linear Logic
+
+  \bigskip
+
+  \begin{displaymath}
+    x_1 : X_1, \dots, x_n : X_n \vdash M : Y
+  \end{displaymath}
+
+  \pause
+  \bigskip
+
+  \begin{center}
+    the presence of a variable $x$ records its usage
+
+    each $x_i$ must be ``used'' by $M$ exactly once
+  \end{center}
+
+  \pause
+  \bigskip
+
+  \begin{center}
+    \begin{minipage}{0.6\linewidth}
+      Enables:
+      \begin{enumerate}
+      \item Insight into computational behaviour
+      \item e.g., time complexity
+      \end{enumerate}
+    \end{minipage}
+  \end{center}
+\end{frame}
+
+\newcommand{\point}{\textcolor{titlered}{$\rhd$}~}
+
+\begin{frame}
+  \begin{displaymath}
+    n : \mathsf{Nat}, x : \mathsf{Fin}(n) \vdash x : \mathsf{Fin}(n)
+  \end{displaymath}
+
+  \bigskip
+
+  Can we read this judgement linearly?
+
+  \pause
+  \bigskip
+
+  \point $n$ appears in the context, but is not used computationally
+
+  \pause
+  \bigskip
+
+  \point $n$ appears \emph{twice} in types
+
+  \pause
+  \bigskip
+
+  Is $n$ even used at all?
+\end{frame}
+
+\begin{frame}
+  \begin{displaymath}
+    n : \mathsf{Nat} \mid x : \mathsf{Fin}(n) \vdash x : \mathsf{Fin}(n)
+  \end{displaymath}
+
+  \bigskip
+  \pause
+
+  \point Separate \emph{intuitionistic} / \emph{unrestricted} uses and \emph{linear} uses
+
+  \pause
+  \bigskip
+
+  \point Types can depend on intuitionistic data, but not linear data
+
+  % \raggedleft
+  % \textcolor{black!60}{\it will come back to this...}
+
+  % \raggedright
+
+  \pause
+  \bigskip
+
+  {\footnotesize
+    \textcolor{black!60}{(Barber, 1996)} \\
+    \textcolor{black!60}{(Cervesato and Pfenning, 2002)} \\
+    \textcolor{black!60}{(Krishnaswami, Pradic, and Benton, 2015)} \\
+    \textcolor{black!60}{(V{\'a}k{\'a}r, 2015)}\\
+  }
+\end{frame}
+
+% \begin{frame}
+%   Separation interferes with dependency:
+
+%   \begin{displaymath}
+%     n : \mathsf{Nat} \mid x : \mathsf{Fin}(n) \vdash (x,\mathsf{refl}(x)) : (y : \mathsf{Fin}(n)) \times (x \equiv y)
+%   \end{displaymath}
+
+%   \pause
+
+%   \begin{displaymath}
+%     n : \mathsf{Nat}, x : \mathsf{Fin}(n) \mid \hat{x} : \hat{\mathsf{Fin}}(n,x) \vdash (x, \hat{x}, \mathsf{refl}(x)) : (y : \mathsf{Fin}(n)) \times \hat{\mathsf{Fin}}(n,y) \otimes (x \equiv y)
+%   \end{displaymath}
+
+% \end{frame}
+
+\begin{frame}
+  Quantitative Coeffect calculi:
+
+  \begin{displaymath}
+    x_1 \stackrel{\rho_1}: S_1, \dots, x_n \stackrel{\rho_n}: S_n \vdash M : T
+  \end{displaymath}
+
+  \pause
+  \bigskip
+
+  \point The $\rho_i$ record usage from some semiring $R$ \\
+  \quad . $1 \in R$ --- a use \\
+  \quad . $0 \in R$ --- not used \\
+  \quad . $\rho_1 + \rho_2$ --- adding up uses (e.g., in an application) \\
+  \quad . $\rho_1\rho_2$ --- nested uses
+
+  \pause
+  \bigskip
+
+  {\footnotesize
+    \textcolor{black!60}{(Petricek, Orchard, and Mycroft, 2014)} \\
+    \textcolor{black!60}{(Brunel, Gaboardi, Mazza, and Zdancewic, 2014)} \\
+    \textcolor{black!60}{(Ghica and Smith, 2014)} \\
+  }
+\end{frame}
+
+\begin{frame}
+  Can we adapt this idea to dependent types?
+
+  \pause
+  \bigskip
+
+  McBride's idea: \\
+  \quad \point allow $0$-usage data to appear in types. \\
+  \qquad \textcolor{black!60}{(McBride, 2016)}
+
+  \pause
+
+  \begin{displaymath}
+    x_1 \stackrel{\rho_1}: S_1, \dots, x_n \stackrel{\rho_n}: S_n \vdash M \stackrel\sigma: T
+  \end{displaymath}
+  where $\sigma \in \{0,1\}$. \\
+  \qquad \point $\sigma = 1$ --- the ``real'' computational world \\
+  \qquad \point $\sigma = 0$ --- the types world \\
+  {\footnotesize \textcolor{black!60}{(allowing arbitrary $\rho$ yields a system where substitution is inadmissible (Atkey, 2018))}}
+
+
+  \pause
+  \bigskip
+
+  Zero-ing is an admissible rule:
+  $\begin{array}{c}\inferrule* {\Gamma \vdash M \stackrel{1}: T} {0\Gamma \vdash M
+    \stackrel{0}: T}\end{array}$ allowing promotion to the type world.
+\end{frame}
+
+\begin{frame}
+  \HEAD{Zero-ing is admissible}
+
+  \begin{displaymath}
+    \inferrule*
+    {\Gamma \vdash M \stackrel{1}: T}
+    {0\Gamma \vdash M \stackrel{0}: T}
+  \end{displaymath}
+
+  \bigskip
+
+  means that every linear term has an ``extensional'' counterpart (or constitutent)
+
+  \bigskip
+
+  which can be used at type checking time to construct types
+
+  \bigskip
+
+  has the effect of making the linear system a restriction of the intuitionistic
+\end{frame}
+
+
+% \titlecard{Quantitative Type Theory}
+
+% \begin{frame}[t]
+%   \raggedleft
+%   \textcolor{titlered}{\bf Quantitative Type Theory}
+
+%   \raggedright
+
+%   {\it Contexts}
+%   \begin{mathpar}
+%     \inferrule* [right=Emp]
+%     { }
+%     {\diamond \vdash}
+
+%     \inferrule* [right=Ext]
+%     {\Gamma \vdash \\ 0\Gamma \vdash S}
+%     {\Gamma, x \stackrel\rho: S \vdash}
+%   \end{mathpar}
+
+%   \pause
+%   \bigskip
+
+%   {\it Types}
+%   \begin{displaymath}
+%     0\Gamma \vdash S
+%   \end{displaymath}
+
+%   \pause
+%   \bigskip
+
+%   {\it Terms}
+%   \begin{displaymath}
+%     \begin{array}{c@{\hspace{3em}}c}
+%       \inferrule* [right=Var]
+%       {0\Gamma, x \stackrel\sigma: S, 0\Gamma' \vdash}
+%       {0\Gamma, x \stackrel\sigma: S, 0\Gamma' \vdash x \stackrel\sigma: S}
+%       &
+%         \inferrule* [right=Conv]
+%         {\Gamma \vdash M \stackrel\sigma: S \hspace{1.5em} 0\Gamma \vdash S \equiv T}
+%         {\Gamma \vdash M \stackrel\sigma: T}
+%     \end{array}
+%   \end{displaymath}
+% \end{frame}
+
+% \begin{frame}[t]
+%   \raggedleft
+%   \textcolor{titlered}{\bf Quantitative Type Theory}
+
+%   \raggedright
+
+%   {\it $\Pi$-type formation}
+%   \begin{displaymath}
+%     \inferrule*
+%     {0\Gamma \vdash S \\ 0\Gamma, x \stackrel0: S \vdash T}
+%     {0\Gamma \vdash (x \stackrel\pi: S) \to T}
+%   \end{displaymath}
+
+%   \pause
+%   \bigskip
+
+%   {\it $\Pi$-type introduction and elimination}
+%   \begin{mathpar}
+%     \inferrule*
+%     {\Gamma, x \stackrel{\sigma\pi}: S \vdash M \stackrel\sigma: T}
+%     {\Gamma \vdash \lambda x \mathord{\stackrel\pi:} S.M \stackrel\sigma: (x \stackrel\pi: S) \to T}
+
+%     \inferrule*
+%     {\Gamma_1 \vdash M \stackrel\sigma: (x \stackrel\pi: S) \to T \\
+%       \Gamma_2 \vdash N \stackrel{\sigma'}: S \\
+%       0\Gamma_1 = 0\Gamma_2 \\
+%       \sigma' = 0 \Leftrightarrow (\pi = 0 \lor \sigma = 0)
+%     }
+%     {\Gamma_1 + \pi\Gamma_2 \vdash M~N \stackrel\sigma: T[N/x]}
+%   \end{mathpar}
+% \end{frame}
+
+% \begin{frame}[t]
+%   \raggedleft
+%   \textcolor{titlered}{\bf Quantitative Type Theory}
+
+%   \raggedright
+
+%   {\it $\Pi$-type elimination}
+%   \begin{displaymath}
+%     \inferrule*
+%     {\Gamma_1 \vdash M \stackrel\sigma: (x \stackrel\pi: S) \to T \\
+%       \Gamma_2 \vdash N \stackrel{\sigma'}: S \\
+%       0\Gamma_1 = 0\Gamma_2 \\
+%       \sigma' = 0 \Leftrightarrow (\pi = 0 \lor \sigma = 0)
+%     }
+%     {\Gamma_1 + \pi\Gamma_2 \vdash \mathrm{App}_{(x\stackrel\pi:S)T}(M,N) \stackrel\sigma: T[N/x]}
+%   \end{displaymath}
+
+%   There are three cases:
+%   \begin{enumerate}
+%   \item<2-> $\sigma = 1, \pi \not= 0, \sigma' = 1$ \\
+%     \quad Function uses its argument ``computationally'';
+%   \item<3-> $\sigma = 1, \pi = 0, \sigma' = 0$ \\
+%     \quad Function yields computational data, but doesn't use its argument;
+%   \item<4-> $\sigma = 0, \sigma' = 0$ \\
+%     \quad We are not using the function for its computational content, so $\pi$ does not matter.
+%   \end{enumerate}
+% \end{frame}
+
+% \begin{frame}[t]
+%   \raggedleft
+%   \textcolor{titlered}{\bf Quantitative Type Theory}
+
+%   \raggedright
+
+%   {\it $\Sigma$-type formation}
+%   \begin{mathpar}
+%     \inferrule* [right=$\otimes$]
+%     {0\Gamma \vdash A \\ 0\Gamma, x \stackrel0: S \vdash T}
+%     {0\Gamma \vdash (x \stackrel\pi: S) \otimes T}
+
+%     \inferrule* [right=$I$]
+%     {0\Gamma \vdash}
+%     {0\Gamma \vdash I}
+%   \end{mathpar}
+
+%   \bigskip
+
+%   {\it $\Sigma$-type introduction}
+%   \begin{mathpar}
+%     \inferrule*
+%     {\Gamma_1 \vdash M \stackrel{\sigma'}: S \\
+%       0\Gamma_1 = 0\Gamma_2 \\\\
+%       \Gamma_2 \vdash N \stackrel\sigma: T\hspace{0.1em}[M/x] \\
+%       \sigma' = 0 \Leftrightarrow (\pi = 0 \lor \sigma = 0)}
+%     {\pi\Gamma_1 + \Gamma_2 \vdash (M, N)_{x\stackrel\pi:S.T} \stackrel\sigma: (x \stackrel\pi: S) \otimes T}
+
+%     \inferrule*
+%     {0\Gamma \vdash}
+%     {0\Gamma \vdash * \stackrel\sigma: I}
+%   \end{mathpar}
+% \end{frame}
+
+% \begin{frame}[t]
+%   \raggedleft
+%   \textcolor{titlered}{\bf Quantitative Type Theory}
+
+%   \raggedright
+
+%   {\it $\Sigma$-type elimination}
+%   \begin{mathpar}
+%     \inferrule*
+%     {0\Gamma_1, z \stackrel0: (x \stackrel\pi: S) \otimes T \vdash U \\
+%       \Gamma_1 \vdash M \stackrel\sigma: (x \stackrel\pi: S) \otimes T \\
+%       \Gamma_2, x \stackrel{\sigma\pi}: S, y \stackrel{\sigma}: T \vdash N \stackrel\sigma: U[(x,y)/z]\\
+%       0\Gamma_1 = 0\Gamma_2}
+%     {\Gamma_1 + \Gamma_2 \vdash \mathrm{let}_{x\stackrel\pi:S.T}~(x,y) = M~\mathrm{in}~N \stackrel\sigma: U[M/z]}
+%   \end{mathpar}
+
+%   \bigskip
+
+%   \pause
+%   {\it Elimination in the $\sigma=0$ fragment}
+%   \begin{mathpar}
+%     \inferrule*
+%     {\Gamma \vdash M \stackrel0: (x \stackrel\pi: S) \otimes T}
+%     {\Gamma \vdash \mathrm{fst}_{x\stackrel\pi:S.T}(M) \stackrel0: A}
+
+%     \inferrule*
+%     {\Gamma \vdash M \stackrel0: (x \stackrel\pi: S) \otimes T}
+%     {\Gamma \vdash \mathrm{snd}_{x\stackrel\pi:S.T}(M) \stackrel0: T[\mathrm{fst}(M)/x]}
+%   \end{mathpar}
+
+%   \pause
+%   \begin{displaymath}
+%     \small
+%     \inferrule*
+%     {0\Gamma, z \stackrel0: (x \stackrel\pi: S) \otimes T \vdash U \\
+%       0\Gamma \vdash M \stackrel0: (x \stackrel\pi: S) \otimes T \\
+%       0\Gamma, x \stackrel0: S, y \stackrel0: T \vdash N \stackrel0: U[(x,y)/z]}
+%     {0\Gamma \vdash \mathrm{let}_{x\stackrel\pi:S.T}~(x,y) = M~\mathrm{in}~N \equiv N[\mathrm{fst}(M)/x,\mathrm{snd}(M)/y] \stackrel0: U[M/z]}
+%   \end{displaymath}
+
+% \end{frame}
+
+% \begin{frame}[t]
+%   \raggedleft
+%   \textcolor{titlered}{\bf Quantitative Type Theory}
+
+%   \raggedright
+
+%   {\it $\TyBool$ formation}
+%   \begin{mathpar}
+%     \inferrule* [right=Bool]
+%     {0\Gamma \vdash}
+%     {0\Gamma \vdash \TyBool}
+%   \end{mathpar}
+
+%   \bigskip
+
+%   {\it $\TyBool$ introduction}
+%   \begin{mathpar}
+%     \inferrule* [right=B-{T,F}]
+%     {0\Gamma \vdash}
+%     {0\Gamma \vdash \mathrm{true}, \mathrm{false} \stackrel\sigma: \TyBool}
+%   \end{mathpar}
+
+%   \bigskip
+
+%   {\it $\TyBool$ elimination}
+%   \begin{displaymath}
+%     \small
+%     \inferrule* [right=B-Elim]
+%     {0\Gamma_1, z \stackrel0: \TyBool \vdash T \\
+%       \Gamma_1 \vdash M_t \stackrel\sigma: T[\mathrm{true}/z] \\
+%       \Gamma_1 \vdash M_f \stackrel\sigma: T[\mathrm{false}/z] \\
+%       \Gamma_2 \vdash N \stackrel\sigma: \TyBool \\
+%       0\Gamma_1 = 0\Gamma_2}
+%     {\Gamma_1 + \Gamma_2 \vdash \mathrm{ElimBool}_{(z)T}(M_t, M_f, N) \stackrel\sigma: T[N/z]}
+%   \end{displaymath}
+% \end{frame}
+
+% \begin{frame}[t]
+%   \raggedleft
+%   \textcolor{titlered}{\bf Quantitative Type Theory}
+
+%   \raggedright
+
+%   {\it LFPL-style $\Diamond$}
+%   \begin{mathpar}
+%     \inferrule* [right=Ty-Dia]
+%     {\Gamma \vdash}
+%     {0\Gamma \vdash \Diamond}
+
+%     \inferrule* [right=Tm-Dia]
+%     {0\Gamma \vdash}
+%     {0\Gamma \vdash * \stackrel0: \Diamond}
+%   \end{mathpar}
+
+%   {\it $\TyBool$ introduction with micropayments}
+%   \begin{mathpar}
+%     \inferrule*
+%     {\Gamma \vdash x \stackrel\sigma: \Diamond}
+%     {\Gamma \vdash \mathrm{true}@x \stackrel\sigma: \TyBool}
+
+%     \inferrule*
+%     {\Gamma \vdash x \stackrel\sigma: \Diamond}
+%     {\Gamma \vdash \mathrm{false}@x \stackrel\sigma: \TyBool}
+%   \end{mathpar}
+
+%   {\it $\TyBool$ elimination with cashback}
+%   \begin{displaymath}
+%     \footnotesize
+%     \inferrule*
+%     {0\Gamma_1, z \stackrel0: \TyBool \vdash T \\
+%       \Gamma_1, x \stackrel{\rho\sigma}: \Diamond \vdash M_t \stackrel\sigma: T[\mathrm{true}@\mathord*/z] \\
+%       \Gamma_1, x \stackrel{\rho\sigma}: \Diamond \vdash M_f \stackrel\sigma: T[\mathrm{false}@\mathord*/z] \\
+%       \Gamma_2 \vdash N \stackrel\sigma: \TyBool \\
+%       0\Gamma_1 = 0\Gamma_2}
+%     {\Gamma_1 + \rho\Gamma_2 \vdash \mathrm{ElimBool}_{(z)T}(x.M_t, x.M_f, N) \stackrel\sigma: T[N/z]}
+%   \end{displaymath}
+% \end{frame}
+
+% \begin{frame}[t]
+%   \raggedleft
+%   \textcolor{titlered}{\bf Quantitative Type Theory}
+
+%   \raggedright
+
+%   {\it $\TySet$ formation}
+%   \begin{displaymath}
+%     \inferrule* [right=Set]
+%     {0\Gamma \vdash}
+%     {0\Gamma \vdash \TySet}
+%   \end{displaymath}
+
+%   \bigskip
+
+%   {\it $\TySet$ introduction}
+%   \begin{mathpar}
+%     \inferrule* [right=Set-Bool]
+%     {0\Gamma \vdash}
+%     {0\Gamma \vdash \TyBool \stackrel0: \TySet}
+
+%     \inferrule* [right=Set-Pi]
+%     {0\Gamma \vdash M \stackrel0: \TySet \\
+%       0\Gamma, x \stackrel0: \TyEl(M) \vdash N \stackrel0: \TySet}
+%     {0\Gamma \vdash (x \stackrel\pi: M) \to N \stackrel0: \TySet}
+%   \end{mathpar}
+
+%   {\it $\TySet$ elimination}
+%   \begin{displaymath}
+%     \inferrule* [right=El]
+%     {0\Gamma \vdash M \stackrel0: \TySet}
+%     {0\Gamma \vdash \TyEl(M)}
+%   \end{displaymath}
+
+%   \pause
+%   \bigskip
+
+%   Could also track usages in \emph{names} of types, to track resources
+%   used in computing types.
+% \end{frame}
+
+% \begin{frame}[t]
+%   \raggedleft
+%   \textcolor{titlered}{\bf Quantitative Type Theory}
+
+%   \raggedright
+
+%   {\it Zero-ing}
+%   \begin{displaymath}
+%     \inferrule* [right=Tm-Zero]
+%     {\Gamma \vdash M \stackrel\sigma: S}
+%     {0\Gamma \vdash M \stackrel0: S}
+%   \end{displaymath}
+
+%   \pause
+%   \bigskip
+
+%   {\it Zero needs nothing}: \qquad $\Gamma \vdash M \stackrel0: S \qquad \Rightarrow \qquad 0\Gamma = \Gamma$
+
+%   \pause
+%   \bigskip
+
+%   {\it Weakening}
+%   \begin{displaymath}
+%     \inferrule* [right=Weaken]
+%     {\Gamma, \Gamma' \vdash \mathcal{J} \\ 0\Gamma \vdash U}
+%     {\Gamma, x \stackrel0: U, \Gamma' \vdash \mathcal{J}}
+%   \end{displaymath}
+
+%   \pause
+%   \bigskip
+
+%   {\it Substitution}
+%   \begin{displaymath}
+%     \inferrule*
+%     {\Gamma_1, x \stackrel\rho:S , \Gamma' \vdash M \stackrel\sigma: T \\ \Gamma_2 \vdash N \stackrel{\sigma'}: S \\ 0\Gamma_1 = 0\Gamma_2 \\ \sigma' = 0 \Leftrightarrow \rho = 0}
+%     {(\Gamma_1 + \rho\Gamma_2), \Gamma'[N/x] \vdash M[N/x] \stackrel\sigma: T[N/x]}
+%   \end{displaymath}
+% \end{frame}
+
+% \titlecard{Integrating Resource Constraints into QTT}
+
+\begin{frame}
+  \HEAD{A suitable semiring for affine linearity?}
+
+  \bigskip
+
+  \youtem Carrier: $\{0, 1, \omega\}$
+
+  \medskip
+
+  \youtem Ordered: $\omega < 1 < 0$
+
+  \medskip
+
+  \youtem Operations:
+  \begin{mathpar}
+    \begin{array}{c|ccc}
+      +&0&1&\omega \\
+      \hline
+      0&0&1&\omega \\
+      1&1&\omega&\omega \\
+      \omega&\omega&\omega&\omega
+    \end{array}
+
+    \begin{array}{c|ccc}
+      \cdot&0&1&\omega \\
+      \hline
+      0&0&0&0 \\
+      1&0&1&\omega \\
+      \omega&0&\omega&\omega
+    \end{array}
+  \end{mathpar}
+
+  \bigskip
+
+  \youtem Would admit an unrestricted $\oc$ modality.
+\end{frame}
+
+\begin{frame}
+  \HEAD{Strict resource counting}
+
+  \bigskip
+
+  \youtem Carrier: $\mathbb{N}$
+
+  \medskip
+
+  \youtem Ordered: $\dots < 2 < 1 < 0$
+
+  \medskip
+
+  \youtem Operations: normal operations on $\mathbb{N}$
+\end{frame}
+
+\begin{frame}
+  \HEAD{Diamonds}
+
+  \bigskip
+
+  \begin{mathpar}
+    \inferrule* [right=Ty-Dia]
+    {\Gamma \vdash}
+    {0\Gamma \vdash \Diamond}
+
+    \inferrule* [right=Tm-Dia]
+    {0\Gamma \vdash}
+    {0\Gamma \vdash * \stackrel0: \Diamond}
+  \end{mathpar}
+
+  \bigskip
+
+  \youtem In the $\sigma=0$ fragment, $\Diamond$s are free.
+\end{frame}
+
+
+\begin{frame}
+  \HEAD{LFPL}
+
+  \bigskip
+
+  \youtem Natural number introduction
+  \begin{mathpar}
+    \inferrule*
+    {\Gamma \vdash d \stackrel\sigma: \Diamond}
+    {\Gamma \vdash \mathrm{zero}(d) \stackrel\sigma : \TyNat}
+
+    \inferrule*
+    {\Gamma \vdash d \stackrel\sigma: \Diamond \\
+      \Gamma \vdash n \stackrel\sigma: \TyNat}
+    {\Gamma \vdash \mathrm{succ}(d,n) \stackrel\sigma : \TyNat}
+  \end{mathpar}
+\end{frame}
+
+\begin{frame}
+  \HEAD{LFPL}
+
+  \bigskip
+
+  \youtem Natural number elimination ($\sigma=1$ case)
+  \begin{displaymath}
+    \mprset{flushleft}
+    \inferrule*
+    {0\Gamma, x : \TyNat \vdash A \\\\
+      \Gamma_1, d \stackrel1: \Diamond \vdash M_z \stackrel1: A\{\mathrm{zero}(*)/x\} \\\\
+      d \stackrel1: \Diamond, n \stackrel0: \TyNat, r \stackrel1: A\{n/x\} \vdash M_s \stackrel1: A\{\mathrm{succ}(*,n)/x\} \\\\
+      \Gamma_2 \vdash N \stackrel1: \TyNat \\\\
+      \Gamma_1 + \Gamma_2 = \Gamma}
+    {\Gamma \vdash \mathrm{iter}(x.A,d.M_z,d~n~r.M_s,N) \stackrel1: A\{N/x\}}
+  \end{displaymath}
+
+  \youtem Crucial: $n$ is not available for computational use in $M_s$.
+\end{frame}
+
+\begin{frame}
+  \HEAD{Encoding lists}
+
+  \bigskip
+
+  \youtem Define (in $\sigma=0$ fragment):
+  \begin{displaymath}
+    \mathrm{Vec}~A : \TyNat \to \mathrm{Set}
+  \end{displaymath}
+  \quad \qquad by iteration on the natural number.
+
+  \bigskip
+
+  \youtem Lists:
+  \begin{displaymath}
+    \mathrm{List}~A = (n \stackrel1: \TyNat) \otimes \mathrm{Vec}~A~n
+  \end{displaymath}
+\end{frame}
+
+\begin{frame}
+  \HEAD{Amortised Analysis}
+
+  \bigskip
+
+  \youtem Unrestricted introduction rules for natural numbers:
+  \begin{mathpar}
+    \inferrule*
+    {\Gamma \vdash}
+    {\Gamma \vdash \mathsf{zero} \stackrel\sigma: \TyNat}
+
+    \inferrule*
+    {\Gamma \vdash N \stackrel\sigma: \TyNat}
+    {\Gamma \vdash \mathsf{suc}(N) \stackrel\sigma: \TyNat}
+\end{mathpar}
+
+  \youtem Postulate:
+  \begin{mathpar}
+    \Diamond^{(p_1,\dots,p_k)} : \TyNat \to \mathrm{Set}
+
+    \inferrule*
+    {\Gamma \vdash n \stackrel0: \TyNat}
+    {\Gamma \vdash * \stackrel0: \Diamond^{(p_1,\dots,p_k)(n)}}
+  \end{mathpar}
+
+  \youtem with:
+  \begin{mathpar}
+    \begin{array}{l@{\hspace{0.3em}}c@{\hspace{0.3em}}l}
+      \mathrm{split} &:& (n \stackrel0: \TyNat) \to \Diamond^{(p_1+p'_1,\dots,p_k+p'_k)}(n) \multimap
+                         \Diamond^{(p_1,\dots,p_k)}(n) \otimes \Diamond^{(p'_1,\dots,p'_k)}(n) \\
+      \mathrm{join} &:& (n \stackrel0: \TyNat) \to \Diamond^{(p_1,\dots,p_k)}(n) \otimes \Diamond^{(p'_1,\dots,p'_k)}(n)
+                        \multimap \Diamond^{(p_1+p'_1,\dots,p_k+p'_k)}(n) \\
+      \mathrm{shift} &:& (n \stackrel0: \TyNat) \to \Diamond^{(p_1,\dots,p_k)}(\mathsf{suc}(n)) \multimap \Diamond^{(p_1+p_2,\dots,p_k)}(n)\\
+    \end{array}
+  \end{mathpar}
+\end{frame}
+
+\begin{frame}
+  \HEAD{Amortised Analysis}
+
+  \bigskip
+
+  \youtem Natural number elimination ($\sigma=1$ case)
+  \begin{displaymath}
+    \mprset{flushleft}
+    \inferrule*
+    {0\Gamma, x \stackrel0: \TyNat \vdash A \\\\
+      \Gamma_1 \vdash M_z \stackrel1: A\{\mathrm{zero}/x\} \\\\
+      n \stackrel1: \TyNat, r \stackrel1: A\{n/x\} \vdash M_s \stackrel1: A\{\mathrm{succ}(n)/x\} \\\\
+      \Gamma_2 \vdash N \stackrel1: \TyNat \\\\
+      \Gamma_3 \vdash D \stackrel1: \Diamond^{(1)}(N) \\\\
+      \Gamma_1 + \Gamma_2 + \Gamma_3 = \Gamma}
+    {\Gamma \vdash \mathrm{iter}(x.A,M_z,n~r.M_s,N,D) : A\{N/x\}}
+  \end{displaymath}
+
+  \bigskip
+
+  \youtem $n$ is available for use in $M_s$
+
+  \medskip
+
+  \youtem Pay up front for the iteration with $D$
+
+  \medskip
+
+  \youtem Get nested iteration by passing in enough $\Diamond$s to pay for it
+  \begin{displaymath}
+    A[n] = \Diamond^{(p_1,\dots,p_k)}(n) \multimap B[n]
+  \end{displaymath}
+\end{frame}
+
+\titlecard{Semantic Interpretation : Soundness}
+
+% \begin{frame}[t]
+
+%   \raggedleft
+%   \textcolor{titlered}{\bf Quantitative Category with Families}
+
+%   \bigskip
+
+%   \begin{enumerate}
+%   \item Category $\cat{L}$ for interpreting contexts and simultaneous substitutions \\
+%     \quad \textcolor{black!60}{Computational and extensional content}
+%   \item Category $\cat{C}$ for intepretation contexts and simultaneous substitutions \\
+%     \quad \textcolor{black!60}{Only extensional content}
+%   \item<2-> $U : \cat{L} \to \cat{C}$ forgetting the computational content;
+%   \item<3-> Addition and scaling structure on $\cat{L}$, fibred over $U$;\\
+%     \quad \textcolor{black!60}{Can add $\Gamma_1$ and $\Gamma_2$ if $U\Gamma_1 = U\Gamma_2$}
+%   \item<4-> Semantic types formed with respect to $\cat{C}$:
+%     \begin{displaymath}
+%       S \in \Ty(\Delta), \qquad \Delta \in \mathrm{Ob}\cat{C};
+%     \end{displaymath}
+%   \item<5-> Semantic terms, resourced and unresourced:
+%     \begin{displaymath}
+%       \begin{array}{ll}
+%         M \in \Tm(\Delta, S), & \Delta \in \mathrm{Ob}\cat{C}, S \in \Ty(\Delta) \\
+%         M \in \RTm(\Gamma, S), & \Gamma \in \mathrm{Ob}\cat{L}, S \in \Ty(U\Gamma);
+%       \end{array}
+%     \end{displaymath}
+%   \item<6-> Semantic zero-ing: $U : \RTm(\Gamma, S) \to \Tm(U\Gamma, S)$;
+%   \item<7-> Resourced counterparts of substitution and comprehension, preserved by $U$.
+%   \end{enumerate}
+% \end{frame}
+
+% \begin{frame}
+%   \begin{center}
+%     {\Large \bf \textcolor{titlered}{Semantic Interpretation}} \\
+%     \textcolor{black!60}{Realisability}
+%   \end{center}
+% \end{frame}
+
+% \begin{frame}[t]
+%   \raggedleft
+%   \textcolor{titlered}{\bf Realisability Models}
+
+%   \raggedright
+
+%   $R$-Linear Combinatory Algebras ($R$-LCAs) \\
+%   \quad \textcolor{black!60}{after LCAs (Abramsky, Haghverdi, and Scott, 2002)}
+
+%   \bigskip
+
+%   A carrier $\mathcal{A}$ with an application operator $(\cdot)$ and
+%   unary operators $\oc_\rho$, $\rho \in R$, and:
+%   \begin{displaymath}
+%     \begin{array}{lcl}
+%       B \cdot x \cdot y \cdot z &=& x \cdot (y \cdot z) \\
+%       C \cdot x \cdot y \cdot z &=& x \cdot z \cdot y \\
+%       I \cdot x &=& x \\
+%       K \cdot x \cdot \oc_{0} y &=&x \\
+%       W_{\pi\rho} \cdot x \cdot \oc_{\pi+\rho} y &=&x \cdot \oc_\pi y \cdot \oc_\rho y \\
+%       D \cdot \oc_{1} x         &=&x \\
+%       \delta_{\pi\rho} \cdot \oc_{\pi\rho} x    &=&\oc_\pi\oc_\rho x \\
+%       F_\rho \cdot \oc_\rho x \cdot \oc_\rho y &=& \oc_\rho (x \cdot y) \\
+%     \end{array}
+%   \end{displaymath}
+
+%   \pause
+
+%   For example: any LCA gives a $\{0,1,\omega\}$-LCA; any BCI algebra
+%   gives a $\mathbb{N}$-LCA; any SK algebra gives a $\{0,1\}$-LCA.
+% \end{frame}
+
+% \begin{frame}[t]
+%   \raggedleft
+%   \textcolor{titlered}{\bf Realisability Models}
+
+%   \raggedright
+
+%   {\it Graph models}
+
+%   \begin{itemize}
+%   \item Let $D \cong \mathbb{N} + D \times D$
+%   \item $\mathcal{A} = \mathcal{P}(D)$
+%   \item Define application to be:
+%     \begin{displaymath}
+%       \alpha \cdot \beta = \{ b \mid \exists a.~\langle a,b \rangle \in \alpha, a \in \beta \}
+%     \end{displaymath}
+%   \item Combinators:
+%     \begin{displaymath}
+%       \begin{array}{lcl}
+%         B&=&\{\langle \langle b, c\rangle, \langle \langle a, b \rangle, \langle a, c \rangle\rangle\rangle \mid a, b, c \in D \} \\
+%         C&=&\{\langle \langle b, \langle a, c \rangle \rangle, \langle a, \langle b, c \rangle \rangle \rangle \mid a, b, c \in D \}\\
+%         I&=&\{\langle a, a \rangle \mid a \in D \}
+%       \end{array}
+%     \end{displaymath}
+%   \item Exponentials:
+%     \begin{displaymath}
+%       \oc_\omega p = \{ [a_1, \cdots, a_n] \mid a_1, \ldots, a_n \in p \}
+%     \end{displaymath}
+%     where
+%     $[a_1,\cdots,a_n] = \langle a_1, \cdots \langle a_n, 0 \rangle \cdots \rangle$
+%   \end{itemize}
+% \end{frame}
+
+% \begin{frame}[t]
+
+%   \raggedleft
+%   \textcolor{titlered}{\bf Realisability Models}
+
+%   \raggedright
+
+%   To model the boolean type, we also need:
+
+%   \begin{enumerate}
+%   \item Elements $T, F \in \mathcal{A}$;
+%   \item A function $E : \mathcal{A} \times \mathcal{A} \to \mathcal{A}$ such that
+%     \begin{displaymath}
+%       \begin{array}{lcl}
+%         E(p,q)\cdot T&=&p\\
+%         E(p,q)\cdot F&=&q
+%       \end{array}
+%     \end{displaymath}
+%   \end{enumerate}
+% \end{frame}
+
+% \begin{frame}[t]
+
+%   \raggedleft
+%   \textcolor{titlered}{\bf Realisability Models}
+
+%   \raggedright
+
+%   \begin{enumerate}
+%   \item Let $\mathcal{A}$ be an $\mathcal{R}$-LCA
+%   \item Let $\cat{C} = \mathrm{Set}$, category of sets and functions
+%   \item Let $\cat{L}$ be:
+%     \begin{itemize}
+%     \item Objects: $(|\Gamma|, \models_\Gamma)$, where $|\Gamma|$ is a set, and $\models_\Gamma \subseteq \mathcal{A} \times |\Gamma|$;
+%     \item Morphisms: $f : |\Gamma_1| \to |\Gamma_2|$, for which \\
+%       \qquad there exists an $a_f \in \mathcal{A}$ such that for all $x, a_x$, $a_x \models_{\Gamma_1} x$ implies $a_f\cdot a_x \models f(x)$.
+%     \end{itemize}
+%     \qquad \emph{sets with computational information}
+%   \item $U : \cat{L} \to \cat{C}$ forgets the computational information
+%   \item Types $S \in \Ty(\Delta)$ include computational information, but:\\
+%     \qquad \emph{only depend on non-computational part}
+%   \item Terms $M \in \RTm(\Gamma, S)$ are tracked by realisers from $\mathcal{A}$
+%   \item Terms $M \in \Tm(\Delta, S)$ are set theoretic functions
+%   \end{enumerate}
+
+%   \bigskip
+
+%   Read constructively, yields an ``efficient'' compilation method for
+%   QTT, which respects and uses the usage information.
+
+% \end{frame}
+
+% \begin{frame}[t]
+%   \raggedleft
+%   \textcolor{titlered}{\bf Realisability Models}
+
+%   \raggedright
+
+%   {\it ``Length'' models} \qquad \textcolor{black!60}{$\sim$(Hofmann, 2003)}\\
+%   \begin{itemize}
+%   \item $\mathcal{A} = \mathbb{N}$
+%   \item Application:
+%     \begin{displaymath}
+%       a\cdot b = a+b
+%     \end{displaymath}
+%   \item Combinators:
+%     \begin{displaymath}
+%       \begin{array}{lcl}
+%         B&=&0\\
+%         C&=&0\\
+%         I&=&0
+%       \end{array}
+%     \end{displaymath}
+%   \item ``Precious'' booleans:
+%     \begin{displaymath}
+%       \begin{array}{lcl}
+%         \diamond&=&1 \\
+%         T       &=&1 \\
+%         F       &=&1 \\
+%       \end{array}
+%     \end{displaymath}
+%   \item Have to restrict interpretation of terms to always be $0$
+%   \end{itemize}
+% \end{frame}
+
+\begin{frame}
+  \HEAD{Realisability for ICC}
+  \quad\qquad \textcolor{black!60}{(Dal Lago \& Hofmann, 2011)}
+
+
+  \bigskip
+
+  Resource monoids
+
+  \bigskip
+
+  \newcommand{\diffcat}{\mathbb{N}_{-\infty}}
+
+  \youtem Let $\diffcat$ be category with objects
+  $\mathbb{N} \cup \{-\infty\}$ and $m \to n$ if $m \leq n$, with
+  $-\infty \leq n$ \\
+  \quad \qquad\youtem Strict symmetric monoidal category with $(+, 0)$
+
+  \medskip
+
+  \youtem A resource monoid $M$ is a $\diffcat$-enriched strict
+  symmetric monoidal category.
+
+  \pause
+  \bigskip
+
+  \youtem $(M,+,0)$ is a commutative monoid
+
+  \youtem $0 \leq M(\alpha,\alpha)$
+
+  \youtem $M(\alpha, \beta) \in \diffcat$ is the difference between $\alpha$ and $\beta$
+
+  \youtem $M(\alpha, \beta) + M(\beta, \gamma) \leq M(\alpha,\gamma)$
+
+  \youtem $M(\alpha,\beta) \leq M(\alpha+\gamma,\beta+\gamma)$
+
+\end{frame}
+
+\begin{frame}
+  \HEAD{Resource monoids}
+
+  \bigskip
+
+  Linear time:
+
+  \bigskip
+
+  \youtem $M = \mathbb{N}$
+
+  \smallskip
+
+  \youtem Differencing:
+  \begin{displaymath}
+    M(n,m) = \left\{\begin{array}{@{}ll} m - n & n \leq m \\ -\infty & \textrm{otherwise} \end{array}\right.
+  \end{displaymath}
+
+%  \youtem $n, \texttt{*} \models_\Diamond *$ if $n \geq 1$
+
+  \youtem Wrinkle: counts recursion steps, not the actual number of
+  steps.
+\end{frame}
+
+\begin{frame}
+  \HEAD{Resource Monoids: } Polynomial time (for LFPL)
+
+  \bigskip
+
+  \youtem $M \ni (n, p)$, where \\
+
+  \smallskip
+
+  \quad \youtem $n \in \mathbb{N}$ is the amount of iterability (number of $\Diamond$s)
+
+  \smallskip
+
+  \quad \youtem $p$ is a polynomial with $\mathbb{N}$ coefficients
+
+  \smallskip
+
+  \quad \youtem $(n,p)+(m,q) = (n+m,p+q)$.
+
+  \smallskip
+
+  \quad \youtem Cost differencing:
+  \begin{displaymath}
+    M((n,p),(m,q)) = \left\{\begin{array}{@{}ll}
+                              q(m) - p(m) & n \leq m\textrm{ and }(q-p)\textrm{ is non-negative}\\
+                              &\quad\textrm{ and non-decreasing }\geq m \\
+                              -\infty      & \textrm{otherwise}
+                            \end{array}\right.
+                        \end{displaymath}
+
+  \bigskip
+
+%  \youtem $(n, 0), \texttt{*} \models_\Diamond *$ if $n \geq 1$.
+\end{frame}
+
+\begin{frame}
+  \HEAD{Resource Monoids: } Polynomial time (for Constructor-free System)
+
+  \bigskip
+
+  \youtem $M \ni (n, p)$, where \\
+
+  \smallskip
+
+  \quad \youtem $n \in \mathbb{N}$ is the amount of iterability (number of $\Diamond$s)
+
+  \smallskip
+
+  \quad \youtem $p$ is a polynomial with $\mathbb{N}$ coefficients
+
+  \smallskip
+
+  \quad \youtem $(n,p)+(m,q) = (\mathrm{max}~n~m,p+q)$.
+
+  \smallskip
+
+  \quad \youtem Cost differencing:
+  \begin{displaymath}
+    M((n,p),(m,q)) = \left\{\begin{array}{@{}ll}
+                              q(m) - p(m) & n \leq m\textrm{ and }(q-p)\textrm{ is non-negative}\\
+                              & \quad\textrm{ and non-decreasing }\geq m \\
+                              -\infty      & \textrm{otherwise}
+                            \end{array}\right.
+                        \end{displaymath}
+
+  \smallskip
+
+%  \youtem $(n, 0), v_n \models_{\TyNat} m$ if $n \geq m$.
+
+  \smallskip
+
+  \youtem Hofmann and Dal Lago used this resource monoid for Lafont's \emph{Soft Linear Logic}.
+
+\end{frame}
+
+\begin{frame}
+  \HEAD{Cost model}
+
+  \bigskip
+
+  \youtem Assume a model of computation with a cost model:
+  \begin{displaymath}
+    e, \eta \Downarrow_k v
+  \end{displaymath}
+  \qquad\quad step count $k$, expressions $e \in \mathcal{E}$, values $v \in \mathcal{V}$.
+
+\end{frame}
+
+\begin{frame}
+  \HEAD{Interpretation of Types and Terms}
+
+  \bigskip
+
+  \youtem Types are interpreted by $(|X|, \models_X)$ where: \\
+  \qquad \youtem $|X|$ is a set\\
+  \qquad \youtem $\mathord{\models_X} \subseteq (M \times \mathcal{V})\times |X|$.
+
+  \bigskip
+
+  \youtem Functions $f : X \to Y$: \\
+  \qquad \youtem $f : |X| \to |Y|$ \\
+  \qquad \youtem exists $e \in \mathcal{E}$, $\gamma \in M$, such that \\
+  \qquad \youtem for all $\alpha, v, x$. \\
+  \qquad\qquad\qquad $(\alpha, v) \models_{X} x$ implies\\
+  \qquad\qquad\qquad\qquad exists $\beta, k, v'$ s.t. \\
+  \qquad\qquad\qquad\qquad\qquad $e, [v] \Downarrow_k v'$,\\
+  \qquad\qquad\qquad\qquad\qquad $(\beta, v') \models_Y f(x)$,\\
+  \qquad\qquad\qquad\qquad\qquad $k \leq M(\alpha+\gamma, \beta)$
+\end{frame}
+
+\begin{frame}
+  \HEAD{Some types}
+
+  \bigskip
+
+  In the amortised system:\\
+  \youtem $\Diamond = (\{*\}, (n, *) \models_\Diamond * \Leftrightarrow n \geq 1)$
+
+  \bigskip
+
+  In LFPL:\\
+  \youtem $\Diamond = (\{*\}, ((n,p), * \models_\Diamond * \Leftrightarrow n \geq 1, p \geq 0)$ \\
+  \youtem $\TyNat = (\mathbb{N}, ((n,p), n \models_\Diamond \underline{m}) \Leftrightarrow n \geq m, p \geq 0)$
+
+  \bigskip
+
+  In the constructor free system:\\
+  \youtem $\TyNat = (\mathbb{N}, ((n,p), n \models_\Diamond \underline{m}) \Leftrightarrow n \geq m, p \geq 0)$
+
+\end{frame}
+
+
+% \begin{frame}
+
+%   \begin{center}
+%     An interpretation of Type Theory that allows for ``sub-computational'' models
+%   \end{center}
+
+%   \pause
+%   \bigskip
+
+%   \begin{enumerate}
+%   \item No longer need the full power of SK;
+%     \vspace{1em}
+%   \item $R$-LCAs allow for interesting refined models of computation;
+%     \vspace{1em}
+%   \item For example --- \emph{(mostly future work!)}
+%     \begin{enumerate}
+%     \item Hofmann and Dal Lago's realisability models of Implicit Computational Complexity, \\
+%       \quad \textcolor{black!60}{poly-time computation, reasoned about with dependent types;}
+%     \item Geometry of Interaction models, \\
+%       \quad \textcolor{black!60}{incl Abramsky's \emph{A structural approach to reversible computation, 2005};}
+%     \item Imperative models, after Ahmed, Fluet, Morrisett's L$^3$; \\
+%       \quad \textcolor{black!60}{low-level memory usage; separation logic style reasoning}
+%     \item Staged models?
+%     \end{enumerate}
+
+%   \end{enumerate}
+
+% \end{frame}
+
+% \begin{frame}
+%   \raggedleft
+%   \textcolor{titlered}{\bf Realisability Models}
+
+%   \raggedright
+
+%   What can't you do?
+
+%   \pause
+%   \bigskip
+
+%   \begin{enumerate}
+%   \item Realisability
+%     \begin{displaymath}
+%       p \models_A a
+%     \end{displaymath}
+%     is a unary property of the ``extensional'' meaning $a$.
+%   \item Can't do non-unary properties \pause
+%   \item Usage annotations have also been used to model ``hyperproperties'':
+%     \begin{itemize}
+%     \item e.g. Information flow, Metric space models for differential privacy
+%     \end{itemize}
+%     \pause
+%   \item The requirement that zero-ing is admissible prevents this:
+%     \begin{displaymath}
+%       \inferrule* [right=Tm-Zero]
+%       {\Gamma \vdash M \stackrel\sigma: S}
+%       {0\Gamma \vdash M \stackrel0: S}
+%     \end{displaymath}
+%     Every term must have a unique extensional meaning.
+%   \end{enumerate}
+% \end{frame}
+
+% \titlecard{Internalising Resource Reasoning?}
+
+% \begin{frame}[t]
+%   \raggedleft
+%   \textcolor{titlered}{\bf Internalising Realisability}
+
+%   \raggedright
+
+%   Intuition:
+%   \begin{displaymath}
+%     \inferrule*
+%     {0\Gamma \vdash A}
+%     {0\Gamma \vdash R(A)}
+%   \end{displaymath}
+%   is the type of ``efficiently'' realisable programs of type $A$. \\
+%   \textcolor{black!60}{For LFPL: $R(\TyNat \multimap \TyNat^\circ) = $ Poly time functions}
+
+%   \pause
+%   \bigskip
+
+%   {\it Introduction and Elimination}
+%   \begin{mathpar}
+%     \inferrule*
+%     {0\Gamma \vdash a \stackrel1: A}
+%     {0\Gamma \vdash r(a) \stackrel\sigma: R(A)}
+
+%     \inferrule*
+%     {\Gamma \vdash a \stackrel\sigma: R(A)}
+%     {\Gamma \vdash r^{-1}(a) \stackrel\sigma: A}
+%   \end{mathpar}
+
+%   \pause
+%   \bigskip
+
+%   E.g.
+%   \begin{displaymath}
+%     \inferrule*
+%     {0\Gamma \vdash M \stackrel1: (x \stackrel1: A) \to B}
+%     {0\Gamma \vdash r(M) \stackrel0: R((x \stackrel1: A) \to B)}
+%   \end{displaymath}
+%   means ``the function $M$ is realisable in the underlying computational model''.
+% \end{frame}
+
+
+% \begin{frame}[t]
+
+%   \raggedleft
+%   \textcolor{titlered}{\bf Internalising Realisability}
+
+%   \raggedright
+
+%   Interpretation:
+%   \begin{displaymath}
+%     |\sem{R(A)}\gamma| = \{ a \in |\sem{A}\gamma| \mid \exists x \in \mathcal{A}.~x \models_{A(\gamma)} a \}
+%   \end{displaymath}
+
+%   \bigskip
+%   \pause
+
+%   \emph{Internalise} the realisability:
+%   \begin{displaymath}
+%     R(A) = \exists a \stackrel0: A. \exists p \stackrel0: \mathsf{Prog}. p \models_A a
+%   \end{displaymath}
+
+%   \bigskip
+
+%   with definition of $\models_A$ above, capture polytime functions as
+%   a type.
+
+%   \bigskip
+%   \pause
+
+%   Note: $R(A)$ must be a proposition -- cannot allow intensional
+%   information to be used to make decisions in the extensional world!
+% \end{frame}
+
+\titlecard{Summary}
+
+\begin{frame}
+  % \point Quantitative Type Theory: \\
+  % \qquad Fixed and extended formulation of McBride's ``Plenty o' Nuttin' '' system
+
+  % \bigskip
+
+  \point Quantitative Type Theory for Complexity Analysis\\
+%  \qquad Dependently typed version of LFPL and Amortised Analysis
+
+  \bigskip
+
+  \point Careful combination of dependency and linearity\\
+
+  \bigskip
+
+  \point Dependent Types for reasoning about programs \\
+
+  \bigskip
+
+  \point Dependent Types for reasoning about complexity (in the explicit system)
+
+  \pause
+  \bigskip
+
+  {\it Related Work}
+  \begin{itemize}
+  \item Sized types \\
+    \textcolor{black!60}{Used for controlling well foundedness} \\
+    \textcolor{black!60}{For complexity analysis require ``tick'' monads} \\
+  \item Gaboardi and Dal Lago: Linear Dependent Types for ICC \\
+    \textcolor{black!60}{Dependent Types only for counting time}
+  % \item Danielsson: \\
+  %   \textcolor{black!60}{Shallow Embedding of ``ticks''}
+  \item Future:
+    \begin{itemize}
+    \item LAL, EAL, BLL, Logspace, ...
+    \item Polytime mathematics?
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\end{document}

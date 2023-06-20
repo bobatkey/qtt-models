@@ -1,0 +1,116 @@
+#+TITLE: To do list for poly-time dependent types
+
+
+* Resource / Measure monoids [1/2]
+  - [X] Rename measure monoids to resource monoids
+  - [ ] Write out the proofs for the relevant monoids
+* The realiser language [3/5]
+  - [X] Fix up the uses of =in= in the realiser language
+  - [X] Define append for environments
+  - [X] Define shifting for expressions
+  - [ ] Sketch the proofs of the evaluation lemmas
+  - [ ] Move the definition of natural number to realiser section
+* Check over the SMCC and other basic structure [4/5]
+  - [X] Check the symmetric monoidal bits
+  - [X] Finish the closed structure (eval)
+  - [X] Cartesian products
+    - Probably easiest to construct these using pi-types
+    - Unlike what I previously thought, lazy pairs are required.
+  - [X] Coproducts
+  - [ ] Think of a name for the category
+* Tidy up the proof for the LFPL natural number iterator [3/4]
+  - [X] Fix up the induction hypothesis
+  - [X] Connect the induction hypothesis with the result for the iterator
+  - [X] Universal property
+  - [ ] Write out the duplication morphism as an alternative to
+    the iterator.
+* Think about more general inductive types in LFPL-style [0/3]
+  - [ ] Lists
+  - [ ] Trees (also consider building trees from nats?)
+  - [ ] `F`-algebras augmented with diamonds
+* Soft Linear Logic [0/4]
+  Perhaps see remarkable notes. Can't remember
+  - [ ] Polynomials semiring with maximum
+  - [ ] Measure monoid from the Hofmann/Dal Lago, using max instead of plus for sizes
+  - [ ] Work out what the overall theorem is
+  - [ ] Natural number iterator
+
+    \begin{displaymath}
+      iter : (z :1 A) -> (s :X A -> A) -> (n :1 Nat) -> A
+    \end{displaymath}
+* Linear / RAML version [0/5]
+  - [ ] Suitable measure monoid (linear time?)
+  - [ ] Write up the failure
+    - Most obvious with the failure of the "obvious" duplicator.
+    - Problem seems to be that we need to estimate the maximum
+      constant factor in the linear complexity, but we can't do
+      that compositionally in a way that allows for diamond
+      driven duplication.
+    - If we use a resource monoid that does allow the
+      duplication, it doesn't support monoidalness; and if we do
+      support monoidalness, we can't generate enough potential
+      in the !'d data to proceed.
+    - My conclusion is that it is not possible to do linear time
+      with a resource monoid. The polytime versions allow for
+      over compensation that the linear one does not.
+  - [ ] Natural number iterator, with clo
+  - [ ] Natural number iterator, with prepayment
+  - [ ] Counting only recursive calls
+    - How to make this imply linear time?
+    - Or how to get the explicit cost accounting to work?
+* QTT bits [0/13]
+  - [ ] Category of resourced contexts
+  - [ ] The `U` functor
+  - [ ] Addition
+  - [ ] Scaling
+  - [ ] Types, including substitution
+  - [ ] Terms, including substitution
+  - [ ] Resourced Terms
+  - [ ] Comprehension
+  - [ ] Pi-Types
+  - [ ] Sigma-Types
+  - [ ] Diamonds
+  - [ ] Natural number type
+  - [ ] Linearity reflection
+* (DT) Programming with polytime [0/4]
+  - [ ] Completeness proof
+  - [ ] List manipulation
+  - [ ] Tree manipulation
+  - [ ] Something dependently typed???
+  - [ ] Example programs written using the iterator
+    - Why not the recursor?
+    - Building up binomial iterators
+* Linearity reification for QTT [0/3]
+  - [ ] Spell out the typing rules
+  - [ ] Define the semantics
+  - [ ] Muse about how it might be implemented
+* Think about poly-time type checking [0/2]
+  - [ ] Formulate the problem
+  - [ ] Work out why changing the universe decoder rule probably won't work
+* Related Work [0/5]
+  - [ ] Hofmann / Dal Lago etc.
+  - [ ] Soft Linear Logic
+  - [ ] Non-idempotent intersection types
+  - [ ] RAML
+  - [ ] Other ICC: log space, safe recursion
+* Paper admin [0/2]
+  - [ ] PACM Style file
+  - [ ] Sketch the structure
+* Other semirings [0/1]
+  - [ ] Think about James Cranch's email (2020-03-16)
+* Related work
+** Light Linear Logic
+   - http://llwiki.ens-lyon.fr/mediawiki/index.php/Light_linear_logics
+   - "Light Linear Logic" by Girard.
+   - "Light Affine Lambda Calculus and Polytime Strong Normalization" by Kazushige Terui
+   - "Light Affine Set Theory: A Naive Set Theory of Polynomial Time" by Kazushige Terui
+
+   Looks to me like light linear logic does not fit into the QTT style
+   system well because the ! modality is not monoidal. Intuitionistic
+   Light Linear Logic has two modalities ! and S. ! allows
+   contraction, while S is monoidal. We can get from ! to S, but not
+   conversely.
+** Quantitative Classical Realisability
+   - Alöis Brunel
+   - Has a simpler form of resource monoid, but I think it only really
+     works in the classical (CPS) setting.

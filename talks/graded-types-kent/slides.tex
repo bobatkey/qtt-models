@@ -1,0 +1,284 @@
+% -*- TeX-engine: xetex -*-
+
+\documentclass[xetex,serif,mathserif,aspectratio=169]{beamer}
+
+\usepackage{mathpartir}
+\usepackage{stmaryrd}
+\usepackage{attrib}
+\usepackage{rotating}
+\usepackage{multirow}
+\usepackage{colortbl}
+\usepackage{mathpartir}
+\usepackage{tikz}
+\usepackage{cmll}
+
+\usepackage{libertine}
+\usepackage{newtxmath}
+\usepackage{zi4}
+
+\newcommand{\TyBool}{\mathsf{Bool}}
+\newcommand{\TySet}{\mathsf{Set}}
+\newcommand{\TyEl}{\mathsf{El}}
+
+\newcommand{\Ty}{\mathrm{Ty}}
+\newcommand{\Tm}{\mathrm{Tm}}
+\newcommand{\RTm}{\mathrm{RTm}}
+\newcommand{\wk}{\mathsf{wk}}
+\newcommand{\proj}{\mathsf{p}}
+\newcommand{\vartm}{\mathsf{v}}
+\newcommand{\sem}[1]{\llbracket #1 \rrbracket}
+\newcommand{\cat}[1]{\mathcal{#1}}
+\newcommand{\id}{\mathrm{id}}
+
+\newcommand{\op}{\mathsf{op}}
+\newcommand{\Set}{\mathrm{Set}}
+\newcommand{\skw}[1]{\mathit{#1}}
+
+\usepackage{mathtools}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+
+\newcommand{\tyPrim}[2]{\textup{\texttt{#1}}\langle #2 \rangle}
+
+\newcommand{\sechead}[1]{\textcolor{titlered}{\emph{#1}}}
+
+\newcommand{\typeOfCartSp}[1]{\lbag #1 \rbag}
+
+
+\def\greyuntil<#1>#2{{\temporal<#1>{\color{black!40}}{\color{black}}{\color{black}} #2}}
+\def\greyfrom<#1>#2{{\temporal<#1>{\color{black}}{\color{black!40}}{\color{black!40}} #2}}
+
+\newcommand{\superscript}[1]{\ensuremath{^{\textrm{#1}}}}
+\newcommand{\highlight}{\textbf}
+
+\newcommand{\atomprop}{\mathrm}
+\newcommand{\true}{\mathbf{T}}
+\newcommand{\false}{\mathbf{F}}
+
+\newcommand{\append}{\mathop{+\kern-3pt+}}
+
+\newcommand{\citationgrey}[1]{\textcolor{black!60}{#1}}
+
+\definecolor{titlered}{rgb}{0.8,0.0,0.0}
+
+\newcommand{\hlchange}[1]{\setlength{\fboxsep}{1pt}\colorbox{black!20}{$#1$}}
+\newcommand{\altdiff}[3]{\alt<-#1>{#2}{\hlchange{#3}}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% from http://tex.stackexchange.com/questions/118410/highlight-terms-in-equation-mode
+\newlength{\overwritelength}
+\newlength{\minimumoverwritelength}
+\setlength{\minimumoverwritelength}{0.1cm}
+\def\overwrite<#1>#2#3{%
+  \settowidth{\overwritelength}{$#2$}%
+  \ifdim\overwritelength<\minimumoverwritelength%
+    \setlength{\overwritelength}{\minimumoverwritelength}\fi%
+  \temporal<#1>{#2}%
+    {\stackrel%
+      {\begin{minipage}{\overwritelength}%
+          \color{red}\centering\small #3\\%
+          \rule{1pt}{9pt}%
+        \end{minipage}}%
+      {\colorbox{red!50}{\color{black}$\displaystyle#2$}}}%
+    {\stackrel%
+      {\begin{minipage}{\overwritelength}%
+          \color{red}\centering\small #3\\%
+          \rule{1pt}{9pt}%
+        \end{minipage}}%
+      {\colorbox{red!50}{\color{black}$\displaystyle#2$}}}}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\setbeamertemplate{navigation symbols}{}
+\usecolortheme[rgb={0.8,0,0}]{structure}
+\usefonttheme{serif}
+\usefonttheme{structurebold}
+\setbeamercolor{description item}{fg=black}
+
+\title{Unifying Models of Linear/Graded Dependent Types}
+\author{Robert Atkey \\
+  \emph{University of Strathclyde} \\
+  robert.atkey@strath.ac.uk}
+\date{Graded Types Meeting, U. of Kent, 17th June 2022}
+
+\newcommand{\youtem}{\quad \textcolor{titlered!80}{---} \quad}
+
+\newcommand{\titlecard}[1]{\begin{frame}%
+  \begin{center}%
+    \Large \textcolor{titlered}{#1}%
+  \end{center}%
+\end{frame}}
+
+\newcommand{\HEAD}[1]{\textcolor{titlered}{#1}}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}
+  Lots of proposals for combining type dependency with
+  gradings/linearity/intensional information.
+
+  \bigskip
+
+  \begin{itemize}
+  \item Linear Dependent Types \citationgrey{(V{\'a}k{\'a}r, 2014)}
+  \item Integrating Linear and Dependent Types \citationgrey{(Krishnaswami, Pradic, Benton, 2015)}
+  \item Quantitative Type Theory \citationgrey{(McBride, 2016; Atkey, 2018)}
+  \item Linear DTT for Quantum Programming Languages \citationgrey{(Fu, Kishida, Selinger, 2020)}
+  \item Graded Modal Dependent Type Theory \citationgrey{(Moon, Eades, Orchard, 2021)}
+  \item Graded Dependent Type System \citationgrey{(Choudhury, Eades, Eisenberg, Weirich, 2021)}
+  \item Parametric Quantifiers \citationgrey{(Nuyts, Vezzosi, Devriese, 2017)}
+  \item Multi-modal type theory \citationgrey{(Gratzer, Kaavos, Nuyts, Birkedal, 2021)}
+  \item Dependent Dependency Calculus \citationgrey{(Choudhury, Eades, Weirich, 2022)}
+  \item ...
+  \end{itemize}
+\end{frame}
+
+\titlecard{But what is \emph{really} going on?}
+
+\begin{frame}
+
+  \begin{enumerate}
+  \item<1-> Linearity vs. dependency. \\
+    {\small Does mentioning a variable in a type count as a use? Can
+      specifications consume resources?}
+
+    \bigskip
+  \item<2-> Intensional information used for specification \\
+    {\small productivity; information flow; parametricity; ...}
+
+    \bigskip
+  \item<3-> Intensional information used for runtime properties \\
+    {\small resource usage; “sub-Turing” implementability}
+  \end{enumerate}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Linearity vs Dependency}
+
+  QTT pretends that you can interleave linearity and dependency
+  \begin{displaymath}
+    x_1 \stackrel{\rho_1}: A_1, ..., x_n \stackrel{\rho_n}: A_n \vdash M \stackrel\sigma: B
+  \end{displaymath}
+  \begin{itemize}
+  \item But really there are two systems; $\sigma = 0$ and $\sigma = 1$
+  \item Every type has two parts:
+    \begin{itemize}
+    \item a specification part (normal type theory)
+    \item an implementation part (linear type theory)
+    \end{itemize}
+  \item In the $\sigma = 0$ fragment, only the specification part
+    matters; in particular types can only depend on the specification
+    part.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Linearity vs Dependency}
+
+  Split context systems \citationgrey{(Krishnaswami et al., 2015; V{\'a}k{\'a}r, 2014)}
+  \begin{displaymath}
+    x_1 : A_1, ..., x_n : A_n \mid y_1 : X_1, ..., y_m : X_m \vdash M : Y
+  \end{displaymath}
+
+  \bigskip
+  Explicit separation of specification types $A_i$ and implementation types $X_j$.
+
+  \bigskip
+  Conjectures:
+  \begin{enumerate}
+  \item QTT can be translated into a split context system
+  \item Split context system can be translated into QTT \\
+    \quad {\small (probably; terms and conditions apply)}
+  \item GMDTT and GraD can be translated into split context system
+    (assuming a universe)
+  \end{enumerate}
+
+  \pause
+  \begin{center}
+    {\Large All Linear Dependent Type Theories are a mode of use
+      of split contexts}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \frametitle{General Semantic Picture}
+
+  Looking at models helps us (me) understand how these interact.
+
+  \bigskip
+
+  \citationgrey{(V{\'a}k{\'a}r, 2015)}
+  \begin{displaymath}
+    L : \mathcal{C}^{op} \to \textbf{SMCCat}
+  \end{displaymath}
+
+  \emph{i.e.}, $\mathcal{C}$-indexed symmetric monoidal categories,
+  plus $\mathcal{C}$ is a \emph{Category with Families} and:
+  \begin{displaymath}
+    L_{\Gamma.A}(\mathsf{p}^*X,Y) \cong L_\Gamma(X, \forall_AY)
+  \end{displaymath}
+
+  \medskip
+  \begin{itemize}
+  \item QTT: Grothendieck construction applied to $L$ \\
+    {\small $\cdot$ \quad but each $L_\Gamma$ must be thin! (can this be relaxed?)} \\
+    {\small $\cdot$ \quad need a theory of graded multicategories}
+  \item QTT is essentially a form of abstract realisability
+  \item The $\mathsf{G}$ constructor of Krishnaswami et al.~yields a
+    notion of ``reflection'' for QTT
+  \item Could also be expressed in terms of \emph{monoidal fibrations}
+    or \emph{internal categories}.
+  \end{itemize}
+
+\end{frame}
+
+% \begin{frame}
+%   \frametitle{Reflection}
+
+%   Starting on making the implementation and specification parts interact:
+
+%   \begin{displaymath}
+%     \mathrm{Tm}(\Gamma, GX) \cong L_\Gamma(I, X)
+%   \end{displaymath}
+
+%   \begin{mathpar}
+%     \inferrule*
+%     {0\Gamma \vdash M \stackrel{1}: X}
+%     {0\Gamma \vdash \mathsf{G}M \stackrel{0}: \mathsf{G}X}
+
+%     \inferrule*
+%     {\Gamma \vdash M \stackrel{\sigma}: \mathsf{G}X}
+%     {\Gamma \vdash \mathsf{G}^{-1}M \stackrel{1}: X}
+%   \end{mathpar}
+
+%   \begin{itemize}
+%   \item
+%   \end{itemize}
+% \end{frame}
+
+\begin{frame}
+
+  \begin{enumerate}
+  \item Do these translations or this general model actually work?
+
+    \bigskip
+  \item Can we reason about the intensional information in
+    implementations?
+
+    \medskip {\small e.g., if we know a term is polytime computable,
+      then what can we do with this?}
+
+    \bigskip
+  \item How can we systematically create systems that combine
+    intensional information at the type level with runtime
+    information?
+
+    \medskip {\small e.g., productivity information, }
+
+    \medskip {\small Conjecture: multi-modal type theory will work
+      well for this (in place of $\mathcal{C}$)}
+  \end{enumerate}
+\end{frame}
+
+\end{document}

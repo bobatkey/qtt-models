@@ -1,0 +1,38 @@
+Bio
+---
+
+Dr. Robert Atkey is a Senior Lecturer at the University of Strathclyde
+in Scotland. He is leader of the Mathematically Structured Programming
+group in the Computer and Information Sciences department
+there. Before starting at Strathclyde in 2015, he did a PhD at the
+University of Edinburgh, postdoctoral research at the Universities of
+Edinburgh and Strathclyde, and worked in industry on static analysis
+of concurrent Java. His research is primarily focused on programming
+languages and their application to resource constrained computing,
+verification, and scientific computing.
+
+
+Title
+-----
+Dependent Types in Polynomial Time
+
+Abstract
+--------
+
+Dependently Typed programming languages such as Agda and Idris2, and
+to some extent Coq and Lean, allow a "very strongly typed" kind of
+functional programming. Their expressive type systems allow
+programmers to write detailed specifications for their programs that
+constrain and guide the programming experience, and provide verified
+guarantees about program behaviour.
+
+However, these specifications can only express extensional properties
+of programs -- properties relating the "what" of programs, but not the
+"how". For example, it is not possible to directly state that a
+particular function executes in polynomial time.
+
+I will present an extension to dependent type theory, based on linear
+types, that allows expression of properties like "polynomial time"
+within the language. I'll explain how the system works, and how to
+prove its soundness. Finally, I'll explain some consequences of such a
+system, and the kinds of complexity theory we can build upon it.

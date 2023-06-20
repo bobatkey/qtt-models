@@ -1,2 +1,19 @@
 *~
 *.agdai
+result
+# TeX stuff
+*.out
+*.pdf
+*.aux
+*.log
+*.toc
+*.blg
+*.bbl
+*.cut
+*.nav
+*.snm
+*.xdv
+*.fls
+*.fdb_latexmk
+*.thm
+/.direnv/
