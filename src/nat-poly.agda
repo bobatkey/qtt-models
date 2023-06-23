@@ -10,6 +10,7 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; trans; cong; subst; sym; cong₂)
 open Eq.≡-Reasoning -- using (begin_; _≡⟨⟩_; _≡⟨_⟩_; _∎)
 
+-- A ℕ-poly is represented by its coefficents.
 ℕ-poly : Set
 ℕ-poly = List ℕ
 

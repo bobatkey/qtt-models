@@ -3,7 +3,7 @@
 module amort-realisers where
 
 open import Data.Bool using (Bool; true; false)
-open import Data.Nat using (ℕ; suc; zero; _+_; _*_)
+open import Data.Nat using (ℕ; suc; zero; _+_; _*_; _≤_)
 open import Data.Nat.Properties using (≤-reflexive)
 open import Data.Nat.Solver using (module +-*-Solver)
 open import Data.Fin using (suc; zero)
@@ -28,9 +28,6 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   _-Obj : Set → Set₁
   Γ -Obj = Γ → Elem
 
-  ⟨_⟩_ : ∀ {Γ Δ} → (Γ → Δ) → Δ -Obj → Γ -Obj
-  ⟨ f ⟩ X = λ γ → X (f γ)
-
   record Eval {n} (Y : Elem) (e : exp n) (α : ∣ ℳ ∣) (η : env n) : Set where
     field
       result           : val
@@ -48,20 +45,45 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
       potential-ok : mor-potential potential
   open Realiser public
 
-  -- FIXME: never used this definition on its own
-  _⊧_⇒_ : (r : Realiser) (X Y : Elem) → Set
-  r ⊧ X ⇒ Y = ∀ {n} (η : env n) (α : ∣ ℳ ∣) v →
-              X .realises α v →
-              Eval Y (r .expr n) (r .potential ⊕ α) (η ,- v)
+  identity-realiser : Realiser
+  identity-realiser .expr _ = ` zero
+  identity-realiser .potential = acct 1
+  identity-realiser .potential-ok = `acct
 
   record _⊢_⇒_ (Γ : Set) (X Y : Γ → Elem) : Set where
     field
       realiser : Realiser
-      realises : ∀ γ → realiser ⊧ X γ ⇒ Y γ
+      realises : ∀ γ → ∀ {n} (η : env n) (α : ∣ ℳ ∣) v →
+                 X γ .realises α v →
+                 Eval (Y γ) (realiser .expr n) (realiser .potential ⊕ α) (η ,- v)
   open _⊢_⇒_ public
+
+  _⊢_≅_ : (Γ : Set) → Γ -Obj → Γ -Obj → Set
+  Γ ⊢ X ≅ Y = (Γ ⊢ X ⇒ Y) × (Γ ⊢ Y ⇒ X)
 
   infix 21 ⟨_⟩_
   infix 19 _⊢_⇒_
+
+  ------------------------------------------------------------------------
+  -- Part 0: Reindexing
+
+  ⟨_⟩_ : ∀ {Γ Δ} → (Γ → Δ) → Δ -Obj → Γ -Obj
+  ⟨ f ⟩ X = λ γ → X (f γ)
+
+  ⟨_⟩-map : ∀ {Γ Δ X Y} (f : Γ → Δ) → Δ ⊢ X ⇒ Y → Γ ⊢ (⟨ f ⟩ X) ⇒ (⟨ f ⟩ Y)
+  ⟨ f ⟩-map g .realiser = g .realiser
+  ⟨ f ⟩-map g .realises γ η α v x = g .realises (f γ) η α v x
+
+  ⟨id⟩ : ∀ {Γ X} → Γ ⊢ X ≅ (⟨ (λ x → x) ⟩ X)
+  ⟨id⟩ .proj₁ .realiser = identity-realiser
+  ⟨id⟩ .proj₁ .realises γ η α v x .result = v
+  ⟨id⟩ .proj₁ .realises γ η α v x .steps = 1
+  ⟨id⟩ .proj₁ .realises γ η α v x .result-potential = α
+  ⟨id⟩ .proj₁ .realises γ η α v x .evaluation = access zero
+  ⟨id⟩ .proj₁ .realises γ η α v x .result-realises = x
+  ⟨id⟩ .proj₁ .realises γ η α v x .accounted = acct⊕-
+  ⟨id⟩ .proj₂ = {!!}
+
 
   ------------------------------------------------------------------------
   -- Part I : Identity and composition in each fibre
@@ -105,6 +127,8 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   I γ .realises α true      = ⊥
   I γ .realises α false     = ⊥
   I γ .realises α (clo _ _) = ⊥
+
+  -- FIXME: I-subst
 
   terminal : ∀ {Γ X} → Γ ⊢ X ⇒ I
   terminal .realiser .expr _ = ⋆
@@ -271,7 +295,29 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   (X ⊸ Y) γ .realises α true = ⊥
   (X ⊸ Y) γ .realises α false = ⊥
 
-  -- FIXME: commutes with reindexing
+  ⊸-reindex-1 : ∀ {Γ₁ Γ₂ X Y} (f : Γ₁ → Γ₂) →
+              Γ₁ ⊢ ⟨ f ⟩ (X ⊸ Y) ⇒ (⟨ f ⟩ X) ⊸ (⟨ f ⟩ Y)
+  ⊸-reindex-1 f .realiser .expr _ = ` zero
+  ⊸-reindex-1 f .realiser .potential = acct 1
+  ⊸-reindex-1 f .realiser .potential-ok = `acct
+  ⊸-reindex-1 f .realises γ η α v x .result = v
+  ⊸-reindex-1 f .realises γ η α v x .steps = 1
+  ⊸-reindex-1 f .realises γ η α v x .result-potential = α
+  ⊸-reindex-1 f .realises γ η α v x .evaluation = access zero
+  ⊸-reindex-1 f .realises γ η α (clo E η') x .result-realises = x
+  ⊸-reindex-1 f .realises γ η α v x .accounted = acct⊕-
+
+  ⊸-reindex-2 : ∀ {Γ₁ Γ₂ X Y} (f : Γ₁ → Γ₂) →
+              Γ₁ ⊢ (⟨ f ⟩ X) ⊸ (⟨ f ⟩ Y) ⇒ ⟨ f ⟩ (X ⊸ Y)
+  ⊸-reindex-2 f .realiser .expr _ = ` zero
+  ⊸-reindex-2 f .realiser .potential = acct 1
+  ⊸-reindex-2 f .realiser .potential-ok = `acct
+  ⊸-reindex-2 f .realises γ η α v x .result = v
+  ⊸-reindex-2 f .realises γ η α v x .steps = 1
+  ⊸-reindex-2 f .realises γ η α v x .result-potential = α
+  ⊸-reindex-2 f .realises γ η α v x .evaluation = access zero
+  ⊸-reindex-2 f .realises γ η α (clo E η') x .result-realises = x
+  ⊸-reindex-2 f .realises γ η α v x .accounted = acct⊕-
 
   Λ : ∀ {Γ X Y Z} → Γ ⊢ X ⊗ Y ⇒ Z → Γ ⊢ X ⇒ Y ⊸ Z
   Λ f .realiser .expr n = ƛ (seq (suc (suc zero) , zero) then f .realiser .expr (3 + n))
@@ -393,6 +439,9 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
       is-realisable .result-realises = v-r .result-realises
       is-realisable .accounted = acct⊕- ⟫ v-r .accounted
 
+  ------------------------------------------------------------------------
+  -- Co-products
+
   `∃ : ∀ {Γ} A → (Σ Γ A) -Obj → Γ -Obj
   `∃ A X γ .realises α v = Σ[ a ∈ A γ ] X (γ , a) .realises α v
 
@@ -452,13 +501,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
 
   κ-map : ∀ {Γ : Set}{A B : Set} → (A → B) → Γ × A → Γ × B
   κ-map f (γ , a) = (γ , f a)
-{-
-  -- Alternative type, which can give the other one by use of ⊸
-  `cond : ∀ {Γ}{X : (Γ × Bool) -Obj} →
-          Γ ⊢ I ⇒ ⟨ κ true ⟩ X →
-          Γ ⊢ I ⇒ ⟨ κ false ⟩ X →
-          (Γ × Bool) ⊢ ⟨ proj₂ ⟩ `Bool ⇒ X
--}
+
   `cond : ∀ {Γ : Set}{X : Γ -Obj}{Y : (Γ × Bool) -Obj} →
           Γ ⊢ X ⇒ ⟨ κ true ⟩ Y →
           Γ ⊢ X ⇒ ⟨ κ false ⟩ Y →
@@ -528,6 +571,20 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
       β₁ ⊕ β₂ ,
       (α-α₁α₂ ⟫ pair α₁-nβ₁ ⟫ pair' α₂-nβ₂ ⟫ repeat-monoidal n) ,
       β₁ , β₂ , identity , β₁v₁ , β₂v₂
+    is-realisable .accounted = acct⊕-
+
+  !-wk : ∀ {Γ X m n} → m ≤ n → Γ ⊢ ![ n ] X ⇒ ![ m ] X
+  !-wk m≤n .realiser .expr _ = ` zero
+  !-wk m≤n .realiser .potential = acct 1
+  !-wk m≤n .realiser .potential-ok = `acct
+  !-wk m≤n .realises γ η α v (β , α-nβ , βv) = is-realisable
+    where
+    is-realisable : Eval _ _ _ _
+    is-realisable .result = v
+    is-realisable .steps = 1
+    is-realisable .result-potential = α
+    is-realisable .evaluation = access zero
+    is-realisable .result-realises = β , (α-nβ ⟫ repeat-wk m≤n) , βv
     is-realisable .accounted = acct⊕-
 
   derelict : ∀ {Γ X} → Γ ⊢ ![ 1 ] X ⇒ X

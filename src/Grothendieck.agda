@@ -120,7 +120,7 @@ record IndexedPreorder : Set₂ where
     -- FIXME: graded exponentials
   field
     -- FIXME: generalise to any semiring
-    ![_] : ∀ {Γ} → ℕ → Obj Γ → Obj Γ   -- FIXME: why not over Γ × ℕ
+    ![_] : ∀ {Γ} → ℕ → Obj Γ → Obj Γ   -- FIXME: why not over Γ × ℕ ???
     ![_]-map : ∀ {Γ} n {X Y} → Γ ⊢ X ⇒ Y → Γ ⊢ ![ n ] X ⇒ ![ n ] Y
     !-subst : ∀ {Γ₁ Γ₂ n A} (f : Γ₁ → Γ₂) → Γ₁ ⊢ ⟨ f ⟩ ![ n ] A ≅ ![ n ] (⟨ f ⟩ A)
     discard : ∀ {Γ X} → Γ ⊢ ![ 0 ] X ≅ I --- FIXME: any way to do without this being an iso?

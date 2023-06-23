@@ -5,8 +5,7 @@ module ResourceMonoid where
 open import Data.Nat as ℕ using (ℕ; _+_; _≤_; zero; suc; _*_)
 import Data.Nat.Properties as ℕ
 open import Data.Unit using (⊤; tt)
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl; trans; cong; subst; sym)
+open import Relation.Binary.PropositionalEquality using (sym)
 
 record rmonoid : Set₁ where
   field
@@ -63,6 +62,10 @@ record rmonoid : Set₁ where
   repeat-add-inv : ∀ {α} m n → 0 ≤D⟨ repeat (m + n) α , repeat m α ⊕ repeat n α ⟩
   repeat-add-inv zero n = unit'-inv
   repeat-add-inv (suc m) n = pair' (repeat-add-inv m n) ⟫ assoc
+
+  repeat-wk : ∀ {α m n} → m ≤ n → 0 ≤D⟨ repeat n α , repeat m α ⟩
+  repeat-wk ℕ.z≤n       = term
+  repeat-wk (ℕ.s≤s m≤n) = pair' (repeat-wk m≤n)
 
   repeat-mul : ∀ {α} m n → 0 ≤D⟨ repeat m (repeat n α) , repeat (m * n) α ⟩
   repeat-mul zero n = identity

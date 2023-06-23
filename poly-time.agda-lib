@@ -1,3 +1,4 @@
 name: poly-time
 include: src
 depend: standard-library
+flags: --postfix-projections

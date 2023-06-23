@@ -88,8 +88,6 @@ body-expr z s n =
 rec-expr : (z s : ∀ n → exp (1 + n)) → ∀ n → exp (suc n)
 rec-expr z s n = seq (ƛ (body-expr z s n)) then (zero · suc zero)
 
--- FIXME: is it important to have Γ here? Presumably could use `∀ to
--- include any extra stuff in X.
 recursor : ∀ {Γ X} →
            Γ ⊢ ◇ ⇒ ⟨ κ zero ⟩ X →
            (Γ × ℕ) ⊢ (X ⊗ ◇) ⇒ ⟨ κ-map suc ⟩ X →
