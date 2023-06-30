@@ -1,4 +1,4 @@
-{-# OPTIONS --postfix-projections --safe --without-K #-}
+{-# OPTIONS --safe #-}
 
 module amort-realisers where
 
@@ -16,23 +16,22 @@ open import MachineModel
 
 module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
 
-  open rmonoid using (∣_∣)
-  open rmonoid ℳ hiding (∣_∣)
+  open rmonoid ℳ renaming (Carrier to |ℳ|)
   open sub-monoid ℳ₀ renaming (member to mor-potential)
 
   record Elem : Set₁ where
     field
-      realises : ∣ ℳ ∣ → val → Set
+      realises : |ℳ| → val → Set
   open Elem public
 
   _-Obj : Set → Set₁
   Γ -Obj = Γ → Elem
 
-  record Eval {n} (Y : Elem) (e : exp n) (α : ∣ ℳ ∣) (η : env n) : Set where
+  record Eval {n} (Y : Elem) (e : exp n) (α : |ℳ|) (η : env n) : Set where
     field
       result           : val
       steps            : ℕ
-      result-potential : ∣ ℳ ∣
+      result-potential : |ℳ|
       evaluation       : e , η ⇓[ steps ] result
       result-realises  : Y .realises result-potential result
       accounted        : steps ≤D⟨ α , result-potential ⟩
@@ -41,14 +40,14 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   record Realiser : Set where
     field
       expr         : ∀ n → exp (suc n)
-      potential    : ∣ ℳ ∣
+      potential    : |ℳ|
       potential-ok : mor-potential potential
   open Realiser public
 
   record _⊢_⇒_ (Γ : Set) (X Y : Γ → Elem) : Set where
     field
       realiser : Realiser
-      realises : ∀ γ → ∀ {n} (η : env n) (α : ∣ ℳ ∣) v →
+      realises : ∀ γ → ∀ {n} (η : env n) (α : |ℳ|) v →
                  X γ .realises α v →
                  Eval (Y γ) (realiser .expr n) (realiser .potential ⊕ α) (η ,- v)
   open _⊢_⇒_ public
@@ -67,7 +66,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
 
   identity-realises : ∀ {Γ} {X Y : Γ -Obj} →
     (∀ {γ α v} → X γ .realises α v → Y γ .realises α v) →
-    ∀ γ {n} (η : env n) (α : ∣ ℳ ∣) v →
+    ∀ γ {n} (η : env n) (α : |ℳ|) v →
     X γ .realises α v → Eval (Y γ) (` zero) (acct 1 ⊕ α) (η ,- v)
   identity-realises X⊆Y γ η α v X-v .result = v
   identity-realises X⊆Y γ η α v X-v .steps = 1
@@ -149,8 +148,8 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
 
   _⊗_ : ∀ {Γ} → Γ -Obj → Γ -Obj → Γ -Obj
   (X ⊗ Y) γ .realises α (v₁ , v₂) =
-     Σ[ α₁ ∈ ∣ ℳ ∣ ]
-     Σ[ α₂ ∈ ∣ ℳ ∣ ]
+     Σ[ α₁ ∈ |ℳ| ]
+     Σ[ α₂ ∈ |ℳ| ]
      (0 ≤D⟨ α , α₁ ⊕ α₂ ⟩ × X γ .realises α₁ v₁ × Y γ .realises α₂ v₂)
   (X ⊗ Y) γ .realises α ⋆ = ⊥
   (X ⊗ Y) γ .realises α (clo _ _) = ⊥
@@ -289,7 +288,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   -- Part IV : Linear functions
   _⊸_ : ∀ {Γ} → Γ -Obj → Γ -Obj → Γ -Obj
   (X ⊸ Y) γ .realises α (clo E η) =
-     ∀ (α' : ∣ ℳ ∣) (v w : val) → X γ .realises α' v → Eval (Y γ) E (α ⊕ α') (η ,- w ,- v)
+     ∀ (α' : |ℳ|) (v w : val) → X γ .realises α' v → Eval (Y γ) E (α ⊕ α') (η ,- w ,- v)
   (X ⊸ Y) γ .realises α ⋆ = ⊥
   (X ⊸ Y) γ .realises α (_ , _) = ⊥
   (X ⊸ Y) γ .realises α true = ⊥
@@ -550,7 +549,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
 
   ![_] : ∀ {Γ} → ℕ → Γ -Obj → Γ -Obj
   ![ n ] X γ .realises α v =
-    Σ[ β ∈ ∣ ℳ ∣ ] (0 ≤D⟨ α , repeat n β ⟩ × X γ .realises β v)
+    Σ[ β ∈ |ℳ| ] (0 ≤D⟨ α , repeat n β ⟩ × X γ .realises β v)
 
   !-monoidal : ∀ {Γ X Y n} → Γ ⊢ (![ n ] X) ⊗ (![ n ] Y) ⇒ ![ n ] (X ⊗ Y)
   !-monoidal .realiser .expr _ = ` zero

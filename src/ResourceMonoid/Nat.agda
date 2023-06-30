@@ -1,4 +1,4 @@
-{-# OPTIONS --postfix-projections --safe --without-K #-}
+{-# OPTIONS --safe #-}
 
 module ResourceMonoid.Nat where
 
@@ -11,7 +11,7 @@ open import ResourceMonoid
 open rmonoid
 
 ℕ-rm : rmonoid
-∣ ℕ-rm ∣ = ℕ
+ℕ-rm .Carrier = ℕ
 ℕ-rm .∅ = 0
 ℕ-rm ._⊕_ = _+_
 ℕ-rm ._≤D⟨_,_⟩ k m n = k + n ≤ m

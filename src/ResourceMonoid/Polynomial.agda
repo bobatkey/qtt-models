@@ -1,4 +1,4 @@
-{-# OPTIONS --postfix-projections --safe --without-K #-}
+{-# OPTIONS --safe #-}
 
 module ResourceMonoid.Polynomial where
 
@@ -66,7 +66,7 @@ module poly-monoid (S : size-algebra) where
     -- also, the class of functions only needs to be closed under constants, 0 and +
     -- and sizes needn't be natural numbers?? Could be trees? Ordinals?
     poly-monoid : rmonoid
-    ∣ poly-monoid ∣ = ℕ × ℕ-poly
+    poly-monoid .Carrier = ℕ × ℕ-poly
     poly-monoid .∅ = 0 , 0-poly
     poly-monoid ._⊕_ (m , p) (n , q) = m ⊎ n , p +-poly q
     poly-monoid ._≤D⟨_,_⟩ k (m , p) (n , q) =
@@ -127,16 +127,15 @@ module poly-monoid (S : size-algebra) where
     poly-monoid₀ .`acct = refl
 
   open monoid-defn using (poly-monoid; poly-monoid₀) public
-  open rmonoid using (∣_∣)
-  open rmonoid poly-monoid using (_≤D⟨_,_⟩; _⊕_; ∅)
+  open rmonoid poly-monoid using (_≤D⟨_,_⟩; _⊕_; ∅; Carrier)
 
-  size : ℕ → ∣ poly-monoid ∣
+  size : ℕ → Carrier
   size n = n , 0-poly
 
-  raise : ∣ poly-monoid ∣ → ∣ poly-monoid ∣
+  raise : Carrier → Carrier
   raise (n , p) = (n , ↑ p)
 
-  scale : ℕ → ∣ poly-monoid ∣ → ∣ poly-monoid ∣
+  scale : ℕ → Carrier → Carrier
   scale n (m , p) = (m , nat-poly.scale n p)
 
   -- For LFPL, this only works for α that are of 0 size; in general of duplicable size

@@ -1,4 +1,4 @@
-{-# OPTIONS --postfix-projections --safe --without-K #-}
+{-# OPTIONS --safe #-}
 
 module ResourceMonoid where
 
@@ -9,11 +9,11 @@ open import Relation.Binary.PropositionalEquality using (sym)
 
 record rmonoid : Set₁ where
   field
-   ∣_∣      : Set
-   ∅        : ∣_∣
-   _⊕_      : ∣_∣ → ∣_∣ → ∣_∣
-   _≤D⟨_,_⟩ : ℕ → ∣_∣ → ∣_∣ → Set
-   acct     : ℕ → ∣_∣
+   Carrier   : Set
+   ∅        : Carrier
+   _⊕_      : Carrier → Carrier → Carrier
+   _≤D⟨_,_⟩ : ℕ → Carrier → Carrier → Set
+   acct     : ℕ → Carrier
 
    identity  : ∀ {m}           → 0 ≤D⟨ m , m ⟩
    _；_       : ∀ {k₁ k₂ m n l} → k₁ ≤D⟨ m , n ⟩ → k₂ ≤D⟨ n , l ⟩ → (k₁ + k₂) ≤D⟨ m , l ⟩
@@ -42,7 +42,7 @@ record rmonoid : Set₁ where
   fst : ∀ {m n} → 0 ≤D⟨ m ⊕ n , m ⟩
   fst = pair' term ； unit
 
-  repeat : ℕ → ∣_∣ → ∣_∣
+  repeat : ℕ → Carrier → Carrier
   repeat zero    m = ∅
   repeat (suc n) m = m ⊕ repeat n m
 
@@ -81,7 +81,7 @@ record rmonoid : Set₁ where
 record sub-monoid (M : rmonoid) : Set₁ where
   open rmonoid M
   field
-    member : ∣_∣ → Set
+    member : Carrier → Set
     _`⊕_   : ∀ {x y} → member x → member y → member (x ⊕ y)
     `∅     : member ∅
     `acct  : ∀ {k} → member (acct k)

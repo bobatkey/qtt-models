@@ -1,4 +1,4 @@
-{-# OPTIONS --postfix-projections --safe --without-K #-}
+{-# OPTIONS --safe #-}
 
 open import Data.Nat using (ℕ; zero; suc; _+_)
 open import Data.Fin using (Fin; zero; suc)
@@ -16,12 +16,11 @@ open import amort-realisers
 
 module LFPL.Iterator
   (M : rmonoid) (M₀ : sub-monoid M)
-  (open rmonoid using (∣_∣))
-  (open rmonoid M hiding (∣_∣))
-  (size         : ℕ → ∣ M ∣)
-  (raise        : ∣ M ∣ → ∣ M ∣)
+  (open rmonoid M renaming (Carrier to |M|))
+  (size         : ℕ → |M|)
+  (raise        : |M| → |M|)
   (raise-ok     : ∀ {α} → M₀ .sub-monoid.member α → M₀ .sub-monoid.member (raise α))
-  (scale        : ℕ → ∣ M ∣ → ∣ M ∣)
+  (scale        : ℕ → |M| → |M|)
   (raise→scale  : ∀ α n → 0 ≤D⟨ raise α ⊕ size n , scale n α ⊕ size n ⟩)
   (scale-zero   : ∀ α → 0 ≤D⟨ scale zero α , ∅ ⟩)
   (scale-suc    : ∀ n α → M₀ .sub-monoid.member α → 0 ≤D⟨ scale (1 + n) α , α ⊕ scale n α ⟩)
@@ -100,7 +99,7 @@ recursor{Γ}{X} z s .realises (γ , n) {n₀} η α v (refl , d) = is-realisable
     η₀ = η ,- v
     η₁ = η₀ ,- clo (body-expr (z .realiser .expr) (s .realiser .expr) n₀) η₀
 
-    loop-potential : ℕ → ∣ M ∣
+    loop-potential : ℕ → |M|
     loop-potential n = size (suc n) ⊕ scale n (acct 8 ⊕ s .realiser .potential) ⊕ (acct 2 ⊕ z .realiser .potential)
 
     loop : (n : ℕ) → Eval (X (γ , n)) (body-expr (z .realiser .expr) (s .realiser .expr) n₀) (loop-potential n) (η₁ ,- nat-val n)
@@ -115,7 +114,14 @@ recursor{Γ}{X} z s .realises (γ , n) {n₀} η α v (refl , d) = is-realisable
         is-realisable .evaluation = letpair zero (cond-true (suc zero) (r .evaluation))
         is-realisable .result-realises = r .result-realises
         is-realisable .accounted =
-          pair (pair' (scale-zero (acct 8 ⊕ s .realiser .potential))) ； pair unit ； assoc ； pair symmetry ； assoc-inv ； acct⊕- ； symmetry ； r .accounted
+          pair (pair' (scale-zero (acct 8 ⊕ s .realiser .potential))) ；
+          pair unit ；
+          assoc ；
+          pair symmetry ；
+          assoc-inv ；
+          acct⊕- ；
+          symmetry ；
+          r .accounted
     loop (suc n) = is-realisable
       where
         r-n = loop n
@@ -165,4 +171,16 @@ recursor{Γ}{X} z s .realises (γ , n) {n₀} η α v (refl , d) = is-realisable
     is-realisable .evaluation = seq lam (app zero (suc zero) (loop n .evaluation))
     is-realisable .result-realises = loop n .result-realises
     is-realisable .accounted =
-      (pair' d) ； (assoc-inv ； (assoc-inv ； (acct⊕- ； ((pair' symmetry) ； (assoc ； ((pair (pair' (size-suc n))) ； (pair assoc ； (pair (pair (raise→scale (acct 8 ⊕ s .realiser .potential) n)) ； (pair assoc-inv ； (pair (pair' (suc-size n)) ； (pair symmetry ； loop n .accounted)))))))))))
+      pair' d ；
+      assoc-inv ；
+      assoc-inv ；
+      acct⊕- ；
+      pair' symmetry ；
+      assoc ；
+      pair (pair' (size-suc n)) ；
+      pair assoc ；
+      pair (pair (raise→scale (acct 8 ⊕ s .realiser .potential) n)) ；
+      pair assoc-inv ；
+      pair (pair' (suc-size n)) ；
+      pair symmetry ；
+      loop n .accounted

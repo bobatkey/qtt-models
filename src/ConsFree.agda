@@ -1,4 +1,4 @@
-{-# OPTIONS --postfix-projections --safe --without-K #-}
+{-# OPTIONS --safe #-}
 
 module ConsFree where
 
@@ -20,7 +20,9 @@ open amort-indexed-preorder (poly-monoid) (poly-monoid₀)
 
 open import ConsFree.Iterator
    poly-monoid poly-monoid₀
-   size raise {!!} scale raise→scale scale-zero scale-suc
+   size raise
+   (λ { refl → refl })
+   scale raise→scale scale-zero scale-suc
    (duplicate-size λ n → ≤-reflexive (⊔-idem n))
 
 
