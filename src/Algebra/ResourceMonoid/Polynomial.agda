@@ -1,6 +1,6 @@
 {-# OPTIONS --safe #-}
 
-module ResourceMonoid.Polynomial where
+module Algebra.ResourceMonoid.Polynomial where
 
 open import Data.Nat using (ℕ; _≤_; _+_; _⊔_; z≤n; zero; suc; _*_)
 open import Data.Nat.Properties
@@ -10,7 +10,7 @@ open import Data.Nat.Properties
           +-monoʳ-≤; +-monoˡ-≤; *-zeroʳ)
 open import Data.Product using (_×_; _,_)
 open import Relation.Binary.PropositionalEquality using (_≡_; sym; cong; trans; cong₂; refl)
-open import ResourceMonoid
+open import Algebra.ResourceMonoid
 
 record size-algebra : Set where
   field
@@ -60,12 +60,12 @@ module poly-monoid (S : size-algebra) where
   open size-algebra S
 
   module monoid-defn where
-    open rmonoid
+    open ResourceMonoid
 
     -- this works for both _+_ and _⊔_: only needs the operation to be a pre-ordered commutative monoid s.t. m·n≤x → m≤x
     -- also, the class of functions only needs to be closed under constants, 0 and +
     -- and sizes needn't be natural numbers?? Could be trees? Ordinals?
-    poly-monoid : rmonoid
+    poly-monoid : ResourceMonoid
     poly-monoid .Carrier = ℕ × ℕ-poly
     poly-monoid .∅ = 0 , 0-poly
     poly-monoid ._⊕_ (m , p) (n , q) = m ⊎ n , p +-poly q
@@ -110,24 +110,24 @@ module poly-monoid (S : size-algebra) where
       ≤-refl ,
       λ x _ → +-monoʳ-≤ k (≤-reflexive (sym (*-zeroʳ x)))
 
-    open sub-monoid
+    open SubResourceMonoid
 
     -- the sub-monoid of idempotently sized things
-    poly-monoid-idem : sub-monoid poly-monoid
+    poly-monoid-idem : SubResourceMonoid poly-monoid
     poly-monoid-idem .member (x , p) = x ⊎ x ≡ x
     poly-monoid-idem ._`⊕_ {x , _}{y , _} ϕ₁ ϕ₂ =
        trans (interchange x y x y) (cong₂ _⊎_ ϕ₁ ϕ₂)
     poly-monoid-idem .`∅ = S .unit 0
     poly-monoid-idem .`acct = S .unit 0
 
-    poly-monoid₀ : sub-monoid poly-monoid
+    poly-monoid₀ : SubResourceMonoid poly-monoid
     poly-monoid₀ .member (x , p) = x ≡ 0
     poly-monoid₀ ._`⊕_ {x , _}{y , _} refl refl = S .unit 0
     poly-monoid₀ .`∅ = refl
     poly-monoid₀ .`acct = refl
 
   open monoid-defn using (poly-monoid; poly-monoid₀) public
-  open rmonoid poly-monoid using (_≤D⟨_,_⟩; _⊕_; ∅; Carrier)
+  open ResourceMonoid poly-monoid using (_≤D⟨_,_⟩; _⊕_; ∅; Carrier)
 
   size : ℕ → Carrier
   size n = n , 0-poly
@@ -152,7 +152,7 @@ module poly-monoid (S : size-algebra) where
     λ x _ → z≤n
 
   scale-suc : ∀ n α →
-              poly-monoid₀ .sub-monoid.member α →
+              poly-monoid₀ .SubResourceMonoid.member α →
               0 ≤D⟨ scale (1 + n) α , α ⊕ scale n α ⟩
   scale-suc n (m , p) refl =
     ≤-reflexive (S .size-algebra.unit 0) ,

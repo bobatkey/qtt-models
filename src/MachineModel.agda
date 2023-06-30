@@ -1,4 +1,4 @@
-{-# OPTIONS --postfix-projections --safe --without-K #-}
+{-# OPTIONS --safe #-}
 
 module MachineModel where
 
@@ -29,6 +29,10 @@ mutual
   data env : ℕ → Set where
     nil  : env 0
     _,-_ : ∀{n} → env n → val → env (suc n)
+
+nat-val : ℕ → val
+nat-val zero    = true , ⋆
+nat-val (suc n) = false , nat-val n
 
 infixl 10 _,-_
 
@@ -78,7 +82,3 @@ data _,_⇓[_]_ : ∀{n} → exp n → env n → ℕ → val → Set where
               E₁ , η ⇓[ k₁ ] V →
               E₂ , (η ,- V) ⇓[ k₂ ] V' →
               (seq E₁ then E₂) , η ⇓[ k₁ + 1 + k₂ ] V'
-
-nat-val : ℕ → val
-nat-val zero    = true , ⋆
-nat-val (suc n) = false , nat-val n

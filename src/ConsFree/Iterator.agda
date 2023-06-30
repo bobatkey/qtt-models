@@ -8,24 +8,23 @@ open import Data.Empty using (⊥)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong)
 
 open import MachineModel
-open import ResourceMonoid
-open import amort-realisers
+open import Algebra.ResourceMonoid
 
 module ConsFree.Iterator
-    (M : rmonoid) (M₀ : sub-monoid M)
-    (open rmonoid M renaming (Carrier to |M|))
+    (M : ResourceMonoid) (M₀ : SubResourceMonoid M)
+    (open ResourceMonoid M renaming (Carrier to |M|))
     (size         : ℕ → |M|)
     (raise        : |M| → |M|)
-    (raise-ok     : ∀ {α} → M₀ .sub-monoid.member α → M₀ .sub-monoid.member (raise α))
+    (raise-ok     : ∀ {α} → M₀ .SubResourceMonoid.member α → M₀ .SubResourceMonoid.member (raise α))
     (scale        : ℕ → |M| → |M|)
     (raise→scale  : ∀ α n → 0 ≤D⟨ raise α ⊕ size n , scale n α ⊕ size n ⟩)
     (scale-zero   : ∀ α → 0 ≤D⟨ scale zero α , ∅ ⟩)
-    (scale-suc    : ∀ n α → M₀ .sub-monoid.member α → 0 ≤D⟨ scale (1 + n) α , α ⊕ scale n α ⟩)
+    (scale-suc    : ∀ n α → M₀ .SubResourceMonoid.member α → 0 ≤D⟨ scale (1 + n) α , α ⊕ scale n α ⟩)
     (duplicate-size : ∀ n → 0 ≤D⟨ size n , size n ⊕ size n ⟩)
       where
 
-open amort-indexed-preorder M M₀
-open sub-monoid M₀
+open import AmortisedRealisabilityModel M M₀ public
+open SubResourceMonoid M₀
 
 `nat : ℕ -Obj
 `nat n .realises α v = v ≡ nat-val n × 0 ≤D⟨ α , size n ⟩

@@ -1,13 +1,13 @@
 {-# OPTIONS --safe #-}
 
-module ResourceMonoid where
+module Algebra.ResourceMonoid where
 
 open import Data.Nat as ℕ using (ℕ; _+_; _≤_; zero; suc; _*_)
 import Data.Nat.Properties as ℕ
 open import Data.Unit using (⊤; tt)
 open import Relation.Binary.PropositionalEquality using (sym)
 
-record rmonoid : Set₁ where
+record ResourceMonoid : Set₁ where
   field
    Carrier   : Set
    ∅        : Carrier
@@ -78,17 +78,19 @@ record rmonoid : Set₁ where
   infixl 50 _；_
   infixl 30 _⊕_
 
-record sub-monoid (M : rmonoid) : Set₁ where
-  open rmonoid M
+record SubResourceMonoid (M : ResourceMonoid) : Set₁ where
+  open ResourceMonoid M
   field
     member : Carrier → Set
     _`⊕_   : ∀ {x y} → member x → member y → member (x ⊕ y)
     `∅     : member ∅
     `acct  : ∀ {k} → member (acct k)
-open sub-monoid
 
-entire : ∀ M → sub-monoid M
-entire M .member α = ⊤
-entire M ._`⊕_ tt tt = tt
-entire M .`∅ = tt
-entire M .`acct = tt
+module _ where
+  open SubResourceMonoid
+
+  entire : ∀ M → SubResourceMonoid M
+  entire M .member α = ⊤
+  entire M ._`⊕_ tt tt = tt
+  entire M .`∅ = tt
+  entire M .`acct = tt

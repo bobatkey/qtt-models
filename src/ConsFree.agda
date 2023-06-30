@@ -9,14 +9,13 @@ open import Data.Product using (Σ-syntax; _,_; _×_; proj₁; proj₂)
 open import Relation.Binary.PropositionalEquality using (refl)
 
 open import MachineModel
-open import ResourceMonoid
-open import ResourceMonoid.Polynomial
-open import amort-realisers
+open import Algebra.ResourceMonoid
+open import Algebra.ResourceMonoid.Polynomial
 open import nat-poly using (ℕ-poly; ⟪_⟫; 0-poly)
 
 open poly-monoid (⊔-size-algebra)
 
-open amort-indexed-preorder (poly-monoid) (poly-monoid₀)
+open import AmortisedRealisabilityModel poly-monoid poly-monoid₀
 
 open import ConsFree.Iterator
    poly-monoid poly-monoid₀

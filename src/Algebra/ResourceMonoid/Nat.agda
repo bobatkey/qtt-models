@@ -1,16 +1,16 @@
 {-# OPTIONS --safe #-}
 
-module ResourceMonoid.Nat where
+module Algebra.ResourceMonoid.Nat where
 
 open import Data.Nat using (ℕ; _+_; _≤_; z≤n)
 open import Data.Nat.Properties
    using (≤-refl; ≤-trans; ≤-reflexive; +-assoc; +-monoʳ-≤; +-monoˡ-≤; +-comm; +-identityʳ)
 open import Relation.Binary.PropositionalEquality using (sym)
-open import ResourceMonoid
+open import Algebra.ResourceMonoid
 
-open rmonoid
+open ResourceMonoid
 
-ℕ-rm : rmonoid
+ℕ-rm : ResourceMonoid
 ℕ-rm .Carrier = ℕ
 ℕ-rm .∅ = 0
 ℕ-rm ._⊕_ = _+_
