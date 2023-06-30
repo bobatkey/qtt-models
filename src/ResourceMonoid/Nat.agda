@@ -6,7 +6,7 @@ open import Data.Nat using (ℕ; _+_; _≤_; z≤n)
 open import Data.Nat.Properties
    using (≤-refl; ≤-trans; ≤-reflexive; +-assoc; +-monoʳ-≤; +-monoˡ-≤; +-comm; +-identityʳ)
 open import Relation.Binary.PropositionalEquality using (sym)
-open import resource-monoid
+open import ResourceMonoid
 
 open rmonoid
 
@@ -17,7 +17,7 @@ open rmonoid
 ℕ-rm ._≤D⟨_,_⟩ k m n = k + n ≤ m
 ℕ-rm .acct k = k
 ℕ-rm .identity = ≤-refl
-ℕ-rm ._⟫_ {k₁} k₁+n≤m k₂+l≤n =
+ℕ-rm ._；_ {k₁} k₁+n≤m k₂+l≤n =
   ≤-trans (≤-trans (≤-reflexive (+-assoc k₁ _ _)) (+-monoʳ-≤ k₁ k₂+l≤n)) k₁+n≤m
 ℕ-rm .weaken k₁+n≤m k₂≤k₁ = ≤-trans (+-monoˡ-≤ _ k₂≤k₁) k₁+n≤m
 ℕ-rm .pair {k}{m}{n}{l} k+n≤m =

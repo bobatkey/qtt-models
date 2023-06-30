@@ -73,7 +73,7 @@ open sub-monoid M₀
     seq false (letpair (suc zero) (mkpair (suc (suc zero)) zero))
   is-realisable .result-realises =
     refl ,
-    (α-α₁α₂ ⟫ pair α₁-1 ⟫ pair' α₂-Sn ⟫ symmetry ⟫ suc-size (suc n))
+    (α-α₁α₂ ； pair α₁-1 ； pair' α₂-Sn ； symmetry ； suc-size (suc n))
   is-realisable .accounted = acct⊕-
 
 body-expr : (z s : ∀ n → exp (1 + n)) → ∀ n → exp (3 + n)
@@ -115,7 +115,7 @@ recursor{Γ}{X} z s .realises (γ , n) {n₀} η α v (refl , d) = is-realisable
         is-realisable .evaluation = letpair zero (cond-true (suc zero) (r .evaluation))
         is-realisable .result-realises = r .result-realises
         is-realisable .accounted =
-          pair (pair' (scale-zero (acct 8 ⊕ s .realiser .potential))) ⟫ pair unit ⟫ assoc ⟫ pair symmetry ⟫ assoc-inv ⟫ acct⊕- ⟫ symmetry ⟫ r .accounted
+          pair (pair' (scale-zero (acct 8 ⊕ s .realiser .potential))) ； pair unit ； assoc ； pair symmetry ； assoc-inv ； acct⊕- ； symmetry ； r .accounted
     loop (suc n) = is-realisable
       where
         r-n = loop n
@@ -133,20 +133,20 @@ recursor{Γ}{X} z s .realises (γ , n) {n₀} η α v (refl , d) = is-realisable
                         (seq (mkpair (suc zero) zero) (r-s .evaluation)))))
         is-realisable .result-realises = r-s .result-realises
         is-realisable .accounted =
-          weaken (pair (pair' (scale-suc n (acct 8 ⊕ s .realiser .potential) (`acct `⊕ s .realiser .potential-ok))) ⟫
-                  pair (pair (size-suc (suc n))) ⟫
-                  assoc-inv ⟫
-                  pair' assoc-inv ⟫
-                  assoc ⟫
-                  pair assoc-inv ⟫
-                  pair symmetry ⟫
-                  assoc-inv ⟫
-                  pair' (assoc ⟫ r-n .accounted) ⟫
-                  pair symmetry ⟫
-                  assoc-inv ⟫
-                  assoc-inv ⟫
-                  acct⊕- ⟫
-                  pair' symmetry ⟫
+          weaken (pair (pair' (scale-suc n (acct 8 ⊕ s .realiser .potential) (`acct `⊕ s .realiser .potential-ok))) ；
+                  pair (pair (size-suc (suc n))) ；
+                  assoc-inv ；
+                  pair' assoc-inv ；
+                  assoc ；
+                  pair assoc-inv ；
+                  pair symmetry ；
+                  assoc-inv ；
+                  pair' (assoc ； r-n .accounted) ；
+                  pair symmetry ；
+                  assoc-inv ；
+                  assoc-inv ；
+                  acct⊕- ；
+                  pair' symmetry ；
                   r-s .accounted)
             (begin
               3 + r-n .steps + 1 + (2 + (2 + r-s .steps))
@@ -165,4 +165,4 @@ recursor{Γ}{X} z s .realises (γ , n) {n₀} η α v (refl , d) = is-realisable
     is-realisable .evaluation = seq lam (app zero (suc zero) (loop n .evaluation))
     is-realisable .result-realises = loop n .result-realises
     is-realisable .accounted =
-      (pair' d) ⟫ (assoc-inv ⟫ (assoc-inv ⟫ (acct⊕- ⟫ ((pair' symmetry) ⟫ (assoc ⟫ ((pair (pair' (size-suc n))) ⟫ (pair assoc ⟫ (pair (pair (raise→scale (acct 8 ⊕ s .realiser .potential) n)) ⟫ (pair assoc-inv ⟫ (pair (pair' (suc-size n)) ⟫ (pair symmetry ⟫ loop n .accounted)))))))))))
+      (pair' d) ； (assoc-inv ； (assoc-inv ； (acct⊕- ； ((pair' symmetry) ； (assoc ； ((pair (pair' (size-suc n))) ； (pair assoc ； (pair (pair (raise→scale (acct 8 ⊕ s .realiser .potential) n)) ； (pair assoc-inv ； (pair (pair' (suc-size n)) ； (pair symmetry ； loop n .accounted)))))))))))

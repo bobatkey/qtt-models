@@ -44,7 +44,7 @@ duplicate-nat .realises n η α v (refl , α-n) = is-realisable
   is-realisable .evaluation = mkpair zero zero
   is-realisable .result-realises =
     size n , size n , duplicate-size n , (refl , identity) , (refl , identity)
-  is-realisable .accounted = acct⊕- ⟫ α-n
+  is-realisable .accounted = acct⊕- ； α-n
 
 body-expr : (z s : ∀ n → exp (1 + n)) → ∀ n → exp (3 + n)
 body-expr z s n =
@@ -88,7 +88,7 @@ recursor{Γ}{X} z s .realises (γ , n) {n₀} η α v (refl , d) = is-realisable
         is-realisable .evaluation = letpair zero (cond-true (suc zero) (r .evaluation))
         is-realisable .result-realises = r .result-realises
         is-realisable .accounted =
-          pair (scale-zero (acct 4 ⊕ s .realiser .potential)) ⟫ unit' ⟫ acct⊕- ⟫ unit-inv ⟫ r .accounted
+          pair (scale-zero (acct 4 ⊕ s .realiser .potential)) ； unit' ； acct⊕- ； unit-inv ； r .accounted
     loop (suc n) = is-realisable
       where
         r-n = loop n
@@ -101,7 +101,7 @@ recursor{Γ}{X} z s .realises (γ , n) {n₀} η α v (refl , d) = is-realisable
         is-realisable .evaluation = letpair zero (cond-false (suc zero) (seq (app (suc (suc (suc zero))) zero (r-n .evaluation)) (r-s .evaluation)))
         is-realisable .result-realises = r-s .result-realises
         is-realisable .accounted =
-          weaken (pair (scale-suc n (acct 4 ⊕ s .realiser .potential) (`acct `⊕ s .realiser .potential-ok)) ⟫ assoc-inv ⟫ assoc-inv ⟫ acct⊕- ⟫ pair' (r-n .accounted) ⟫ r-s .accounted)
+          weaken (pair (scale-suc n (acct 4 ⊕ s .realiser .potential) (`acct `⊕ s .realiser .potential-ok)) ； assoc-inv ； assoc-inv ； acct⊕- ； pair' (r-n .accounted) ； r-s .accounted)
                  (≤-reflexive (cong (λ □ → suc (suc (suc □))) (cong (λ □ → □ + r-s .steps) (+-comm (loop n .steps) 1))))
            -- Given: k₁ ≤D⟨ loop-potential n , r-n .result-potential ⟩
            --        k₂ ≤D⟨ s .potential ⊕ r-n .result-potential , r-s .result-potential ⟩
@@ -116,7 +116,7 @@ recursor{Γ}{X} z s .realises (γ , n) {n₀} η α v (refl , d) = is-realisable
     is-realisable .evaluation = seq lam (app zero (suc zero) (loop n .evaluation))
     is-realisable .result-realises = loop n .result-realises
     is-realisable .accounted =
-      pair' d ⟫ assoc-inv ⟫ assoc-inv ⟫ acct⊕- ⟫ pair' symmetry ⟫ assoc ⟫ pair (raise→scale (acct 4 ⊕ s .realiser .potential) n) ⟫ pair (pair' term ⟫ unit) ⟫ loop n .accounted
+      pair' d ； assoc-inv ； assoc-inv ； acct⊕- ； pair' symmetry ； assoc ； pair (raise→scale (acct 4 ⊕ s .realiser .potential) n) ； pair (pair' term ； unit) ； loop n .accounted
        -- Given: loop n .steps ≤D⟨ loop-potential n , loop n .result-potential ⟩
        -- 3 + loop n .steps ≤D⟨ γ ⊕ α , loop n .result-potential ⟩
        --                       acct 3 ⊕ raise (acct 4 ⊕ s .potential) ⊕ (acct 2 ⊕ z .potential) ⊕ α

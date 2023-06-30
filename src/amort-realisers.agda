@@ -45,11 +45,6 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
       potential-ok : mor-potential potential
   open Realiser public
 
-  identity-realiser : Realiser
-  identity-realiser .expr _ = ` zero
-  identity-realiser .potential = acct 1
-  identity-realiser .potential-ok = `acct
-
   record _⊢_⇒_ (Γ : Set) (X Y : Γ → Elem) : Set where
     field
       realiser : Realiser
@@ -64,6 +59,23 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   infix 21 ⟨_⟩_
   infix 19 _⊢_⇒_
 
+  ------------------------------------------------------------------------------
+  identity-realiser : Realiser
+  identity-realiser .expr _ = ` zero
+  identity-realiser .potential = acct 1
+  identity-realiser .potential-ok = `acct
+
+  identity-realises : ∀ {Γ} {X Y : Γ -Obj} →
+    (∀ {γ α v} → X γ .realises α v → Y γ .realises α v) →
+    ∀ γ {n} (η : env n) (α : ∣ ℳ ∣) v →
+    X γ .realises α v → Eval (Y γ) (` zero) (acct 1 ⊕ α) (η ,- v)
+  identity-realises X⊆Y γ η α v X-v .result = v
+  identity-realises X⊆Y γ η α v X-v .steps = 1
+  identity-realises X⊆Y γ η α v X-v .result-potential = α
+  identity-realises X⊆Y γ η α v X-v .evaluation = access zero
+  identity-realises X⊆Y γ η α v X-v .result-realises = X⊆Y X-v
+  identity-realises X⊆Y γ η α v X-v .accounted = acct⊕-
+
   ------------------------------------------------------------------------
   -- Part 0: Reindexing
 
@@ -76,28 +88,16 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
 
   ⟨id⟩ : ∀ {Γ X} → Γ ⊢ X ≅ (⟨ (λ x → x) ⟩ X)
   ⟨id⟩ .proj₁ .realiser = identity-realiser
-  ⟨id⟩ .proj₁ .realises γ η α v x .result = v
-  ⟨id⟩ .proj₁ .realises γ η α v x .steps = 1
-  ⟨id⟩ .proj₁ .realises γ η α v x .result-potential = α
-  ⟨id⟩ .proj₁ .realises γ η α v x .evaluation = access zero
-  ⟨id⟩ .proj₁ .realises γ η α v x .result-realises = x
-  ⟨id⟩ .proj₁ .realises γ η α v x .accounted = acct⊕-
-  ⟨id⟩ .proj₂ = {!!}
-
+  ⟨id⟩ .proj₁ .realises = identity-realises (λ x → x)
+  ⟨id⟩ .proj₂ .realiser = identity-realiser
+  ⟨id⟩ .proj₂ .realises = identity-realises (λ x → x)
 
   ------------------------------------------------------------------------
   -- Part I : Identity and composition in each fibre
 
   id : ∀ {Γ X} → Γ ⊢ X ⇒ X
-  id .realiser .expr _ = ` zero
-  id .realiser .potential = acct 1
-  id .realiser .potential-ok = `acct
-  id .realises γ η α v X-α-v .result = v
-  id .realises γ η α v X-α-v .steps = 1
-  id .realises γ η α v X-α-v .result-potential = α
-  id .realises γ η α v X-α-v .evaluation = access zero
-  id .realises γ η α v X-α-v .result-realises = X-α-v
-  id .realises γ η α v X-α-v .accounted = acct⊕-
+  id .realiser = identity-realiser
+  id .realises = identity-realises (λ x → x)
 
   _∘_ : ∀ {Γ X Y Z} → Γ ⊢ Y ⇒ Z → Γ ⊢ X ⇒ Y → Γ ⊢ X ⇒ Z
   (f ∘ g) .realiser .expr n = seq (g .realiser .expr n) then f .realiser .expr (suc n)
@@ -116,7 +116,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
       is-realisable .evaluation = seq (gr .evaluation) (fr .evaluation)
       is-realisable .result-realises = fr .result-realises
       is-realisable .accounted =
-         assoc-inv ⟫ assoc-inv ⟫ pair' (pair' (gr .accounted)) ⟫ acct⊕- ⟫ fr .accounted
+         assoc-inv ； assoc-inv ； pair' (pair' (gr .accounted)) ； acct⊕- ； fr .accounted
 
   ------------------------------------------------------------------------
   -- Part II : has a terminal object
@@ -170,7 +170,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
       is-realisable .steps = 2
       is-realisable .result-potential = α
       is-realisable .evaluation = letpair zero (mkpair zero (suc zero))
-      is-realisable .result-realises = α₂ , α₁ , d ⟫ symmetry , Y-α₂-v₂ , X-α₁-v₁
+      is-realisable .result-realises = α₂ , α₁ , d ； symmetry , Y-α₂-v₂ , X-α₁-v₁
       is-realisable .accounted = acct⊕-
 
   assoc-m : ∀ {Γ X Y Z} → Γ ⊢ X ⊗ (Y ⊗ Z) ⇒ (X ⊗ Y) ⊗ Z
@@ -194,7 +194,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
             (seq (mkpair (suc (suc (suc zero))) (suc zero))
               (mkpair zero (suc zero))))
      is-realisable .result-realises =
-        α₁ ⊕ α₃ , α₄ , (d ⟫ pair' d' ⟫ assoc) ,
+        α₁ ⊕ α₃ , α₄ , (d ； pair' d' ； assoc) ,
         (α₁ , α₃ , identity , vx-r , vy-r) , vz-r
      is-realisable .accounted = acct⊕-
 
@@ -214,7 +214,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
      is-realisable .steps = 5
      is-realisable .result-potential = α
      is-realisable .evaluation = letpair zero (letpair (suc zero) (seq (mkpair zero (suc (suc zero))) (mkpair (suc (suc zero)) zero)))
-     is-realisable .result-realises = α₃ , α₄ ⊕ α₂ , (d ⟫ pair d' ⟫ assoc-inv) , vx-r , α₄ , α₂ , identity , vy-r , vz-r
+     is-realisable .result-realises = α₃ , α₄ ⊕ α₂ , (d ； pair d' ； assoc-inv) , vx-r , α₄ , α₂ , identity , vy-r , vz-r
      is-realisable .accounted = acct⊕-
 
   unit-m : ∀ {Γ X} → Γ ⊢ (X ⊗ I) ⇒ X
@@ -229,7 +229,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
       is-realisable .result-potential = α₁
       is-realisable .evaluation = letpair zero (access (suc zero))
       is-realisable .result-realises = vx-r
-      is-realisable .accounted = acct⊕- ⟫ d ⟫ pair' ⋆-r ⟫ unit
+      is-realisable .accounted = acct⊕- ； d ； pair' ⋆-r ； unit
 
   unit-inv-m : ∀ {Γ X} → Γ ⊢ X ⇒ (X ⊗ I)
   unit-inv-m .realiser .expr _ = seq ⋆ then (suc zero , zero)
@@ -273,7 +273,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
       is-realisable .result-realises =
         r₁ .result-potential , r₂ .result-potential , identity , r₁ .result-realises , r₂ .result-realises
       is-realisable .accounted =
-        weaken (assoc-inv ⟫ acct⊕- ⟫ pair' (d ⟫ symmetry) ⟫ assoc-inv ⟫ pair' (assoc ⟫ symmetry) ⟫ assoc ⟫ pair' (r₂ .accounted) ⟫ pair (r₁ .accounted))
+        weaken (assoc-inv ； acct⊕- ； pair' (d ； symmetry) ； assoc-inv ； pair' (assoc ； symmetry) ； assoc ； pair' (r₂ .accounted) ； pair (r₁ .accounted))
                (≤-reflexive (begin
                                1 + (r₂ .steps + 1) + (2 + r₁ .steps + 1 + 1)
                              ≡⟨ +-*-Solver.solve 2
@@ -297,9 +297,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
 
   ⊸-reindex-1 : ∀ {Γ₁ Γ₂ X Y} (f : Γ₁ → Γ₂) →
               Γ₁ ⊢ ⟨ f ⟩ (X ⊸ Y) ⇒ (⟨ f ⟩ X) ⊸ (⟨ f ⟩ Y)
-  ⊸-reindex-1 f .realiser .expr _ = ` zero
-  ⊸-reindex-1 f .realiser .potential = acct 1
-  ⊸-reindex-1 f .realiser .potential-ok = `acct
+  ⊸-reindex-1 f .realiser = identity-realiser
   ⊸-reindex-1 f .realises γ η α v x .result = v
   ⊸-reindex-1 f .realises γ η α v x .steps = 1
   ⊸-reindex-1 f .realises γ η α v x .result-potential = α
@@ -309,9 +307,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
 
   ⊸-reindex-2 : ∀ {Γ₁ Γ₂ X Y} (f : Γ₁ → Γ₂) →
               Γ₁ ⊢ (⟨ f ⟩ X) ⊸ (⟨ f ⟩ Y) ⇒ ⟨ f ⟩ (X ⊸ Y)
-  ⊸-reindex-2 f .realiser .expr _ = ` zero
-  ⊸-reindex-2 f .realiser .potential = acct 1
-  ⊸-reindex-2 f .realiser .potential-ok = `acct
+  ⊸-reindex-2 f .realiser = identity-realiser
   ⊸-reindex-2 f .realises γ η α v x .result = v
   ⊸-reindex-2 f .realises γ η α v x .steps = 1
   ⊸-reindex-2 f .realises γ η α v x .result-potential = α
@@ -341,8 +337,8 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
           is-realisable' .result-potential = r .result-potential
           is-realisable' .evaluation = seq (mkpair (suc (suc zero)) zero) (r .evaluation)
           is-realisable' .result-realises = r .result-realises
-          is-realisable' .accounted = assoc-inv ⟫ assoc-inv ⟫ acct⊕- ⟫ r .accounted
-      is-realisable .accounted = assoc-inv ⟫ acct⊕-
+          is-realisable' .accounted = assoc-inv ； assoc-inv ； acct⊕- ； r .accounted
+      is-realisable .accounted = assoc-inv ； acct⊕-
 
   apply : ∀ {Γ X Y} → Γ ⊢ (X ⊸ Y) ⊗ X ⇒ Y
   apply .realiser .expr _ = letpair zero then (suc zero · zero)
@@ -358,7 +354,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
       is-realisable .result-potential = y-r .result-potential
       is-realisable .evaluation = letpair zero (app (suc zero) zero (y-r .evaluation))
       is-realisable .result-realises = y-r .result-realises
-      is-realisable .accounted = acct⊕- ⟫ d ⟫ y-r .accounted
+      is-realisable .accounted = acct⊕- ； d ； y-r .accounted
 
   ------------------------------------------------------------------------
   -- Part V : Products
@@ -418,8 +414,8 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
        is-realisable .result-potential = f-r .result-potential
        is-realisable .evaluation = seq (access (suc (suc zero))) (f-r .evaluation)
        is-realisable .result-realises = f-r .result-realises
-       is-realisable .accounted = assoc-inv ⟫ acct⊕- ⟫ f-r .accounted
-  `∀-intro f .realises γ η α v X-α-v .accounted = assoc-inv ⟫ acct⊕-
+       is-realisable .accounted = assoc-inv ； acct⊕- ； f-r .accounted
+  `∀-intro f .realises γ η α v X-α-v .accounted = assoc-inv ； acct⊕-
 
   `∀-proj : ∀ {Γ A X} →
             (Σ Γ A) ⊢ (⟨ proj₁ ⟩ `∀ A X) ⇒ X
@@ -437,7 +433,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
       is-realisable .evaluation =
         seq mkunit (app (suc zero) zero (v-r .evaluation))
       is-realisable .result-realises = v-r .result-realises
-      is-realisable .accounted = acct⊕- ⟫ v-r .accounted
+      is-realisable .accounted = acct⊕- ； v-r .accounted
 
   ------------------------------------------------------------------------
   -- Co-products
@@ -483,7 +479,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   `true .realises γ η α ⋆ r .result-potential = ∅
   `true .realises γ η α ⋆ r .evaluation = true
   `true .realises γ η α ⋆ r .result-realises = identity
-  `true .realises γ η α ⋆ r .accounted = acct⊕- ⟫ r
+  `true .realises γ η α ⋆ r .accounted = acct⊕- ； r
 
   `false : ∀ {Γ} → Γ ⊢ I ⇒ (⟨ K false ⟩ `Bool)
   `false .realiser .expr _ = false
@@ -494,7 +490,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   `false .realises γ η α ⋆ r .result-potential = ∅
   `false .realises γ η α ⋆ r .evaluation = false
   `false .realises γ η α ⋆ r .result-realises = identity
-  `false .realises γ η α ⋆ r .accounted = acct⊕- ⟫ r
+  `false .realises γ η α ⋆ r .accounted = acct⊕- ； r
 
   κ : ∀ {Γ A : Set} → A → Γ → Γ × A
   κ a γ = (γ , a)
@@ -527,10 +523,10 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
         letpair zero (cond-false zero (seq (access (suc zero)) (r .evaluation)))
       is-realisable .result-realises = r .result-realises
       is-realisable .accounted =
-        assoc-inv ⟫ pair (acct⊕- ⟫ term) ⟫ unit' ⟫ pair' d' ⟫ r .accounted
+        assoc-inv ； pair (acct⊕- ； term) ； unit' ； pair' d' ； r .accounted
         where
           d' : 0 ≤D⟨ α , α₁ ⟩
-          d' = d ⟫ pair' b-r ⟫ unit
+          d' = d ； pair' b-r ； unit
   `cond on-true on-false .realises (γ , true) η α (vx , true) (α₁ , α₂ , d , vx-r , b-r) =
     is-realisable
     where
@@ -544,10 +540,10 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
         letpair zero (cond-true zero (seq (access (suc zero)) (r .evaluation)))
       is-realisable .result-realises = r .result-realises
       is-realisable .accounted =
-        assoc-inv ⟫ assoc-inv ⟫ acct⊕- ⟫ pair' (pair term ⟫ unit') ⟫ pair' d' ⟫ r .accounted
+        assoc-inv ； assoc-inv ； acct⊕- ； pair' (pair term ； unit') ； pair' d' ； r .accounted
         where
           d' : 0 ≤D⟨ α , α₁ ⟩
-          d' = d ⟫ pair' b-r ⟫ unit
+          d' = d ； pair' b-r ； unit
 
   ------------------------------------------------------------------------
   -- Part VII : ℕ-graded repetition exponential
@@ -569,7 +565,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
     is-realisable .evaluation = access zero
     is-realisable .result-realises =
       β₁ ⊕ β₂ ,
-      (α-α₁α₂ ⟫ pair α₁-nβ₁ ⟫ pair' α₂-nβ₂ ⟫ repeat-monoidal n) ,
+      (α-α₁α₂ ； pair α₁-nβ₁ ； pair' α₂-nβ₂ ； repeat-monoidal n) ,
       β₁ , β₂ , identity , β₁v₁ , β₂v₂
     is-realisable .accounted = acct⊕-
 
@@ -584,7 +580,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
     is-realisable .steps = 1
     is-realisable .result-potential = α
     is-realisable .evaluation = access zero
-    is-realisable .result-realises = β , (α-nβ ⟫ repeat-wk m≤n) , βv
+    is-realisable .result-realises = β , (α-nβ ； repeat-wk m≤n) , βv
     is-realisable .accounted = acct⊕-
 
   derelict : ∀ {Γ X} → Γ ⊢ ![ 1 ] X ⇒ X
@@ -597,7 +593,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
   derelict .realises γ η α v (β , α-β , β-v) .evaluation = access zero
   derelict .realises γ η α v (β , α-β , β-v) .result-realises = β-v
   derelict .realises γ η α v (β , α-β , β-v) .accounted =
-    pair account ⟫ unit' ⟫ α-β ⟫ unit
+    pair account ； unit' ； α-β ； unit
 
   comult : ∀ {Γ X m n} → Γ ⊢ ![ m ] (![ n ] X) ⇒ ![ m * n ] X
   comult .realiser .expr _ = ` zero
@@ -612,7 +608,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
     is-realisable .evaluation = access zero
     is-realisable .result-realises =
       β' ,
-      (α-m-β ⟫ repeat-f m β-n-β' ⟫ repeat-mul m n) ,
+      (α-m-β ； repeat-f m β-n-β' ； repeat-mul m n) ,
       β'-v
     is-realisable .accounted = acct⊕-
 
@@ -629,7 +625,7 @@ module amort-indexed-preorder (ℳ : rmonoid) (ℳ₀ : sub-monoid ℳ) where
     is-realisable .evaluation = mkpair zero zero
     is-realisable .result-realises =
       repeat m β , repeat n β ,
-      α-m+n-β ⟫ repeat-add-inv m n ,
+      α-m+n-β ； repeat-add-inv m n ,
       (β , identity , β-v) ,
       (β , identity , β-v)
     is-realisable .accounted = acct⊕-

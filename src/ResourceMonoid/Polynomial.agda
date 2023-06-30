@@ -74,7 +74,7 @@ module poly-monoid (S : size-algebra) where
     poly-monoid .acct n = 0 , const-poly n
     poly-monoid .identity {n , p} =
        ≤-refl , λ x n≤x → ≤-refl
-    poly-monoid ._⟫_ {k₁}{k₂}{m , p}{n , q}{l , r} (n≤m , ϕ₁) (l≤n , ϕ₂) =
+    poly-monoid ._；_ {k₁}{k₂}{m , p}{n , q}{l , r} (n≤m , ϕ₁) (l≤n , ϕ₂) =
        ≤-trans l≤n n≤m ,
        λ x m≤x → ≤-trans (≤-reflexive (+-assoc k₁ k₂ (⟪ r ⟫ x)))
                  (≤-trans (+-monoʳ-≤ k₁ (ϕ₂ x (≤-trans n≤m m≤x)))
