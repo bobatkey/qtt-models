@@ -64,15 +64,29 @@ identity-realiser .potential = acct 1
 identity-realiser .potential-ok = `acct
 
 identity-realises : ∀ {Γ} {X Y : Γ -Obj} →
-  (∀ {γ α v} → X γ .realises α v → Y γ .realises α v) →
+  (∀ γ α v → X γ .realises α v → Y γ .realises α v) →
   ∀ γ {n} (η : env n) (α : |ℳ|) v →
   X γ .realises α v → Eval (Y γ) (` zero) (acct 1 ⊕ α) (η ,- v)
 identity-realises X⊆Y γ η α v X-v .result = v
 identity-realises X⊆Y γ η α v X-v .steps = 1
 identity-realises X⊆Y γ η α v X-v .result-potential = α
 identity-realises X⊆Y γ η α v X-v .evaluation = access zero
-identity-realises X⊆Y γ η α v X-v .result-realises = X⊆Y X-v
+identity-realises X⊆Y γ η α v X-v .result-realises = X⊆Y γ α v X-v
 identity-realises X⊆Y γ η α v X-v .accounted = acct⊕-
+
+identity-realised : ∀ {Γ} {X Y : Γ -Obj} →
+  (∀ γ α v → X γ .realises α v → Y γ .realises α v) →
+  Γ ⊢ X ⇒ Y
+identity-realised X⊆Y .realiser = identity-realiser
+identity-realised X⊆Y .realises = identity-realises X⊆Y
+
+
+realised-iso : ∀ {Γ} {X Y : Γ -Obj} →
+  (∀ γ α v → X γ .realises α v → Y γ .realises α v) →
+  (∀ γ α v → Y γ .realises α v → X γ .realises α v) →
+  Γ ⊢ X ≅ Y
+realised-iso X⊆Y Y⊆X .proj₁ = identity-realised X⊆Y
+realised-iso X⊆Y Y⊆X .proj₂ = identity-realised Y⊆X
 
 ------------------------------------------------------------------------
 -- Part 0: Reindexing
@@ -85,17 +99,17 @@ identity-realises X⊆Y γ η α v X-v .accounted = acct⊕-
 ⟨ f ⟩-map g .realises γ η α v x = g .realises (f γ) η α v x
 
 ⟨id⟩ : ∀ {Γ X} → Γ ⊢ X ≅ (⟨ (λ x → x) ⟩ X)
-⟨id⟩ .proj₁ .realiser = identity-realiser
-⟨id⟩ .proj₁ .realises = identity-realises (λ x → x)
-⟨id⟩ .proj₂ .realiser = identity-realiser
-⟨id⟩ .proj₂ .realises = identity-realises (λ x → x)
+⟨id⟩ = realised-iso (λ _ _ _ x → x) (λ _ _ _ x → x)
+
+⟨_∘_⟩ : ∀ {Γ₁ Γ₂ Γ₃ X} (f : Γ₂ → Γ₃) (g : Γ₁ → Γ₂) →
+        Γ₁ ⊢ (⟨ g ⟩ (⟨ f ⟩ X)) ≅ (⟨ (λ x → f (g x)) ⟩ X)
+⟨ f ∘ g ⟩ = realised-iso (λ _ _ _ x → x) (λ _ _ _ x → x)
 
 ------------------------------------------------------------------------
 -- Part I : Identity and composition in each fibre
 
 id : ∀ {Γ X} → Γ ⊢ X ⇒ X
-id .realiser = identity-realiser
-id .realises = identity-realises (λ x → x)
+id = identity-realised (λ _ _ _ x → x)
 
 _∘_ : ∀ {Γ X Y Z} → Γ ⊢ Y ⇒ Z → Γ ⊢ X ⇒ Y → Γ ⊢ X ⇒ Z
 (f ∘ g) .realiser .expr n = seq (g .realiser .expr n) then f .realiser .expr (suc n)
@@ -126,21 +140,24 @@ I γ .realises α true      = ⊥
 I γ .realises α false     = ⊥
 I γ .realises α (clo _ _) = ⊥
 
--- FIXME: I-subst
+I-subst : ∀ {Γ₁ Γ₂} (f : Γ₁ → Γ₂) → Γ₁ ⊢ ⟨ f ⟩ I ≅ I
+I-subst f = realised-iso ⟨f⟩I⊆I I⊆⟨f⟩I
+  where
+    ⟨f⟩I⊆I : ∀ γ α v → (⟨ f ⟩ I) γ .realises α v → I γ .realises α v
+    ⟨f⟩I⊆I γ α ⋆ x = x
+    I⊆⟨f⟩I : ∀ γ α v → I γ .realises α v → (⟨ f ⟩ I) γ .realises α v
+    I⊆⟨f⟩I γ α ⋆ x = x
 
 terminal : ∀ {Γ X} → Γ ⊢ X ⇒ I
 terminal .realiser .expr _ = ⋆
 terminal .realiser .potential = acct 1
 terminal .realiser .potential-ok = `acct
-terminal .realises γ η α _ _ = is-realisable
-  where
-    is-realisable : Eval _ _ _ _
-    is-realisable .result = ⋆
-    is-realisable .steps = 1
-    is-realisable .result-potential = α
-    is-realisable .evaluation = mkunit
-    is-realisable .result-realises = term
-    is-realisable .accounted = acct⊕-
+terminal .realises γ η α _ _ .result = ⋆
+terminal .realises γ η α _ _ .steps = 1
+terminal .realises γ η α _ _ .result-potential = α
+terminal .realises γ η α _ _ .evaluation = mkunit
+terminal .realises γ η α _ _ .result-realises = term
+terminal .realises γ η α _ _ .accounted = acct⊕-
 
 ------------------------------------------------------------------------
 -- Part III : has an ordered commutative monoid
@@ -271,7 +288,14 @@ _⊗m_ : ∀ {Γ X₁ X₂ Y₁ Y₂} →
     is-realisable .result-realises =
       r₁ .result-potential , r₂ .result-potential , identity , r₁ .result-realises , r₂ .result-realises
     is-realisable .accounted =
-      weaken (assoc-inv ； acct⊕- ； pair' (d ； symmetry) ； assoc-inv ； pair' (assoc ； symmetry) ； assoc ； pair' (r₂ .accounted) ； pair (r₁ .accounted))
+      weaken (assoc-inv ；
+              acct⊕- ；
+              pair' (d ； symmetry) ；
+              assoc-inv ；
+              pair' (assoc ； symmetry) ；
+              assoc ；
+              pair' (r₂ .accounted) ；
+              pair (r₁ .accounted))
              (≤-reflexive (begin
                              1 + (r₂ .steps + 1) + (2 + r₁ .steps + 1 + 1)
                            ≡⟨ +-*-Solver.solve 2
@@ -293,25 +317,14 @@ _⊸_ : ∀ {Γ} → Γ -Obj → Γ -Obj → Γ -Obj
 (X ⊸ Y) γ .realises α true = ⊥
 (X ⊸ Y) γ .realises α false = ⊥
 
-⊸-reindex-1 : ∀ {Γ₁ Γ₂ X Y} (f : Γ₁ → Γ₂) →
-            Γ₁ ⊢ ⟨ f ⟩ (X ⊸ Y) ⇒ (⟨ f ⟩ X) ⊸ (⟨ f ⟩ Y)
-⊸-reindex-1 f .realiser = identity-realiser
-⊸-reindex-1 f .realises γ η α v x .result = v
-⊸-reindex-1 f .realises γ η α v x .steps = 1
-⊸-reindex-1 f .realises γ η α v x .result-potential = α
-⊸-reindex-1 f .realises γ η α v x .evaluation = access zero
-⊸-reindex-1 f .realises γ η α (clo E η') x .result-realises = x
-⊸-reindex-1 f .realises γ η α v x .accounted = acct⊕-
-
-⊸-reindex-2 : ∀ {Γ₁ Γ₂ X Y} (f : Γ₁ → Γ₂) →
-            Γ₁ ⊢ (⟨ f ⟩ X) ⊸ (⟨ f ⟩ Y) ⇒ ⟨ f ⟩ (X ⊸ Y)
-⊸-reindex-2 f .realiser = identity-realiser
-⊸-reindex-2 f .realises γ η α v x .result = v
-⊸-reindex-2 f .realises γ η α v x .steps = 1
-⊸-reindex-2 f .realises γ η α v x .result-potential = α
-⊸-reindex-2 f .realises γ η α v x .evaluation = access zero
-⊸-reindex-2 f .realises γ η α (clo E η') x .result-realises = x
-⊸-reindex-2 f .realises γ η α v x .accounted = acct⊕-
+⊸-subst : ∀ {Γ₁ Γ₂ X Y} (f : Γ₁ → Γ₂) →
+            Γ₁ ⊢ ⟨ f ⟩ (X ⊸ Y) ≅ ((⟨ f ⟩ X) ⊸ (⟨ f ⟩ Y))
+⊸-subst {X = X}{Y = Y} f = realised-iso fwd bwd
+  where
+  fwd : ∀ γ α v → (⟨ f ⟩ (X ⊸ Y)) γ .realises α v → ((⟨ f ⟩ X) ⊸ (⟨ f ⟩ Y)) γ .realises α v
+  fwd γ α (clo _ _) x = x
+  bwd : ∀ γ α v → ((⟨ f ⟩ X) ⊸ (⟨ f ⟩ Y)) γ .realises α v → (⟨ f ⟩ (X ⊸ Y)) γ .realises α v
+  bwd γ α (clo _ _) x = x
 
 Λ : ∀ {Γ X Y Z} → Γ ⊢ X ⊗ Y ⇒ Z → Γ ⊢ X ⇒ Y ⊸ Z
 Λ f .realiser .expr n = ƛ (seq (suc (suc zero) , zero) then f .realiser .expr (3 + n))
@@ -367,29 +380,19 @@ apply .realises γ η₀ α (clo E η , vx) (α₁ , α₂ , d , vf-r , vx-r) = 
 ⟪_⟫ : ∀ {Γ₁ Γ₂ : Set} → (Γ₁ → Γ₂) → (Γ₂ → Set) → (Γ₁ → Set)
 ⟪ f ⟫ A γ = A (f γ)
 
-`∀-subst-1 : ∀ {Γ₁ Γ₂ A X} (f : Γ₁ → Γ₂) →
-             Γ₁ ⊢ ⟨ f ⟩ (`∀ A X) ⇒ `∀ (⟪ f ⟫ A) (⟨ (λ x → (f (x .proj₁)) , x .proj₂) ⟩ X)
-`∀-subst-1 f .realiser .expr _ = ` zero
-`∀-subst-1 f .realiser .potential = acct 1
-`∀-subst-1 f .realiser .potential-ok = `acct
-`∀-subst-1 f .realises γ η α v x .result = v
-`∀-subst-1 f .realises γ η α v x .steps = 1
-`∀-subst-1 f .realises γ η α v x .result-potential = α
-`∀-subst-1 f .realises γ η α v x .evaluation = access zero
-`∀-subst-1 f .realises γ η α (clo E η') x .result-realises = x
-`∀-subst-1 f .realises γ η α v x .accounted = acct⊕-
+`∀-subst : ∀ {Γ₁ Γ₂ A X} (f : Γ₁ → Γ₂) →
+             Γ₁ ⊢ ⟨ f ⟩ (`∀ A X) ≅ `∀ (⟪ f ⟫ A) (⟨ (λ x → (f (x .proj₁)) , x .proj₂) ⟩ X)
+`∀-subst {A = A} {X = X} f = realised-iso fwd bwd
+  where
+  fwd : ∀ γ α v →
+        (⟨ f ⟩ `∀ A X) γ .realises α v →
+        `∀ (⟪ f ⟫ A) (⟨ (λ x → f (x .proj₁) , x .proj₂) ⟩ X) γ .realises α v
+  fwd γ α (clo _ _) x = x
 
-`∀-subst-2 : ∀ {Γ₁ Γ₂ A X} (f : Γ₁ → Γ₂) →
-             Γ₁ ⊢ `∀ (⟪ f ⟫ A) (⟨ (λ x → (f (x .proj₁)) , x .proj₂) ⟩ X) ⇒ ⟨ f ⟩ (`∀ A X)
-`∀-subst-2 f .realiser .expr _ = ` zero
-`∀-subst-2 f .realiser .potential = acct 1
-`∀-subst-2 f .realiser .potential-ok = `acct
-`∀-subst-2 f .realises γ η α v x .result = v
-`∀-subst-2 f .realises γ η α v x .steps = 1
-`∀-subst-2 f .realises γ η α v x .result-potential = α
-`∀-subst-2 f .realises γ η α v x .evaluation = access zero
-`∀-subst-2 f .realises γ η α (clo E η') x .result-realises = x
-`∀-subst-2 f .realises γ η α v x .accounted = acct⊕-
+  bwd : ∀ γ α v →
+        `∀ (⟪ f ⟫ A) (⟨ (λ x → f (x .proj₁) , x .proj₂) ⟩ X) γ .realises α v →
+        (⟨ f ⟩ `∀ A X) γ .realises α v
+  bwd γ α (clo _ _) x = x
 
 `∀-intro : ∀ {Γ A X Y} →
            (Σ Γ A) ⊢ (⟨ proj₁ ⟩ X) ⇒ Y →
@@ -538,7 +541,12 @@ K a _ = a
       letpair zero (cond-true zero (seq (access (suc zero)) (r .evaluation)))
     is-realisable .result-realises = r .result-realises
     is-realisable .accounted =
-      assoc-inv ； assoc-inv ； acct⊕- ； pair' (pair term ； unit') ； pair' d' ； r .accounted
+      assoc-inv ；
+      assoc-inv ；
+      acct⊕- ；
+      pair' (pair term ； unit') ；
+      pair' d' ；
+      r .accounted
       where
         d' : 0 ≤D⟨ α , α₁ ⟩
         d' = d ； pair' b-r ； unit
@@ -648,5 +656,5 @@ discard .realises γ η α v (β , α-∅ , _) = is-realisable
 
 data Code : Set where
   _`+_   : Code → Code → Code
-  `⊤     : Code
+  `⊤    : Code
   `Rec×_ : Code → Code
