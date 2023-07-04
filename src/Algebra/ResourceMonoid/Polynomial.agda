@@ -1,5 +1,7 @@
 {-# OPTIONS --safe #-}
 
+{- Generic construction of ResourceMonoids with polynomial function potential -}
+
 module Algebra.ResourceMonoid.Polynomial where
 
 open import Data.Nat using (ℕ; _≤_; _+_; _⊔_; z≤n; zero; suc; _*_)
@@ -12,7 +14,7 @@ open import Data.Product using (_×_; _,_)
 open import Relation.Binary.PropositionalEquality using (_≡_; sym; cong; trans; cong₂; refl)
 open import Algebra.ResourceMonoid
 
-record size-algebra : Set where
+record SizeAlgebra : Set where
   field
     _⊎_       : ℕ → ℕ → ℕ
     mono      : ∀ {x y} z → x ≤ y → (x ⊎ z) ≤ (y ⊎ z)
@@ -38,26 +40,26 @@ record size-algebra : Set where
     ∎
     where open Relation.Binary.PropositionalEquality.≡-Reasoning
 
-+-size-algebra : size-algebra
-+-size-algebra .size-algebra._⊎_ = _+_
-+-size-algebra .size-algebra.mono z x≤y = +-mono-≤ x≤y ≤-refl
-+-size-algebra .size-algebra.assoc x y z = +-assoc x y z
-+-size-algebra .size-algebra.comm x y = +-comm x y
-+-size-algebra .size-algebra.unit x = +-identityʳ x
-+-size-algebra .size-algebra.bounded x y x⊎y≤z = m+n≤o⇒m≤o x x⊎y≤z
++-SizeAlgebra : SizeAlgebra
++-SizeAlgebra .SizeAlgebra._⊎_ = _+_
++-SizeAlgebra .SizeAlgebra.mono z x≤y = +-mono-≤ x≤y ≤-refl
++-SizeAlgebra .SizeAlgebra.assoc x y z = +-assoc x y z
++-SizeAlgebra .SizeAlgebra.comm x y = +-comm x y
++-SizeAlgebra .SizeAlgebra.unit x = +-identityʳ x
++-SizeAlgebra .SizeAlgebra.bounded x y x⊎y≤z = m+n≤o⇒m≤o x x⊎y≤z
 
-⊔-size-algebra : size-algebra
-⊔-size-algebra .size-algebra._⊎_ = _⊔_
-⊔-size-algebra .size-algebra.mono z x≤y = ⊔-mono-≤ x≤y ≤-refl
-⊔-size-algebra .size-algebra.assoc x y z = ⊔-assoc x y z
-⊔-size-algebra .size-algebra.comm x y = ⊔-comm x y
-⊔-size-algebra .size-algebra.unit x = ⊔-identityʳ x
-⊔-size-algebra .size-algebra.bounded x y x⊎y≤z = m⊔n≤o⇒m≤o x y x⊎y≤z
+⊔-SizeAlgebra : SizeAlgebra
+⊔-SizeAlgebra .SizeAlgebra._⊎_ = _⊔_
+⊔-SizeAlgebra .SizeAlgebra.mono z x≤y = ⊔-mono-≤ x≤y ≤-refl
+⊔-SizeAlgebra .SizeAlgebra.assoc x y z = ⊔-assoc x y z
+⊔-SizeAlgebra .SizeAlgebra.comm x y = ⊔-comm x y
+⊔-SizeAlgebra .SizeAlgebra.unit x = ⊔-identityʳ x
+⊔-SizeAlgebra .SizeAlgebra.bounded x y x⊎y≤z = m⊔n≤o⇒m≤o x y x⊎y≤z
 
-module poly-monoid (S : size-algebra) where
+module poly-monoid (S : SizeAlgebra) where
 
-  open import nat-poly hiding (unit; assoc; comm; scale)
-  open size-algebra S
+  open import Data.Polynomial.Nat renaming (_⊕_ to _⊕p_; 0-poly to 0p)
+  open SizeAlgebra S
 
   module monoid-defn where
     open ResourceMonoid
@@ -66,43 +68,43 @@ module poly-monoid (S : size-algebra) where
     -- also, the class of functions only needs to be closed under constants, 0 and +
     -- and sizes needn't be natural numbers?? Could be trees? Ordinals?
     poly-monoid : ResourceMonoid
-    poly-monoid .Carrier = ℕ × ℕ-poly
-    poly-monoid .∅ = 0 , 0-poly
-    poly-monoid ._⊕_ (m , p) (n , q) = m ⊎ n , p +-poly q
+    poly-monoid .Carrier = ℕ × Poly
+    poly-monoid .∅ = 0 , 0p
+    poly-monoid ._⊕_ (m , p) (n , q) = m ⊎ n , p ⊕p q
     poly-monoid ._≤D⟨_,_⟩ k (m , p) (n , q) =
-       (n ≤ m) × ((x : ℕ) → m ≤ x → k + ⟪ q ⟫ x ≤ ⟪ p ⟫ x)
-    poly-monoid .acct n = 0 , const-poly n
+       (n ≤ m) × ((x : ℕ) → m ≤ x → k + ⟦ q ⟧ x ≤ ⟦ p ⟧ x)
+    poly-monoid .acct n = 0 , const n
     poly-monoid .identity {n , p} =
        ≤-refl , λ x n≤x → ≤-refl
     poly-monoid ._；_ {k₁}{k₂}{m , p}{n , q}{l , r} (n≤m , ϕ₁) (l≤n , ϕ₂) =
        ≤-trans l≤n n≤m ,
-       λ x m≤x → ≤-trans (≤-reflexive (+-assoc k₁ k₂ (⟪ r ⟫ x)))
+       λ x m≤x → ≤-trans (≤-reflexive (+-assoc k₁ k₂ (⟦ r ⟧ x)))
                  (≤-trans (+-monoʳ-≤ k₁ (ϕ₂ x (≤-trans n≤m m≤x)))
                           (ϕ₁ x m≤x))
     poly-monoid .weaken {k₁}{k₂}{m , p}{n , q} (n≤m , ϕ) k₂≤k₁ =
        n≤m ,
-       λ x m≤x → ≤-trans (+-monoˡ-≤ (⟪ q ⟫ x) k₂≤k₁) (ϕ x m≤x)
+       λ x m≤x → ≤-trans (+-monoˡ-≤ (⟦ q ⟧ x) k₂≤k₁) (ϕ x m≤x)
     poly-monoid .pair {k}{m , p}{n , q}{l , r} (n≤m , ϕ) =
        mono l n≤m ,
-       λ x m⊔l≤x →  ≤-trans (≤-reflexive (cong (λ □ → k + □) (eval-+ q r x)))
-                    (≤-trans (≤-reflexive (sym (+-assoc k (⟪ q ⟫ x) (⟪ r ⟫ x))))
-                    (≤-trans (+-monoˡ-≤ (⟪ r ⟫ x) (ϕ x (bounded m l m⊔l≤x)))
-                             (≤-reflexive (sym (eval-+ p r x)))))
+       λ x m⊔l≤x →  ≤-trans (≤-reflexive (cong (λ □ → k + □) (eval-⊕ q r x)))
+                    (≤-trans (≤-reflexive (sym (+-assoc k (⟦ q ⟧ x) (⟦ r ⟧ x))))
+                    (≤-trans (+-monoˡ-≤ (⟦ r ⟧ x) (ϕ x (bounded m l m⊔l≤x)))
+                             (≤-reflexive (sym (eval-⊕ p r x)))))
     poly-monoid .symmetry {m , p}{n , q} =
        ≤-reflexive (comm n m) ,
-       λ x _ → ≤-reflexive (nat-poly.comm q p x)
+       λ x _ → ≤-reflexive (⊕-comm q p x)
     poly-monoid .unit {m , p} =
-      ≤-reflexive (sym (size-algebra.unit S m)) ,
-      λ x _ → ≤-reflexive (nat-poly.unit p x)
+      ≤-reflexive (sym (SizeAlgebra.unit S m)) ,
+      λ x _ → ≤-reflexive (sym (⊕-identityʳ p x))
     poly-monoid .unit-inv {m , p} =
-      ≤-reflexive (size-algebra.unit S m) ,
-      λ x _ → ≤-reflexive (sym (nat-poly.unit p x))
+      ≤-reflexive (SizeAlgebra.unit S m) ,
+      λ x _ → ≤-reflexive (⊕-identityʳ p x)
     poly-monoid .assoc {m , p}{n , q}{l , r} =
-      ≤-reflexive (size-algebra.assoc S m n l) ,
-      λ x _ → ≤-reflexive (nat-poly.assoc p q r x)
+      ≤-reflexive (SizeAlgebra.assoc S m n l) ,
+      λ x _ → ≤-reflexive (⊕-assoc p q r x)
     poly-monoid .assoc-inv {m , p}{n , q}{l , r} =
-      ≤-reflexive (sym (size-algebra.assoc S m n l)) ,
-      λ x _ → ≤-reflexive (sym (nat-poly.assoc p q r x))
+      ≤-reflexive (sym (SizeAlgebra.assoc S m n l)) ,
+      λ x _ → ≤-reflexive (sym (⊕-assoc p q r x))
     poly-monoid .term {m , p} =
       z≤n ,
       λ x _ → z≤n
@@ -130,20 +132,20 @@ module poly-monoid (S : size-algebra) where
   open ResourceMonoid poly-monoid using (_≤D⟨_,_⟩; _⊕_; ∅; Carrier)
 
   size : ℕ → Carrier
-  size n = n , 0-poly
+  size n = n , 0p
 
   raise : Carrier → Carrier
   raise (n , p) = (n , ↑ p)
 
   scale : ℕ → Carrier → Carrier
-  scale n (m , p) = (m , nat-poly.scale n p)
+  scale n (m , p) = (m , n · p)
 
   -- For LFPL, this only works for α that are of 0 size; in general of duplicable size
   raise→scale : ∀ α n → 0 ≤D⟨ raise α ⊕ size n , scale n α ⊕ size n ⟩
   raise→scale (m , p) n =
     ≤-refl ,
-    λ x m⊔n≤x → ≤-trans (≤-reflexive (sym (nat-poly.unit (nat-poly.scale n p) x)))
-                         (↑-wins n p x (S .size-algebra.bounded n m (≤-trans (≤-reflexive (S .size-algebra.comm n m)) m⊔n≤x)))
+    λ x m⊔n≤x → ≤-trans (≤-reflexive (⊕-identityʳ (n · p) x))
+                         (↑-wins n p x (S .SizeAlgebra.bounded n m (≤-trans (≤-reflexive (S .SizeAlgebra.comm n m)) m⊔n≤x)))
 
   -- this is true because ∅ is the terminal object anyway
   scale-zero : ∀ α → 0 ≤D⟨ scale zero α , ∅ ⟩
@@ -155,17 +157,17 @@ module poly-monoid (S : size-algebra) where
               poly-monoid₀ .SubResourceMonoid.member α →
               0 ≤D⟨ scale (1 + n) α , α ⊕ scale n α ⟩
   scale-suc n (m , p) refl =
-    ≤-reflexive (S .size-algebra.unit 0) ,
+    ≤-reflexive (S .SizeAlgebra.unit 0) ,
     λ x m≤x → ≤-reflexive (begin
-                              ⟪ p +-poly nat-poly.scale n p ⟫ x
-                            ≡⟨ eval-+ p (nat-poly.scale n p) x ⟩
-                              ⟪ p ⟫ x + ⟪ nat-poly.scale n p ⟫ x
-                            ≡⟨ cong (λ □ → ⟪ p ⟫ x + □) (eval-scale n p x) ⟩
-                              ⟪ p ⟫ x + n * ⟪ p ⟫ x
-                            ≡⟨ refl ⟩
-                              (1 + n) * ⟪ p ⟫ x
-                            ≡⟨ sym (eval-scale (1 + n) p x) ⟩
-                              ⟪ nat-poly.scale (1 + n) p ⟫ x
+                              ⟦ p ⊕p n · p ⟧ x
+                            ≡⟨ eval-⊕ p (n · p) x ⟩
+                              ⟦ p ⟧ x + ⟦ n · p ⟧ x
+                            ≡⟨ cong (λ □ → ⟦ p ⟧ x + □) (eval-· n p x) ⟩
+                              ⟦ p ⟧ x + n * ⟦ p ⟧ x
+                            ≡⟨⟩
+                              (1 + n) * ⟦ p ⟧ x
+                            ≡⟨ sym (eval-· (1 + n) p x) ⟩
+                              ⟦ (1 + n) · p ⟧ x
                             ∎)
     where open Relation.Binary.PropositionalEquality.≡-Reasoning
 
