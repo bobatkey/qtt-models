@@ -79,7 +79,7 @@
 %%
 %% The "title" command has an optional parameter,
 %% allowing the author to define a "short title" to be used in page headers.
-\title{Implicit Polynomial Time and Dependent Types}
+\title{Polynomial Time and Full Dependent Types}
 
 %%
 %% The "author" command and its associated commands are used to define
@@ -167,7 +167,97 @@
 \section{Introduction}
 \label{sec:introduction}
 
-The story:
+{\bf New story:}
+\begin{enumerate}
+\item Introduction: The goal of this paper is to unify implicit
+  computational complexity with full dependent types. ICC enables us
+  to ensure that \emph{programs} are within a certain complexity
+  class, while dependent types allow us to state and prove that these
+  programs solve the problems that we intend them to, and to construct
+  reductions between problems. We can marry complexity-controlled
+  implementations with problems, paving the way for a \emph{synthetic
+    computational complexity theory}.
+\item Section 1: Linear types and Implicit Polynomial Time.
+  \begin{enumerate}
+  \item Total typed functional programming, as we see in type theory,
+    is restricted to the use of higher order functions and iteration
+    over inductive data types.
+  \item Polynomial time is the smallest class closed under nested
+    iteration over the input -- i.e. we consider iteration over the
+    input as feasible, and compositions thereof. The key thing is to
+    avoid iteration over data constructed from the input.
+  \item Key is to control iteration. So we split inductive datatypes
+    into iterable and non-iterable versions. We can
+  \item One way to capture polytime is to ensure that all iteration is
+    only done over the input. So we can duplicate iterable things, but
+    we can't construct new iterable things (at least not from an
+    iteration). We also can't duplicate higher order things, because
+    that effectively acts as a way to duplicate iterations (half
+    instantiated iterators). Compare to Jones' CONS-FREE programming.
+  \item Another approach is to allow ``borrowing'' of iterability by
+    means of diamonds. Iterability becomes a first-class object, so we
+    can use it to construct new data structures from the input. This
+    allows the construction of new iterable data structures. LFPL.
+  \end{enumerate}
+\item Section 2: Extending to Dependent Types
+  \begin{enumerate}
+  \item Combining linear types and dependent types is subtle, because
+    there is a fundamental incompatibility in the syntax of the two
+    systems.
+  \item There have been several approaches, though they are all
+    somewhat similar (list them all here). We will use QTT, because it
+    offers a firm semantic foundation as well as a relatively
+    straightforward syntax.
+  \item Recap the syntax of QTT, with extensional equality. Key point
+    is that there is a normal dependently typed language with a linear
+    sub-language. We can have special constructs in the linear
+    sub-language that ``erase'' to normal type theory -- products are
+    the prime example.
+  \item Non iterable datatypes -- have normal eliminators in the DTT
+    fragment, but
+  \end{enumerate}
+\item Section 3: Programming and Proving with Poly-time
+  \begin{enumerate}
+  \item Internalised completeness proofs.
+  \item Construct the type of problems that are solvable in polynomial
+    time.
+  \item Construct reductions between problems.
+  \item NP. Doesn't make sense to talk about this without dependent
+    types, because we can't say when we've solved the problem being
+    stated.
+  \item PP (Probabilistic), using a monad. Again, need to be able to
+    state connection with the problem to know that we are solving it.
+  \end{enumerate}
+\item Section 4: Soundness via Realisability
+  \begin{enumerate}
+  \item The underlying CBV language and its
+  \end{enumerate}
+\item Section 5: Extensions
+  \begin{enumerate}
+  \item Explicit Complexity via Diamond Counting
+  \item Poly-time univalence
+  \item Towards P- and NP-completeness proofs. Issue here is the
+    extensionality. Towards a synthetic (poly-time based)
+    computational complexity theory.
+  \end{enumerate}
+\item Section 6: Related Work
+  \begin{enumerate}
+  \item ICC stuff
+    \begin{enumerate}
+    \item LFPL
+    \item CONS-free
+    \item Soft Affine Logic; which has the same underlying idea as
+      CONS-free (is this a novel observation?)
+    \item Other systems based on information flow.
+    \end{enumerate}
+  \item Explicit complexity: lambda-amor, and things by Deepak Garg
+    and Marco Gaboardi.
+  \item Recent CMU stuff on calf
+  \end{enumerate}
+
+\end{enumerate}
+
+{\bf Old story:}
 \begin{enumerate}
 \item There are systems for implicit computational complexity based on
   linear logic (e.g. LFPL, SAL, LLL, BLL) that seek to capture
@@ -600,6 +690,11 @@ have equally well used the $d$ variable that is in scope in each case.
 \newcommand{\ExpSet}{\mathcal{E}}
 \newcommand{\ValSet}{\mathcal{V}}
 
+\newcommand{\rplus}{\oplus}
+\newcommand{\rzero}{\emptyset}
+
+FIXME: introductory paragraph.
+
 The Hofmann-Dal Lago approach to proving the soundness of implicit
 computational complexity systems is based on a three way coupling
 between abstract mathematical elements (the \emph{what}), values from
@@ -731,7 +826,7 @@ requirements into a formal definition as follows:
   \item A carrier set $|M|$, whose elements represent amounts of
     potential. We use Greek letters $\alpha$, $\beta$, $\gamma$ to
     denote elements of a resource monoid.
-  \item Commutative monoid structure $(\oplus,\emptyset)$ on $|M|$, so
+  \item Commutative monoid structure $(\rplus,\rzero)$ on $|M|$, so
     we can add potentials.
   \item A \emph{difference function} $M : |M| \times |M| \to \natinf$,
     where $\natinf$ is the natural numbers extended with a negative
@@ -744,15 +839,16 @@ requirements into a formal definition as follows:
     \begin{enumerate}
     \item for all $\alpha$, $M(\alpha,\alpha) = 0$; and
     \item for all $\alpha, \beta, \gamma$,
-      $M(\alpha, \beta) + M(\beta, \gamma) \leq M(\alpha, \gamma)$.
+      $M(\alpha, \beta) \rplus M(\beta, \gamma) \leq M(\alpha, \gamma)$.
     \end{enumerate}
     The latter is a ``reverse triangle inequality'': the fuel
     recoverable by moving between potential levels $\alpha$ and
     $\gamma$ via $\beta$ may be less than the fuel recoverable
     moving from $\alpha$ to $\gamma$ directly.
+  \item \bob{Interaction between $(\rplus,\rzero)$ and $M(\alpha,\beta)$.}
   \item An \emph{accounting function}
     $\mathit{acct} : \mathbb{N} \to |M|$ such that for all $k$,
-    $k \leq M(\mathit{acct}(k),\emptyset)$.
+    $k \leq M(\mathit{acct}(k),\rzero)$.
   \end{enumerate}
 \end{definition}
 
@@ -884,6 +980,8 @@ FIXME: Relational definition, used for the formalisation.
 \subsection{Models of Quantitative Type Theory}
 \label{sec:qtt-models}
 
+\bob{PLAN: RCwFs, and state that they can be constructed from Indexed Linear Posets}
+
 \cite{atkey18} describes a general class of QTT models termed
 \emph{Quantitative Categories with Families} (QCwFs). This class of
 models fits will with the syntax of QTT, but to actually build models
@@ -921,146 +1019,175 @@ systems.
   \end{enumerate}
 \end{definition}
 
+\bob{define the construction}
+\begin{enumerate}
+\item Start with a CwF $\cat{C}$ that supports $\Pi$, $\Sigma$ and
+  natural numbers.
+\item Assume a functor $L : \cat{C}^\top \to \LinPoset$ with
+  reindexing along projections having a right adjoint.
+\item Construct a new CwF with the same base category as $\cat{C}$,
+  but with $\Ty'(\Delta) = \Sigma A : \Ty(\Delta).~L(\Delta.A)$ and
+  $\Tm'(\Delta, (T, X)) = \Tm(\Delta, T)$.
+\item
+\end{enumerate}
 
-\subsection{Realisability Model}
+This construction is implicit in \cite{atkey2018qtt}, where the
+indexed linear poset is defined from a $\mathcal{R}$-LCA.
+
+
+\subsection{Amortised Complexity Realisability Model}
 \label{sec:realisability-model}
-
-\bob{Rearrange this as an indexed linear poset}
 
 Equipped with our underlying costed model of computation
 (\autoref{sec:machine-model}) and a compositional notion of resource
-potential (\autoref{sec:resource-monoids}), we now begin to construct
-models of QTT that witness the resource (and type) soundness of our
-complexity constrained systems.
+potential (\autoref{sec:resource-monoids}), we construct models of QTT
+that witness the resource and type soundness of our complexity
+constrained systems.
+
+\bob{Tie back to previous section}
+
+We fix a resource monoid $M$ with distinguished sub-monoid $M_0$.
+
+\subsubsection{Base CwF}
+\label{sec:realisability-base-cwf}
+
+As our base CwF, we use the category $\Set$ of sets and functions with
+the standard interpretation of $\Pi$, $\Sigma$ types and the
+$\mathbb{N}$ type.
+
+\subsubsection{Indexed Linear Preorder}
+\label{sec:realisability-indexed-linear-preorder}
+
+We now define an indexed linear poset $L$ of realisers over $\Set$
+that ties together our ``mathematical'' model of types in $\Set$ with
+our machine model and resource monoid. For a set $A$, the carrier of
+$L(A)$ is the set of ternary relations
+$X \subseteq A \times M \times \ValSet$ and we define the ordering
+$X \leq Y$ to hold iff there exists realising expression
+$E \in \ExpSet$ and potential $\gamma \in M_0$ such that for all
+$a \in A$, $\alpha \in M$ and $v \in \ValSet$ with
+$(a,\alpha,v) \in X$, we have that there exists a result
+$v' \in \ValSet$, step count $k \in \mathbb{N}$ and result potential
+$\beta \in M$ with:
+\begin{enumerate}
+\item $E, v \Downarrow_k v'$ (evaluation successfully completes in $k$ steps);
+\item $(a, \beta, v') \in Y$ (the result is well-resourced and
+  satisfies $Y$); and
+\item $k \leq M(\alpha \rplus \gamma, \beta)$ (the step count is within the
+  difference between the initial potential and the result potential).
+\end{enumerate}
+Note that the definition of realisablity is uniform in the element $a$
+-- the realising expression $e$ and the potential $\gamma$ must work
+for all $a$ -- thus the implementation and complexity measure of the
+transition being modelled cannot depend on what the input is. Put in
+implementation terms, the input $a$ is not present at
+runtime. Moreover note that the potential $\gamma$ attached to the
+expression $e$ must come from the sub-monoid $M_0$, indicating that is
+intended to be data-free, while the potential $\alpha$ for the input
+is from the full monoid $M$, so it can contain data and functions.
+
+For $X, Y \in L(A)$, the required elements for symmetric monoidal
+closed structure are defined as follows. For the tensor product
+$X \otimes Y \in L(A)$, the realising value must be a pair $(v_1,v_2)$
+and the potential of the pair must split into suitable potentials
+$\alpha_1$, $\alpha_2$ for the components. For the residual
+$X \multimap Y$, the realising value must be a closure with potential
+to, when added to the potential of an input, compute the output with
+enough remaining. Note that the potential attached to a closure
+($\alpha$, here) need not be from the sub-monoid $M_0$. Unlike
+top-level term interpretations, closures may contain data.
+\begin{displaymath}
+  \begin{array}{lcl}
+    X \otimes Y &=& \{ (a, \alpha, (v_1, v_2)) \mid \exists \alpha_1, \alpha_2.~0 \leq M(\alpha, \alpha_1 \rplus \alpha_2) \land X(a,\alpha_1,v_1) \land Y(a,\alpha_2,v_2) \}\\
+    X \multimap Y &=& \{ (a, \alpha, \clo{E}{\eta}) \mid
+                      \begin{array}[t]{@{}l}
+                        \forall \alpha' \in M, v,w \in \ValSet.\,X(a,\alpha',v) \Rightarrow\\
+                        \quad \exists v', k, \beta.\,
+                        E, (\eta :: w :: v) \Downarrow_k v' \land Y(a,\beta,v') \land k \leq M(\alpha \rplus \alpha', \beta) \} \end{array}
+  \end{array}
+\end{displaymath}
+The seemingly useless $w \in \ValSet$ in the formula for
+$X \multimap Y$ is a dummy argument standing for the self-referential
+reference to the closure used for defining recursive programs.
+
+Each $L(A)$ has a terminal (i.e. top) element, which is also the unit
+for $\otimes$, defined as
+$I_A = \{(a, \alpha, *) \mid a \in A, \alpha \in M\}$. The potential
+$\alpha$ here is unrestricted, so $I_A$ can consume an arbitrary
+resource.
+
+$\mathbb{N}$-Graded exponentials in each $L(A)$ are defined using the
+action $(\cdot)$ of $(\mathbb{N}, \leq)$ on $M$ defined above \bob{do
+  this}. At the level of realising values, the modality $\oc_n$ has no
+effect; it only serves to alter the required potentials.
+\begin{displaymath}
+  \oc_n\,X = \{(a,\alpha,v) \mid \exists \alpha'.\,M(n \cdot \alpha', \alpha) = 0 \land (a, \alpha', v) \in X \}
+\end{displaymath}
+
+$L$ also has arbitrary $\Set$-indexed products, realised ``lazily'' as
+functions that take dummy arguments. For $A \in \Set$ and
+$B \in A \to \Set$ and $X \in L(\Sigma A.\,B)$, we define
+$\forall_B X \in L(A)$ similarly to $\multimap$ above, but with
+different resource and indexing requirements:
+\begin{displaymath}
+  \forall_B X = \{ (a,\alpha,\clo{E}{\eta}) \mid \forall b, v.~\exists v', \beta, k. E, (\eta :: v :: *) \Downarrow_k v' \land X((a,b),\beta,v') \land k \leq M(\alpha,\beta) \}
+\end{displaymath}
+Note, as with the definition of $X \leq Y$ above, the realiser closure
+$\clo{E}{\eta}$ must be chosen uniformly for all $b$. This definition
+also appears to allow arbitrary computation (paid for by $\alpha$) to
+happen when the realising closure is applied, but the potential
+$\alpha$ will only ever be greater than $\beta$ by enough to handle
+the administrative costs of applying the function.
+
+To complete the construction of $L$ as an indexed linear preorder, we
+need to give realisers for each of the required inequalities in
+\autoref{def:indexed-linear-preorder}. In each case, this is a matter
+of programming in the language of \autoref{sec:machine-model}. The
+corresponding potentials are calculated by counting the steps in the
+ensuing programs. Note that, so far, all realisers are constant time
+(relative to their input), so the constructions so far work for any
+resource monoid. For systems that require iteration, we will need more
+structure on our resource monoids \bob{fwd ref}.
+
+\begin{proposition}
+  $L$, with $I$, $\otimes$, $\multimap$, $\oc_n$, and $\forall_{B}$ defined above, is
+  an indexed linear preorder.
+\end{proposition}
+
+\begin{proof}
+  See the Agda development.
+\end{proof}
+
+\begin{proposition}\label{prop:basic-qtt-realisability-model}
+  Get a model QTT with $\Pi$, $\Sigma$, and a universe.
+\end{proposition}
+
+\subsubsection{Non-iterable Data Types}
+
+The model of QTT constructed in
+\autoref{prop:basic-qtt-realisability-model} does not yet include any
+useful base types. Handling iterable types, which are the ones that
+induce non-constant-time complexities, requires specific properties of
+resource monoids that we introduce in
+\autoref{sec:realising-iteration}.
+
+Rather than perform a complex generic construction of datatypes to
+show how non-iterable versions may be realised, we focus on two
+representative examples. Booleans
+
+\paragraph{Booleans} Fix $\mathbb{B} = \{ \mathit{tt}, \mathit{ff} \}$
+as our set of boolean elements. We define an element of $L(\mathbb{B}$
+to represent boolean values:
+\begin{displaymath}
+  \mathrm{bool} = \{ (\mathit{tt}, \alpha, \synTrue) \mid \alpha \in M \} \cup \{ (\mathit{ff}, \alpha, \synFalse) \mid \alpha \in M \}
+\end{displaymath}
+Thus, the boolean $\mathit{tt}$ is represented by the value $\synTrue$
+and $\mathit{ff}$ is represented by $\synFalse$. In both case, we
+allow arbitrary potentials to be attached.
 
 
 
-
-\bigskip
-
-\cite{atkey18qtt} describes a general class of QTT models termed
-\emph{Quantitative Categories with Families} (QCwFs), an extension of
-the \cite{dyber}'s \emph{Categories with Families} formulation of
-models of dependent type theory. We will not regurgitate the full
-definition here. Instead, we will define each of the parts of our
-specialised QCwF for proving complexity soundness and explain
-informally how to use them to model the syntax of QTT. Please refer to
-\cite{atkey18qtt} for details of the interpretation.
-
-Fix a resource monoid $M$ with a submonoid $M_0 \subseteq M$.
-
-We define a category $\mathbf{Asm}(M,M_0)$.\bob{``Asm'' is the wrong
-  name here.}
-
-\begin{definition}[Resourced Sets, Semantic Contexts and Types]
-  \label{defn:rl-object}
-  \begin{enumerate}
-  \item A \emph{resourced set} $X$ is a pair $(|X|,\models_\Gamma)$ of
-    a set $|X|$ and a ternary relation
-    $\mathord{\models_\Gamma} \subseteq |M| \times \ValSet \times |X|$. We write
-    the first two elements to the left of the $\models$ and the last
-    to the right: e.g. $\alpha, v \models_X x$.
-  \item \emph{Semantic contexts} $\Gamma$ are resourced sets.
-  \item Given a set $\Delta$ (representing a context bereft of any
-    resource information), a family $S$ of semantics types over
-    $\Delta$ is a collection $\{S_\delta\}_{\delta \in \Delta}$ of
-    resourced sets. We write $\Ty(\Delta)$ for the large set of all
-    semantic types over $\Delta$.
-  \end{enumerate}
-\end{definition}
-Note how the intepretation of types only depends on a set of values,
-not any resource information. This corresponds to
-
-We define scaling and addition of resourced sets (and also semantic
-contexts) to interpret the scaling and addition of syntactic contexts
-\autoref{defn:FIXME}.
-
-\begin{definition}[Scaling and Addition of Resourced Sets]
-  \begin{enumerate}
-  \item \emph{(Scaling)} If $X$ is a resourced set and
-    $n \in \mathbb{N}$, then $nX$ is the resourced set with
-    $|nX| = |X|$ and $\alpha, v \models_{nX} x$ iff there exist
-    $\alpha_1, \dots, \alpha_n$ such that
-    $\alpha \leq \alpha_1 \oplus \dots \oplus \alpha_n$ and for all
-    $1 \leq i \leq n$, $\alpha_i, v \models_X x$.
-  \item \emph{(Addition)} If $X$ and $Y$ are resourced sets such that
-    $|X| = |Y|$, then define their addition $X + Y$ with
-    $|X + Y| = |X|$ and $\alpha, v \models_{X + Y} x$ iff there exist
-    $\alpha_1, \alpha_2$ such that
-    $\alpha \leq \alpha_1 \oplus \alpha_2$ and
-    $\alpha_1, v \models_X x$ and $\alpha_2, v \models_Y x$.
-  \end{enumerate}
-\end{definition}
-
-Morphisms are where the connection between abstract elements, machine
-values, and potential is given force:
-\begin{definition}[Morphisms, Semantic Substitutions and Terms]
-  \label{defn:rl-morphism}
-  \begin{enumerate}
-  \item Given resourced sets $X$ and $Y$, a morphism $f : X \to Y$ is
-    a function $f : |X| \to |Y|$ for which there exists a closed
-    expression $e \in \ExpSet$ (the \emph{realiser}) and a potential
-    $\gamma \in |M_0|$ such that for all $\alpha, v, x$ with
-    $\alpha, v \models_X x$, there exists a $\beta$, $v'$ and $k$ such
-    that:
-    \begin{enumerate}
-    \item $e, [v] \Downarrow_k v'$ (\emph{the realiser evaluates to a result value}) and
-    \item $k \leq M(\alpha + \gamma, \beta)$ (\emph{the potential difference yields adequate fuel}) and
-    \item $\beta, v' \models_Y f(x)$ (\emph{the result is correct}).
-    \end{enumerate}
-  \item A \emph{semantic substitution} $\Gamma \Rightarrow \Delta$ is
-    a morphism between the resourced sets.
-  \item Given a semantic context $\Gamma$ and a semantic type
-    $S \in \Ty(|\Gamma|)$, a \emph{semantic resourced term} $m$ is a
-    function $m : (\gamma \in |\Gamma|) \to |S(\gamma)|$ such that there
-    exists a closed expression $e \in \ExpSet$ and potential
-    $\gamma \in |M_0|$ satisfying a similar property to that for
-    morphisms. We write $\RTm(\Gamma, S)$ for the set of all semantic
-    resourced terms between $\Gamma$ and $S$.
-  \item Given a set $\Delta$ and a semantic type $S \in \Ty(\Delta)$,
-    a \emph{semantic unresourced term} $m$ is a function
-    $m : (\delta \in \Delta) \to |S(\delta)|$. We write
-    $\Tm(\Gamma, S)$ for the set of all semantic unresourced terms
-    between $\Delta$ and $S$.
-  \end{enumerate}
-\end{definition}
-The definition of \emph{semantic resourced term} is the key to our
-claim of soundness for any applications of QTT. By choosing the
-correct resource monoid, and interpreting QTT with extensions
-supported by that monoid into the resulting structure, we can deduce
-our desired resource soundness theorems. FIXME: forward references.
-
-Notice that the resource potential $\gamma$ for morphisms and
-resourced terms must come from the sub-monoid $M_0$. For the
-polynomial time systems, this will ensure that programs cannot
-generate iterability from scratch. This is benign in the case of the
-cons-free system (though it does complicate the statement of
-soundness), but would be catastrophic in the LFPL-style system because
-it would mean that we could generate $\Diamond$s from nothing.
-
-To be able to interpret
-
-\begin{definition}
-  Context extension
-\end{definition}
-
-\subsection{Realising Finite Type Formers}
-
-\begin{definition}[$\Pi$-types]
-  FIXME: taken from
-\end{definition}
-
-\begin{definition}[$\Sigma$-types]
-
-\end{definition}
-
-\begin{definition}[Equality types]
-
-\end{definition}
-
-\begin{definition}[Non-iterable types]
-
-\end{definition}
+\paragraph{Lists}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
