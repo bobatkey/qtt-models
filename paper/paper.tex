@@ -4,6 +4,8 @@
 \usepackage{cmll}
 \usepackage{mathpartir}
 
+\newcommand{\TapeType}{\mathrm{Tape}}
+
 \newcommand{\tmRec}{\mathrm{rec}}
 \newcommand{\tyNat}{\mathrm{Nat}}
 \newcommand{\conZero}{\mathsf{zero}}
@@ -14,10 +16,25 @@
 \newcommand{\LetPair}{\mathrm{letpair}}
 \newcommand{\In}{\mathrm{in}}
 \newcommand{\If}{\mathrm{if}}
+\newcommand{\Then}{\mathrm{then}}
+\newcommand{\Else}{\mathrm{else}}
 \newcommand{\dupNat}{\mathrm{dupNat}}
+\newcommand{\Match}{\mathrm{match}}
 
+% QTT stuff
 \newcommand{\istype}{\mathrm{type}}
 \newcommand{\isctxt}{\mathrm{ctxt}}
+
+\newcommand{\BoolTy}{\mathrm{Bool}}
+\newcommand{\cTrue}{\mathsf{true}}
+\newcommand{\cFalse}{\mathsf{false}}
+\newcommand{\ListTy}{\mathrm{List}}
+\newcommand{\cNil}{\mathsf{nil}}
+\newcommand{\cCons}{\mathsf{cons}}
+
+\newcommand{\Rtype}{\mathbf{R}}
+\newcommand{\rIntro}{\mathbf{R}}
+\newcommand{\rElim}{\mathbf{R}^{-1}}
 
 \newcommand{\natinf}{\mathbb{N}_{-\infty}}
 
@@ -30,9 +47,14 @@
 \newcommand{\cat}[1]{\mathcal{#1}}
 \newcommand{\op}{\mathsf{op}}
 
-\newcommand{\LinPoset}{\mathrm{LinPoset}}
+\newcommand{\LinPreorder}{\mathrm{LinPreorder}}
 
 \newcommand{\bob}[1]{\textcolor{purple}{FIXME: #1}}
+
+\renewcommand{\sectionautorefname}{Section}
+\renewcommand{\subsectionautorefname}{Section} % PS
+\renewcommand{\subsubsectionautorefname}{Section}
+
 
 %% Rights management information.  This information is sent to you
 %% when you complete the rights form.  These commands have SAMPLE
@@ -307,87 +329,213 @@
   \end{enumerate}
 \end{enumerate}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Linear $\lambda$-Calculus and Implicit Computational
-  Complexity}
-\label{sec:linear-icc}
+Related work: only applications of Linear TT so far are erasure (Abel
+et al.) and quantum stuff (Selinger et al.), and (sort of) dependency
+analysis. This is another one.
 
-Introduce the idea of linear typing for complexity control.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Linear $\lambda$-Calculus and Polytime}
+\label{sec:linear-intro}
 
-Linear $\lambda$-calculus, as we shall be discussing it in this
-section:
+Not long after Girard introduced Linear Logic \cite{girard87}, it was
+observed that its resource sensitivity could be turned to describing
+computational complexity classes by purely logical means. Typically, a
+logical system is described for which the process of reducing a proof
+to a normal form (often by cut elimination) is guaranteed to always be
+accomplished within a certain complexity bound. Moreover, the system
+is usually proven to be complete for the relevant complexity class, by
+constructing a simulation of some known representation. Such systems
+that characterise polytime include Bounded Linear Logic (BLL), which
+uses explicit polynomials in the formulas \cite{bll} and Soft Affine
+Logic (SAL) \cite{lafont}, which does not explicitly represent
+time information in formulas, but uses a restricted form of Linear
+Logic's $\oc$ modality instead. Light Affine Logic (LAL) \cite{lal} is
+another ``counting-free'' system for polytime.
+
+Viewing logical systems though the lens of the Curry-Howard
+correspondence, the idea arises that one could define functional
+programming languages that characterise complexity classes such as
+polytime. SAL has been transformed into a programming language for
+polytime by \cite{gaboardi}. Hofmann proposed a new programming
+language, Linear Functional Programming Language (LFPL), that uses a
+novel ``payment'' system to track iteration. In this section, we
+review the use of linear types to capture polytime by presenting two
+systems, one based on ideas from SALL and the second more explicitly
+based on LFPL. With a view to adapting these systems to dependent
+types in \autoref{sec:qtt}, we take an approach slightly different to
+much of the polytime linear logic literature. We emphasise the use of
+explicit datatypes and eliminators, rather than using impredicative
+encodings via universal types. Thus, we are closer to Hofmann's
+original LFPL (though not later presentations of it
+\cite{dallago-hofmann}) than BLL, SALL, or LAL.
+
+For this section, the linear $\lambda$-calculus we will use will have
+linear functions and $\otimes$-products:
 \begin{mathpar}
-  \inferrule* [right=Var]
+  \inferrule*
   { }
   {x : A \vdash x : A}
 
-  \inferrule* [right=Lam]
+  \inferrule*
   {\Gamma, x : A \vdash M : B}
   {\Gamma \vdash \lambda x.M : A \multimap B}
 
-  \inferrule* [right=App]
+  \inferrule*
   {\Gamma_1 \vdash M : A \multimap B \\
     \Gamma_2 \vdash N : A}
   {\Gamma_1, \Gamma_2 \vdash M\,N : B}
-\end{mathpar}
 
-\begin{mathpar}
-  \inferrule* [right=$\otimes$-Intro]
+  \inferrule*
   {\Gamma_1 \vdash M : A \\ \Gamma_2 \vdash N : B}
   {\Gamma_1, \Gamma_2 \vdash (M,N) : A \otimes B}
 
-  \inferrule* [right=$\otimes$-Elim]
+  \inferrule*
   {\Gamma_1 \vdash M : A \otimes B \\ \Gamma_2, x : A, y : B \vdash N : C}
   {\Gamma_1, \Gamma_2 \vdash \Let\,(x,y)=M\,\In\,N : C}
 \end{mathpar}
+These rules are standard, so we do not describe them further except to
+note how linear typing uses presence or absences in a context to
+control resource usage -- if a variable is in the context it must be
+used exactly once. The fact that this discipline interferes with
+dependent types is one of the reasons we turn to QTT when we wish to
+add dependent types in \autoref{sec:qtt}.
 
-\subsection{Excluding Recursion}
+\subsection{No Recursion, Only Case Analysis}
 
-What do we get if we exclude recursion altogether?
+It is not too difficult to see that reduction of linear
+$\lambda$-terms always takes a number of steps linearly proprotional
+to the size of the term. This is because every $\beta$-redex
+substitutes into exactly one variable, reducing the size of the term
+by one each time.
 
-What happens if we include natural number recursion naively?
+We can increase the expressivity, but not the computational
+complexity, of the system by adding datatypes that do not allow
+iteration. These can be used for representation, but not for driving
+computation. We include the rules here, to show how linearity must be
+preserved in these rules, and to foreshadow their dependently typed
+counterparts in \autoref{sec:qtt-noniter}. The first type is the
+booleans, which are anyway non-recursive and so wouldn't allow
+iteration anyway:
+\begin{mathpar}
+  \inferrule*
+  { }
+  {\vdash \cTrue, \cFalse : \BoolTy}
 
-\paragraph{A Binary Tape Datatype}
+  \inferrule*
+  {\Gamma_1 \vdash M : \BoolTy \\ \Gamma_2 \vdash N_1 : A \\ \Gamma_2 \vdash N_2 : A}
+  {\Gamma_1, \Gamma_2 \vdash \If\,M\,\Then\,N_1\,\Else\,N_2 : A}
+\end{mathpar}
+The if-then-else rule is careful to ensure that the resources used by
+the eliminated $\BoolTy$ and the resources used by the chosen branch
+are accounted for separately. The two branches must have the same
+resource usage.
 
-FIXME: how to do this?
+Construction and case analysis of lists are given by the following
+rules:
+\begin{mathpar}
+  \inferrule*
+  { }
+  {\vdash \cNil : \ListTy(A)}
 
-move left, move right, update. Tape is always finite.
+  \inferrule*
+  {\Gamma_1 \vdash M : A \\ \Gamma_2 \vdash N : \ListTy(A)}
+  {\Gamma_1, \Gamma_2 \vdash \cCons(M,N) : \ListTy(A)}
 
-\subsection{Cons-free programming}
+  \inferrule*
+  {\Gamma_1 \vdash M : \ListTy(A) \\
+    \Gamma_2 \vdash N_1 : B \\
+    \Gamma_2, h : A, t : \ListTy(A) \vdash N_2 : B}
+  {\Gamma_1, \Gamma_2 \vdash \Match\,M\,\{\cNil \mapsto N_1; \cCons(h,t) \mapsto N_2\} : B}
+\end{mathpar}
+Hence, we can construct lists arbitrarily, but we can only do case
+analysis on them. If we wish to explore a list to a arbitrary depth it
+must be driven by an iterable type of the form that we will see in the
+next two sections.
 
-FIXME: zero case has a context, or do we $\lambda$-abstract?
+With booleans and lists, we can construct several other useful
+types. For example, to simulate Turing machines, one can construct a
+$\mathit{Tape}$ type as a Zipper \cite{huet}
+$\ListTy(\BoolTy) \otimes \BoolTy \otimes \ListTy(\BoolTy)$,
+representing a position on the tape with the items before, under, and
+after the head.
+
+\subsection{The Cons-free system}
+\label{sec:cons-free-intro}
+
+Polynomial time is usually seen as a proxy for ``feasible''
+computation. On the face of it, there does not seem to be any
+particular reason why polynomials have anything to do with
+feasibility. However, one can arrive at the definition of polynomial
+time in three steps, by assuming that (i) iterating over the whole
+input is feasible; (ii) if two computations are feasible, then so is
+their composition; and (iii) performing a feasible computation for
+every element of the input is also feasible. It is the last point that
+allows complexities of arbitrary polynomial degree to be constructed
+(we will see this in action in the completeness construction below and
+soundness proofs in \autoref{sec:iterator-soundness}).
+
+Following these ideas, let us assume that the input is a natural
+number, so we assume that there is some type of natural numbers
+$\tyNat$. For point (i), we must be able to iterate over these natural
+numbers, so we use a linear iterator defined by this typing rule:
 \begin{displaymath}
   \inferrule*
   {\vdash M_z : A \\ x : A \vdash M_s : A \\ \Gamma \vdash N : \tyNat}
   {\Gamma \vdash \tmRec\,N\,\{\conZero \mapsto M_z; \conSucc(x) \mapsto M_s\} : A}
 \end{displaymath}
-
+Note that in the zero, $M_z$, and sucessor, $M_s$, cases, the context
+is empty to ensure that these cases may be invoked as many times as
+required. Point (ii) above is automatically satisfied by being in a
+typed $\lambda$-calculus, where it is difficult to stop functions from
+being composable. For point (iii), the iterator as given does not
+allow us to nest iterations. Once the natural number input $n$ has
+been used for an iteration, the linear typing discipine prevents us
+from using it again (note the two separate contexts $\Gamma_1$,
+$\Gamma_2$ in the rule for application). In order to allow nested
+iterations, we add an operator to duplicate numbers:
 \begin{displaymath}
   \inferrule*
   {\Gamma \vdash M : \tyNat}
   {\Gamma \vdash \dupNat\,M : \tyNat \otimes \tyNat}
 \end{displaymath}
+Somewhat surprisingly, this system is now sound and complete for
+polynomial time. Crucially, this depends on the two things we have
+\emph{not} allowed. First, we have disallowed the construction of new
+natural numbers via the $\conZero$ and $\conSucc$
+constructors\footnote{Actually, $\conZero$ would be acceptable, as
+  well as any constant natural number. It is only unrestricted use of
+  $\conSucc$ that is dangerous.}. If we were to permit this, then we
+could use iteration over the input to construct addition,
+multiplication (by repeated addition), and then exponentials (by
+repeated multiplication). We therefore refer to this system as the
+\emph{Cons-Free} system.  The second prohibited feature is the ability
+to duplicate values of function type, even though we have allowed
+duplication of iterable naturals. If we were to allow this, then we
+would be able to sneak in a form of constructors for natural numbers
+by encoding them as eliminators that duplicate a function for every
+$\conSucc$ step.
 
-Intuitive reason it works: we can only iterate over the natural
-numbers we have recieved as input, there is no way to construct new
-natural numbers by iteration. Duplicating natural numbers is safe,
-becasue we can only do it a number of times controlled by iteration of
-the natural numbers we are given.
-
-FIXME: is it possible to pin down how it relates to SAL?
-
-\paragraph{Completeness}
-
+We will see in \autoref{sec:consfree-sound} that this system is sound
+for polytime by a realisability argument. Completeness can be seen
+more directly by constructing a function that iterates a function for
+a statically known polynomial number of times in the size of the
+input. Assume that we have a known polynomial
+$p(n) = c_dn^d + \dots + c_0$ of degree $d$ with natural number
+coefficients and some single step function
+$f : \mathit{St} \multimap \mathit{St}$ over a state type
+$\mathit{St}$ that runs to completion for input of size $n$ in $p(n)$
+steps. Then, using the iterator above we can iterate $f$ over a
+$\tyNat$ representing the size of the input:
 \begin{displaymath}
   \begin{array}{l}
     I_1 : \tyNat \multimap \mathit{St} \multimap \mathit{St} \\
     I_1 = \lambda n. \lambda s.\tmRec\,n\,\{\conZero \mapsto s; \conSucc(s) \mapsto f\,s \}
   \end{array}
 \end{displaymath}
-
+To achieve higher degrees, we can use $\dupNat$ to nest iterations:
 \begin{displaymath}
   \begin{array}{l}
     I_{k+1} : \tyNat \multimap \mathit{St} \multimap \mathit{St} \\
@@ -398,24 +546,27 @@ FIXME: is it possible to pin down how it relates to SAL?
     \end{array}
   \end{array}
 \end{displaymath}
+By further use of $\dupNat$ and composition to handle addition of
+polynomials, the function $f$ can now be iterated $p(n)$ many times,
+where $n$ is the input $\tyNat$. Thus, the \emph{Cons-free} system can
+represent all polytime computations.
 
 \subsection{Diamond Trading with LFPL}
 
-The cons-free style of programming allows us to express all polytime
-Turing machines, but is quite awkward from the point of view of
-functional programming. It allows us to iterate over natural numbers
-that come from the input but does not allow us to build further values
-to do iteration on. For example, if our input is a list, then we
-cannot transform it into a binary search tree and then flatten it
-\bob{actually write this}.
+The Cons-free system is sound and complete for polytime, but is quite
+awkward from the point of view of functional programming. It allows us
+to iterate over natural numbers that come from the input but does not
+allow us to build further values to do iteration on. For example, if
+our input is a list, then we cannot transform it into a binary search
+tree and then flatten it, we must always refer back to the original
+natural number input. Even dividing the input into two halves to be
+treated separately is difficult.
 
-Introduce a new type $\Diamond$. Each $\Diamond$ value represents a
-``chunk of iterability''.
-
-{\bf Rough model:} programs are polynomials, data are bags of
-diamonds. Applying a program to some data yields a concrete number of
-steps that will bound the resulting computation.
-
+A more flexible system was proposed by \cite{hofmann99}. The
+\emph{Linear Functional Programming Language} (LFPL) takes a different
+approach to the \emph{Cons-free} system. Instead of completely
+prohibiting construction of new data, constructions is allowed if it
+is paid for by values of new type $\Diamond$ (``diamonds''):
 \begin{mathpar}
   \inferrule*
   {\Gamma \vdash M : \Diamond}
@@ -425,24 +576,29 @@ steps that will bound the resulting computation.
   {\Gamma_1 \vdash M : \Diamond \\ \Gamma_2 \vdash N : \tyNat}
   {\Gamma_1, \Gamma_2 \vdash \conSucc(M, N) : \tyNat}
 \end{mathpar}
-
+Thus, to construct a $\conZero$, we must have a $\Diamond$ to pay for
+it, and likewise, to construct a $\conSucc$ we must have a diamond. We
+can think of $\Diamond$s as an unit of iterable data. Iterability is
+``saved up'' in data during construction, and released during
+iteration. Diamonds cannot be created by a program itself, for the
+same reason that constructors were prohibited in the \emph{Cons-free}
+system, but they are released from iterable data during iteration. The
+LFPL natural number iterator has the following typing rule:
 \begin{displaymath}
   \inferrule*
   {d : \Diamond \vdash M_z : A \\ d : \Diamond, x : A \vdash M_s : A \\ \Gamma \vdash N : \tyNat}
   {\Gamma \vdash \tmRec\,N\,\{\conZero(d) \mapsto M_z; \conSucc(d,x) \mapsto M_s \} : A}
 \end{displaymath}
-
-\paragraph{Other datatypes} Trees, and so on.
-
-\paragraph{Completeness for Polytime} We now show how every polytime
-Turing machine can be simulated in LFPL with a non-iterable type of
-tapes. The construction, due to Aelhig and Schwictenberg
-\cite{syntactic-lfpl}, illustrates how programming with diamonds in
-LFPL differs from the soft system in the previous section.
-
-Assume a state type $\mathit{St}$ and a step function $f : \mathit{St} \multimap \mathit{St}$.
-
-The linear iterator:
+The difference with the \emph{Cons-free} iterator above is that the
+$\conZero$ and $\conSucc$ cases now both have an addition binding of
+type $\Diamond$. This allows some form nesting of iterations: during
+an iteration over the input, the program can accumulate $\Diamond$s to
+use for iteration over substructures that are smaller than the current
+point in the iteration. A construction, due to Aelhig and
+Schwictenberg \cite{syntactic-lfpl}, illustrates how this leads to all
+polytime computations. As above, we assume a polynomial $p(n)$ and a
+step function $f : \mathit{St} \multimap \mathit{St}$ that needs to be
+iterated $p(n)$ times. We construct a linear iterator:
 \begin{displaymath}
   \begin{array}{l}
     I_1 : (\tyNat \otimes \mathit{St}) \multimap (\tyNat \otimes \mathit{St}) \\
@@ -453,8 +609,11 @@ The linear iterator:
     \end{array}
   \end{array}
 \end{displaymath}
-
-Step:\textbf{Is the extra $f\,s$ required here?}
+Note that this iterator returns the natural number input as well as
+the new state. LFPL does not allow duplication of iterable inputs, so
+we must always reconstruct it if we want to do further
+iteration. Addition of polynomials is accomplished by composition of
+iterators. To raise the degree, we again use a nesting iterator:
 \begin{displaymath}
   \begin{array}{l}
     I_{k+1} : (\tyNat \otimes \mathit{St}) \multimap (\tyNat \otimes \mathit{St}) \\
@@ -465,37 +624,37 @@ Step:\textbf{Is the extra $f\,s$ required here?}
     \end{array}
   \end{array}
 \end{displaymath}
+Unlike in the \emph{Cons-free} system, this iterator does not raise
+the degree of the nested iterator directly. Rather the iterator $I_k$
+performs $\binom{n}{k}$ iterations. As observed by Aelhig and
+Schwictenberg, this is sufficient because the binomials form a basis
+for the vector space of all polynomials.
 
-\begin{lemma}
-  (Under a plausible operational semantics) FIXME: use an equational
-  theory instead, that includes $\beta$-equality.
-  \begin{displaymath}
-    I_k\,(\underline{n},s) \longrightarrow^* (\underline{n},v)
-  \end{displaymath}
-  iff
-  \begin{displaymath}
-    f^{\binom{n}{k}}\,s \longrightarrow^* v
-  \end{displaymath}
-\end{lemma}
+Despite this slightly more involved completeness construction, the
+advantage of LFPL is that it is now easy to have arbitrary iterable
+datatypes and to transform between them. We need only take the
+introduction and elimination rules for any inductive datatype and add
+$\Diamond$ premises to the introduction rules and $\Diamond$ bindings
+to the eliminators.
 
 
-\subsection{Explicit Resource Tracking}
+% \subsection{Explicit Resource Tracking}
 
-\begin{enumerate}
-\item We still require diamonds to build zero and successor, but the
-  iterator does not give them back.
-\item In the simply typed case, we can annotate types with the static
-  amount of potential they have per constructor.
-\end{enumerate}
+% \begin{enumerate}
+% \item We still require diamonds to build zero and successor, but the
+%   iterator does not give them back.
+% \item In the simply typed case, we can annotate types with the static
+%   amount of potential they have per constructor.
+% \end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Complexity Control in Quantitative Type Theory}
+\section{Quantitative Type Theory}
 \label{sec:qtt}
 
-We have now seen three systems for controlling resource usage by means
+We have now seen two systems for controlling resource usage by means
 of linear typing. We now look to extend these systems to include
 dependent types. Our motivation is threefold:
 \begin{enumerate}
@@ -514,82 +673,191 @@ dependent types. Our motivation is threefold:
 To integrate linear typing for controlling time complexity with
 dependent types we use \emph{Quantitative Type Theory} (QTT)
 \cite{atkey18qtt}. In this section, we review the definition of QTT
-and how we have adapted it to implicit and explicit control of
-computational complexity.
-
-\begin{enumerate}
-\item General description of QTT
-\item Non-iterable datatypes in QTT
-\item Adapting QTT to include a ``soft'' natural number type
-\item Diamonds
-\item
-\end{enumerate}
+and how we have adapted it to the polytime systems we saw in the
+previous section.
 
 \subsection{Quantitative Type Theory}
 
-\begin{enumerate}
-\item Rules for contexts (using $\epsilon$ for empty contexts to avoid
-  confusion between $\diamond$ and $\Diamond$):
-  \begin{mathpar}
-    \inferrule* [right=Ctxt-Emp]
-    { }
-    {\epsilon~\isctxt}
+\bob{Explain the judgements and general idea of QTT, and the admissibility of $0$-ing}
 
-    \inferrule* [right=Ctxt-Ext]
-    {\Gamma~\isctxt \\ 0\Gamma \vdash S~\istype}
-    {\Gamma, x \stackrel\rho: S~\isctxt}
-  \end{mathpar}
+\subsubsection{Contexts, variables, and conversion}
+\begin{mathpar}
+  \inferrule* [right=Ctxt-Emp]
+  { }
+  {\epsilon~\isctxt}
 
-  \begin{mathpar}
-    \inferrule* [right=Tm-Var]
-    {0\Gamma, x \stackrel\sigma: S, 0\Gamma'~\isctxt}
-    {0\Gamma, x \stackrel\sigma: S, 0\Gamma' \vdash x \stackrel\sigma: S}
+  \inferrule* [right=Ctxt-Ext]
+  {\Gamma~\isctxt \\ 0\Gamma \vdash S~\istype}
+  {\Gamma, x \stackrel\rho: S~\isctxt}
+\end{mathpar}
 
-    \inferrule* [right=Tm-Conv]
-    {\Gamma \vdash M \stackrel\sigma: S \\ 0\Gamma \vdash S \equiv T~\istype}
-    {\Gamma \vdash M \stackrel\sigma: T}
-  \end{mathpar}
-\item Rules for $\Pi$ and $\Sigma$ types
-  \begin{mathpar}
-    \inferrule* [right=$\Pi$-type]
-    {0\Gamma \vdash S~\istype \\ 0\Gamma, x \stackrel0: S \vdash T~\istype}
-    {0\Gamma \vdash (x \stackrel\rho: S) \to T~\istype}
+\begin{mathpar}
+  \inferrule* [right=Tm-Var]
+  {0\Gamma, x \stackrel\sigma: S, 0\Gamma'~\isctxt}
+  {0\Gamma, x \stackrel\sigma: S, 0\Gamma' \vdash x \stackrel\sigma: S}
 
-    \inferrule* [right=$\Pi$-Intro]
-    {\Gamma, x \stackrel{\sigma\rho}: S \vdash M \stackrel\sigma: T}
-    {\Gamma \vdash \lambda x.M \stackrel\sigma: (x \stackrel\rho: S) \to T}
+  \inferrule* [right=Tm-Conv]
+  {\Gamma \vdash M \stackrel\sigma: S \\ 0\Gamma \vdash S \equiv T~\istype}
+  {\Gamma \vdash M \stackrel\sigma: T}
+\end{mathpar}
 
-    \inferrule* [right=$\Pi$-Elim]
-    {\Gamma_1 \vdash M \stackrel\sigma: (x \stackrel\rho: S) \to T \\
-      \Gamma_2 \vdash N \stackrel{\sigma'}: S \\
-      FIXME}
-    {\Gamma_1 + \rho\Gamma_2 \vdash M\,N \stackrel\sigma: T[N/x]}
-  \end{mathpar}
+\subsubsection{$\Pi$- and $\Sigma$-types}
+\begin{mathpar}
+  \inferrule* [right=$\Pi$-type]
+  {0\Gamma \vdash S~\istype \\ 0\Gamma, x \stackrel0: S \vdash T~\istype}
+  {0\Gamma \vdash (x \stackrel\rho: S) \to T~\istype}
 
-  FIXME: $\Sigma$-types
-\item Rules for equality
-  \begin{mathpar}
-    \inferrule* [right=Eq-type]
-    {0\Gamma \vdash S~\istype \\
-      0\Gamma \vdash M \stackrel0: S \\
-      0\Gamma \vdash N \stackrel0: S}
-    {0\Gamma \vdash M =_S N~\istype}
+  \inferrule* [right=$\Pi$-Intro]
+  {\Gamma, x \stackrel{\sigma\rho}: S \vdash M \stackrel\sigma: T}
+  {\Gamma \vdash \lambda x.M \stackrel\sigma: (x \stackrel\rho: S) \to T}
 
-    \inferrule* [right=Eq-Intro]
-    {\Gamma \vdash M \stackrel\sigma: S}
-    {\Gamma \vdash \conRefl(M) \stackrel\sigma: M =_S M}
-  \end{mathpar}
-  \bob{Equality reflection?}
-\item Rules for universe
-\end{enumerate}
+  \inferrule* [right=$\Pi$-Elim]
+  {\Gamma_1 \vdash M \stackrel\sigma: (x \stackrel\rho: S) \to T \\
+    \Gamma_2 \vdash N \stackrel{\sigma'}: S \\
+    FIXME}
+  {\Gamma_1 + \rho\Gamma_2 \vdash M\,N \stackrel\sigma: T[N/x]}
+\end{mathpar}
+
+\bob{$\Sigma$-types, from the LICS paper}
+
+\subsubsection{The Identity Type}
+\begin{mathpar}
+  \inferrule* [right=Eq-type]
+  {0\Gamma \vdash S~\istype \\
+    0\Gamma \vdash M \stackrel0: S \\
+    0\Gamma \vdash N \stackrel0: S}
+  {0\Gamma \vdash M =_S N~\istype}
+
+  \inferrule* [right=Eq-Intro]
+  {\Gamma \vdash M \stackrel\sigma: S}
+  {\Gamma \vdash \conRefl(M) \stackrel\sigma: M =_S M}
+\end{mathpar}
+\bob{Equality reflection}
+
+\subsubsection{Universe}
+\bob{Copy from LICS paper}
+
+\subsubsection{Datatypes} QTT, as we have presented it so far, has no
+interesting base types to perform computation on. Following our
+presentation of the simply typed linear systems in
+\autoref{sec:lin-intro}, we add two kinds of datatype to QTT. First,
+\autoref{sec:noniter-qtt}, we add non-iterable datatypes that allow
+construction and case analysis, but no recursion. In
+\autoref{sec:cons-free-qtt} we describe how to extend QTT to be a
+dependently typed adaptation of the Cons-free system of
+\autoref{sec:cons-free-intro}. In \autoref{sec:lfpl-qtt}, we apply the
+same treatment to the LFPL-style system.
 
 \subsection{Non-iterable Datatypes}
+\label{sec:noniter-qtt}
 
-\subsection{Cons-free Natural Numbers}
+\subsubsection{Booleans} The boolean type was already described in
+\cite{atkey18qtt}, but we repeat it here for completeness. Booleans
+offer no possibility for iteration in any case, but it is useful to
+see how their typing rules handle resource distribution before moving
+to more complex types.
+\begin{mathpar}
+  \inferrule*
+  {\Gamma~\isctxt}
+  {\Gamma \vdash \BoolTy~\istype}
 
-Of course, ``cons-free'' only applies to the runtime portion of the
-system. In the $\sigma = 0$ fragment, we are allowed to create new
-natural numbers arbitrarily:
+  \inferrule*
+  {\Gamma~\isctxt}
+  {0\Gamma \vdash \cTrue, \cFalse \stackrel\sigma: \BoolTy}
+
+  \inferrule*
+  {0\Gamma_1, x \stackrel0: \BoolTy \vdash P~\istype \\
+    \Gamma_1 \vdash M \stackrel\sigma: \BoolTy \\
+    \Gamma_2 \vdash N_t \stackrel\sigma: P[\cTrue/x] \\
+    \Gamma_2 \vdash N_f \stackrel\sigma: P[\cFalse/x] \\
+    0\Gamma_1 = 0\Gamma_2}
+  {\Gamma_1 + \Gamma_2 \vdash \If_{x.P}\: M \: \Then \: N_t \: \Else \: N_f \stackrel\sigma: P[M/x]}
+\end{mathpar}
+The introduction rules for booleans both use a $0$-d context,
+indicating that construction of boolean values is free. Elimination of
+booleans via a dependently typed if-then-else is more subtle with its
+resource usage. The boolean to be eliminated must be constructed in a
+context $\Gamma_1$, while the two branches are constructed in context
+$\Gamma_2$. Since only one of the branches will be used, sharing
+resources between the branches is expected.
+
+One might wonder how, since constructing booleans is $0$-cost by their
+introduction rules, the $\Gamma_1$ context will ever be non-$0$. This
+is resolved by observing that booleans may be the output of processes
+that consume time (e.g., the iteration constructs defined below), and
+so $\Gamma_1$ will represent a requirement that the necessary resource
+is provided.
+
+\subsubsection{Lists} Lists are a little more complex than booleans,
+because the $\cCons$ constructor takes two arguments, so their
+resource usage must be combined. The type formation and introduction
+rules are as follows:
+\begin{mathpar}
+  \inferrule*
+  {0\Gamma \vdash T~\istype}
+  {0\Gamma \vdash \ListTy(T)~\istype}
+
+  \inferrule*
+  {\Gamma \vdash T~\istype}
+  {0\Gamma \vdash \cNil \stackrel\sigma: \ListTy(T)}
+
+  \inferrule*
+  {\Gamma_1 \vdash M \stackrel\sigma: T \\
+    \Gamma_2 \vdash N \stackrel\sigma: \ListTy(T) \\
+    0\Gamma_1 = 0\Gamma_2}
+  {\Gamma_1 + \Gamma_2 \vdash \cCons(M,N) \stackrel\sigma: \ListTy(T)}
+\end{mathpar}
+Lists do have the potential for iteration by their recursive nature,
+but in order to ensure the complexity guarantees we only permit
+matching without recursion in the full calculus. Here is the rule for
+dependently typed case analysis on lists:
+\begin{mathpar}
+  \inferrule*
+  {0\Gamma_1, x \stackrel0: \ListTy(T) \vdash P~\istype \\
+    \Gamma_1 \vdash M \stackrel\sigma: \ListTy(T) \\
+    \Gamma_2 \vdash N_1 \stackrel\sigma: P[\cNil/x] \\
+    \Gamma_2, h \stackrel\sigma: T, t \stackrel\sigma: \ListTy(T) \vdash N_2 \stackrel\sigma: P[\cCons(h,t)/x] \\
+    0\Gamma_1 = 0\Gamma_2}
+  {\Gamma_1 + \Gamma_2 \vdash \Match_{x.P}\,M\,\{\,\cNil \mapsto N_1; \cCons(h,t) \mapsto N_2\,\} : P[M/x]}
+\end{mathpar}
+In the $\sigma = 0$ fragment, however, we are free to iterate on lists
+because computations in this fragment are only meant for type-level
+computation, not for the program itself. Put another way, the type
+checker may perform arbitary recursion on lists to type check the
+program, but the program itself may not do so without correctly
+accounting its costs as described in the following sections. The
+$\sigma = 0$ recursor for lists has the following typing rule, which
+is the standard dependent eliminator for lists, with everything
+annotated as $0$ usage.
+\begin{mathpar}
+  \inferrule*
+  {0\Gamma, x \stackrel0: \ListTy(T) \vdash P~\istype \\
+    0\Gamma \vdash M \stackrel0: \ListTy(T) \\
+    0\Gamma \vdash N_1 \stackrel0: P[\cNil/x] \\
+    0\Gamma, h \stackrel0: T, t \stackrel0: \ListTy(T), p \stackrel0: P[t/x] \vdash N_2 \stackrel0: P[\cCons(h,t)/x]}
+  {0\Gamma \vdash \mathrm{recList}_{x.P}\,M\,\{\,\cNil \mapsto N_1; \cCons(h,t;p) \mapsto N_2\,\} \stackrel0: P[M/x]}
+\end{mathpar}
+
+\subsection{Cons-free Natural Numbers and their Recursor}
+\label{sec:cons-free-qtt}
+
+\bob{Reword this paragraph in light of whatever is said in the
+  previous section.} The datatypes of the previous section still only
+allow us to write programs in the $\sigma = 1$ fragment that are
+constant time in the size of their input. If we are handed a list of
+an unknown length, we can only explore it to a fixed depth determined
+statically. As we saw above, to write programs that perform work
+proportional to the length of their input, we need some form of
+iterable datatype. In both our cons-free and LFPL-style systems, we
+use a natural number datatype.
+
+The cons-free system cannot allow the programmer to construct natural
+numbers in the $\sigma = 1$ fragment, as this would violate the
+complexity guarantees. However, we can use the flexibility of QTT to
+allow free construction of naturals in the $\sigma = 0$ fragment,
+which allows us to use natural numbers freely in types. Therefore, we
+have the following introduction rules, only usable in the $\sigma = 0$
+fragment:
 \begin{mathpar}
   \inferrule*
   {\Gamma \vdash}
@@ -599,43 +867,97 @@ natural numbers arbitrarily:
   {\Gamma \vdash M \stackrel0: \tyNat}
   {\Gamma \vdash \conSucc(M) \stackrel0: \tyNat}
 \end{mathpar}
-Creating numbers in the $\sigma = 0$ fragment ensures that we can talk
-about natural numbers in our types, allowing us to state properties of
-our programs.\bob{Forward ref to actually doing this.}
+The cons-free system allows free duplication of complete natural
+numbers. This is accomplished by a special construct copying the
+simply linear typed rule we gave above:
+\begin{mathpar}
+  \inferrule*
+  {\Gamma \vdash M \stackrel\sigma: \tyNat}
+  {\Gamma \vdash \mathrm{dupNat}(M) \stackrel\sigma: \tyNat \otimes \tyNat}
+\end{mathpar}
+Anyone who has reasoned about the metatheory of or implemented a type
+checker for dependent types will view this rule with unease as it
+appears to grant the ability to construct non-canonical values of pair
+type, and consequently generate non-canonical naturals. We fix this by
+adding an equational rule to the $\sigma = 0$ fragment, ensuring
+\emph{definitionally} that $\mathrm{dupNat}$ acts as its name implies:
+\begin{mathpar}
+  \inferrule*
+  {\Gamma \vdash M \stackrel0: \tyNat}
+  {\Gamma \vdash \mathrm{dupNat}(M) \equiv (M,M) \stackrel0: \tyNat \otimes \tyNat}
+\end{mathpar}
+Note that this rule is well-typed by the $0$-needs-$0$ property of
+QTT, and the fact that $0+0=0$.
 
-The eliminator:
+The eliminator for these natural numbers takes the following
+form. Disregarding the usage annotations, this has the same type
+structure as the normal dependently typed recursor for natural
+numbers:
 \begin{displaymath}
   \mprset{flushleft}
   \inferrule*
-  {0\Gamma, m \stackrel0: \tyNat \vdash X~\istype \\\\
-    0\Gamma \vdash M_z \stackrel\sigma: X[\conZero/m] \\\\
-    0\Gamma, n \stackrel0: \tyNat, x \stackrel1: X[n/m] \vdash M_s \stackrel\sigma: X[\conSucc(n)/m] \\\\
-    \Gamma \vdash N \stackrel\sigma: \tyNat}
-  {\Gamma \vdash \tmRec\,N\,\{\conZero \mapsto M_z; \conSucc(n/x) \mapsto M_s\} \stackrel\sigma: X[N/m]}
+  {0\Gamma, x \stackrel0: \tyNat \vdash P~\istype \\\\
+    \Gamma \vdash M \stackrel\sigma: \tyNat \\\\
+    0\Gamma \vdash N_z \stackrel\sigma: P[\conZero/x] \\\\
+    0\Gamma, n \stackrel0: \tyNat, p \stackrel\sigma: P[n/x] \vdash N_s \stackrel\sigma: P[\conSucc(n)/x]}
+  {\Gamma \vdash \tmRec_{x.P}\,M\,\{\conZero \mapsto N_z; \conSucc(n;p) \mapsto N_s\} \stackrel\sigma: P[M/x]}
 \end{displaymath}
+In the successor case, $N_s$, there are two bound variables: $n$ for
+the natural number and $p$ for its induction hypothesis. Note that $n$
+is required to be usage $0$ no matter what $\sigma$ is. We need the
+variable $n$ to be present in order to correctly type the induction
+hypothesis and the conclusion, but it must be marked as usage $0$ to
+ensure that the resources captured by the number are not duplicated.
 
-\subsection{Diamonds}
+The reader is invited to compare this dependently typed rule with the
+simply typed linear version in \autoref{sec:cons-free-intro}. Removing
+the $0$-annotated parts of the rule, and the type dependency, yield
+the exact same rule. Conversely, when $\sigma = 0$, this rule is
+identical (up to $0$-annotations) to the usual dependently typed
+recursor for natural numbers, and so we can use it in the types to
+prove properties of programs just as we do in normal type theory. We
+will see in \autoref{sec:cons-free-sound} that this rule is realisable
+by polynomial-time amortised computation, and so is sound for
+polynomial time. \bob{And we do some examples?}
 
+\subsection{LFPL-style Diamonds and Natural Numbers}
+\label{sec:lfpl-qtt}
+
+As explained in \autoref{sec:lfpl-intro}, the LFPL system differs from
+the Cons-free system in that it is possible to construct natural
+numbers (and other iterable datatypes), provided one has the necessary
+diamonds to pay for the construction. As with the natural number type
+in the Cons-free system, it ought not be possible to construct
+diamonds in the $\sigma = 1$ fragment, as this would amount to the
+free distribution of diamonds to all which would lead to a collapse in
+the complexity guarantees of the system. It is possible construct
+diamonds in the $\sigma = 0$, though:
 \begin{mathpar}
-  \inferrule* [right=DiaType]
+  \inferrule*
   {\Gamma \vdash}
   {0\Gamma \vdash \Diamond~\istype}
 
-  \inferrule* [right=DiaIntro]
+  \inferrule*
   {\Gamma \vdash}
   {0\Gamma \vdash * \stackrel0: \Diamond}
 
-  \inferrule* [right=DiaEta]
+  \inferrule*
   {\Gamma \vdash M \stackrel0: \Diamond}
   {\Gamma \vdash M \equiv * \stackrel0: \Diamond}
 \end{mathpar}
+The $\Diamond$ type also supports an $\eta$-rule in the $\sigma = 0$
+fragment, indicating that, in this fragment, it acts the same as a
+unit type. This allows us to use freely use diamonds in types, and to
+not have to care about the identity of particular diamonds, since by
+this rule all diamonds are definitionally
+equal\footnote{\emph{Fungible}, if one wishes to use a monetary
+  metaphor.}.
+% Link to Selinger et al: the $\eta$ rule for $\Diamond$s means that are
+% essentially depending on the ``shape'' of anything that depends on
+% diamonds.
 
-Link to Selinger et al: the $\eta$ rule for $\Diamond$s means that are
-essentially depending on the ``shape'' of anything that depends on
-diamonds.
-
-\subsection{LFPL-style Natural Numbers}
-
+Construction of natural numbers now requires a $\Diamond$ for
+$\conZero$ and a $\Diamond$ and a predecessor for $\conSucc$:
 \begin{mathpar}
   \inferrule*
   {\Gamma \vdash M \stackrel\sigma: \Diamond}
@@ -647,29 +969,112 @@ diamonds.
     0\Gamma_1 = 0\Gamma_2}
   {\Gamma_1 + \Gamma_2 \vdash \conSucc(M,N) \stackrel\sigma: \tyNat}
 \end{mathpar}
+In the $\sigma = 0$ fragment, we can construct $\Diamond$s for free,
+and so construct natural numbers freely as well just as we did for the
+Cons-free system above.
 
+The dependently typed recursor for LFPL-style natural numbers again
+augments the simply typed linear recursor from
+\autoref{sec:lfpl-intro} with dependency information:
 \begin{mathpar}
   \mprset{flushleft}
   \inferrule*
-  {0\Gamma, m \stackrel0: \tyNat \vdash X~\istype \\\\
-    0\Gamma, d \stackrel1: \Diamond \vdash M_z \stackrel\sigma: X[\conZero(*)/m] \\\\
-    0\Gamma, d \stackrel1: \Diamond, n \stackrel0: \tyNat, x \stackrel1: X[n/m] \vdash M_s \stackrel\sigma : X[\conSucc(*,n)/m] \\\\
-    \Gamma \vdash N \stackrel\sigma: \tyNat}
-  {\Gamma \vdash \tmRec\,N\,\{\conZero(d) \mapsto M_z; \conSucc(d,n/x) \mapsto M_s\} \stackrel\sigma: X[N/m]}
+  {0\Gamma, x \stackrel0: \tyNat \vdash P~\istype \\\\
+    \Gamma \vdash M \stackrel\sigma: \tyNat
+    0\Gamma, d \stackrel1: \Diamond \vdash N_z \stackrel\sigma: P[\conZero(*)/x] \\\\
+    0\Gamma, d \stackrel1: \Diamond, n \stackrel0: \tyNat, p \stackrel1: P[n/x] \vdash N_s \stackrel\sigma : P[\conSucc(*,n)/x]}
+  {\Gamma \vdash \tmRec\,M\,\{\conZero(d) \mapsto N_z; \conSucc(d,n;p) \mapsto N_s\} \stackrel\sigma: P[M/x]}
 \end{mathpar}
+We have used $* : \Diamond$ as the value in the types for the zero and
+successor cases. By the $\eta$-rule for diamonds, we could have
+equally well used the $d$ variable that is in scope in each case.
 
-Note: we have used $* : \Diamond$ as the value in the types for the
-zero and successor cases. By the $\eta$-rule for diamonds, we could
-have equally well used the $d$ variable that is in scope in each case.
+Just as for the Cons-free system iterator above, in the $\sigma = 0$
+fragment this rule is identical to the usual dependently typed
+recursor for the natural numbers, so it can be used in the types to
+reason about programs. Moreover, we will see in
+\autoref{sec:lfpl-sound} that this rule is also sound for polynomial
+time in a system with $\Diamond$s.
 
-\subsection{Explicit Potential}
+\subsection{Reflection of Realisability}
+\label{sec:qtt-reflection}
 
+Our final addition to QTT is \emph{reflection of realisability}. In
+QTT thus far, it has been possible to reason about the non-resourced
+behaviour of programs. This is because the $0$-ing process moving from
+the $\sigma = 1$ fragment to the $\sigma = 0$ fragment erases all
+resource information. This is sufficient for reasoning about the
+extensional behaviour of programs, but it is useful to be able to make
+statements like ``this function is realisable in polynomial time'' in
+the types of QTT, something that is not current possible.
+
+We remedy this by adding a \emph{realisable} type to QTT with the
+following type formation and introduction and elimination rules:
+\begin{mathpar}
+  \inferrule*
+  {0\Gamma \vdash A~\istype}
+  {0\Gamma \vdash \Rtype(A)~\istype}
+
+  \inferrule*
+  {0\Gamma \vdash M \stackrel1: A}
+  {0\Gamma \vdash \rIntro(M) \stackrel\sigma: \Rtype(A)}
+
+  \inferrule*
+  {\Gamma \vdash M \stackrel\sigma: \Rtype(A)}
+  {\Gamma \vdash \rElim(M) \stackrel{\sigma'}: A}
+\end{mathpar}
+Intuitively, the type $\Rtype(A)$ is inhabited whenever the type $A$
+is realisable in the $\sigma = 1$ fragment of the system. In
+particular, the type $\Rtype(\tyNat \to \tyNat)$ is the type of all
+realisable functions from natural numbers to natural numbers. In the
+polynomial time systems we are concerned with here, this is exactly
+the type of polynomial functions. Note that in the introduction rule,
+the premise is required to be in the $\sigma = 1$ fragment, to ensure
+that the type is realisable, while in the elimination rule, the
+conclusion is in an arbitrary fragment $\sigma'$. This flexibility is
+require to maintain the admissibility of the $0$-ing rule.
+
+With just the rules given here, the type $\Rtype(A)$ is nothing more
+than a statement that a given type is realisable with a polytime
+implementation. This is enough to do some proofs that we present in
+the next section, e.g., that polytime functions are closed under
+composition, but one could imagine stronger reflection principles that
+allow deeper logical consequences of polytime realisability to be
+proved internally. We discuss this further in
+\autoref{sec:towards-synthetic-complexity-theory}.
+
+Readers familiar with Benton's Linear/Non-linear system
+\cite{benton94} will note that the $\Rtype(A)$ constructor is the QTT
+analogue of the right adjont $G$ type constructor in that system. The
+$\Sigma$-types describe above play the role of the left adjoint $F$
+types, in a similar way to the dependent linear type system of Pradic,
+Krishnaswami and Benton \cite{pradic}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Soundness via Realisability}
+\section{Programming and Proving with Polytime}
+\label{sec:programming-polytime}
+
+\begin{enumerate}
+\item Non-deterministic polytime via a bit oracle -- needs a statement
+  of success
+\item Previous could also be interpreted as probabilistic polytime
+  (access to coin flips); can we formalise some kind of cryptographic
+  property this way? Have a look at hash functions in the
+  Authenticated Data Structures paper.
+\item Insertion sort, quicksort as polytime functions.
+\item A type of polytime functions; via a reflection operator
+\item Programming with explicit resource annotations, including
+  reasoning about the resource requirements directly.
+\end{enumerate}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Polytime Soundness via Realisability}
 \label{sec:soundness}
 
 \newcommand{\cstaccess}{c_{\mathit{access}}}
@@ -693,7 +1098,7 @@ have equally well used the $d$ variable that is in scope in each case.
 \newcommand{\rplus}{\oplus}
 \newcommand{\rzero}{\emptyset}
 
-FIXME: introductory paragraph.
+\bob{introductory paragraph.}
 
 The Hofmann-Dal Lago approach to proving the soundness of implicit
 computational complexity systems is based on a three way coupling
@@ -787,7 +1192,7 @@ want to prove complexity soundness for.
     {\eta[i] = \synFalse \\ E_2, \eta \Downarrow_k V}
     {\If\,i\,E_1\,E_2, \eta \Downarrow_{\cstIf + k} V}
 \end{mathpar}
-  \caption{Language with Big-step Costed Evaluation Semantics}
+  \caption{Language with CBV Big-step Costed Evaluation Semantics}
   \label{fig:opsem}
 \end{figure}
 
@@ -960,6 +1365,8 @@ substitutions (\autoref{defn:rl-morphism}) and terms
 
 \subsubsection{Resource Monoids as Enriched Categories}
 
+\bob{move this to below the definition of resource monoid}
+
 An alternative perspective on resource monoids is to see them as a
 kind of entriched category \cite{kelly}. Enriched categories replace
 the sets of morphisms between objects with objects from some category
@@ -974,8 +1381,6 @@ definition of Hofmann and Dal Lago's resource monoids can be given as:
   A \emph{resource monoid} is a strict symmetric monoidal
   $\natinf$-enriched category.
 \end{definition}
-
-FIXME: Relational definition, used for the formalisation.
 
 \subsection{Models of Quantitative Type Theory}
 \label{sec:qtt-models}
@@ -995,23 +1400,24 @@ systems.
 \end{definition}
 
 \begin{definition}
-  A \emph{linear poset} is a partially ordered set $(A, \leq)$ with
+  A \emph{linear preorder} is a preordered set $(A, \leq)$ with
   \begin{enumerate}
   \item A commutative monoid $(I, -\otimes-)$ that is monotone
     w.r.t. the order; and
   \item Is closed: there is an operation
     $\multimap : A \times A \to A$ such that $x \otimes y \leq z$ iff
     $x \leq y \multimap z$.
+  \item Right adjoint
   \end{enumerate}
-  The collection of all linear posets and functions that preserve the
-  order and the operations forms a category $\LinPoset$.
+  The collection of all linear preorders and functions that preserve the
+  order and the operations forms a category $\LinPreorder$.
 \end{definition}
 
 \begin{definition}
   \begin{enumerate}
   \item A CwF $(\cat{C}, \top, \langle-,-\rangle, ...)$ that supports
     $\Pi$ and $\Sigma$ types.
-  \item A functor $L : \cat{C}^\op \to \LinPoset$, such that
+  \item A functor $L : \cat{C}^\op \to \LinPreorder$, such that
     reindexing along projections has a right adjoint:
     \begin{displaymath}
       L_{\Gamma.A}(\pi^*X, Y) \cong L_{\Gamma}(X, \forall_A Y)
@@ -1023,7 +1429,7 @@ systems.
 \begin{enumerate}
 \item Start with a CwF $\cat{C}$ that supports $\Pi$, $\Sigma$ and
   natural numbers.
-\item Assume a functor $L : \cat{C}^\top \to \LinPoset$ with
+\item Assume a functor $L : \cat{C}^\top \to \LinPreorder$ with
   reindexing along projections having a right adjoint.
 \item Construct a new CwF with the same base category as $\cat{C}$,
   but with $\Ty'(\Delta) = \Sigma A : \Ty(\Delta).~L(\Delta.A)$ and
@@ -1158,10 +1564,6 @@ structure on our resource monoids \bob{fwd ref}.
   See the Agda development.
 \end{proof}
 
-\begin{proposition}\label{prop:basic-qtt-realisability-model}
-  Get a model QTT with $\Pi$, $\Sigma$, and a universe.
-\end{proposition}
-
 \subsubsection{Non-iterable Data Types}
 
 The model of QTT constructed in
@@ -1173,21 +1575,81 @@ resource monoids that we introduce in
 
 Rather than perform a complex generic construction of datatypes to
 show how non-iterable versions may be realised, we focus on two
-representative examples. Booleans
+representative examples. Booleans are the simplest case, with only two
+cases and no chance of iteration. Lists are more complex; we can have
+non-iterable lists containing iterable data. Combining lists and
+booleans allows us to represent other datatypes, such as the
+$\TapeType$ type used to represent Turing machine tapes in
+\autoref{sec:completeness}.
 
 \paragraph{Booleans} Fix $\mathbb{B} = \{ \mathit{tt}, \mathit{ff} \}$
 as our set of boolean elements. We define an element of $L(\mathbb{B}$
 to represent boolean values:
 \begin{displaymath}
-  \mathrm{bool} = \{ (\mathit{tt}, \alpha, \synTrue) \mid \alpha \in M \} \cup \{ (\mathit{ff}, \alpha, \synFalse) \mid \alpha \in M \}
+  \mathrm{Bool} = \{ (\mathit{tt}, \alpha, \synTrue) \mid \alpha \in M \} \cup \{ (\mathit{ff}, \alpha, \synFalse) \mid \alpha \in M \}
 \end{displaymath}
 Thus, the boolean $\mathit{tt}$ is represented by the value $\synTrue$
 and $\mathit{ff}$ is represented by $\synFalse$. In both case, we
 allow arbitrary potentials to be attached.
 
+Realisability of the construction and elimination of booleans amounts
+to the existence of the following inequalities. In an arbitrary fibre
+$L(A)$, we have $I_A \leq \mathit{tt}^* \mathrm{Bool}$ and
+$I_A \leq \mathit{ff}^* \mathrm{Bool}$ (treating $\mathit{tt}$ and
+$\mathit{ff}$ as constant functions $A \to \mathbb{B}$). These
+inequalities are realised by the corresponding $\synTrue/\synFalse$
+expression. For conditionals, the types involved are a little more
+complex to ensure agreement between boolean manipulations at the
+$\Set$-level and the realising computations. To get a realiser for a
+condition, we require a set $A$, an element $X \in L(A)$ (standing for
+the context) and an element $Y \in L(A \times \mathbb{B})$ (standing
+for the target type) and the existence in $L(A)$ of inequalities
+$X \leq (\lambda a. (a, \mathit{tt}))^* Y$, for the true case, and
+$X \leq (\lambda a. (a, \mathit{ff}))^* Y$, for the false case. When
+we have all these, we get in $L(A \times \mathbb{B})$ an inequality
+$\pi_1^* X \otimes \pi_2^* \mathrm{Bool} \leq Y$. \bob{back ref to the
+  typing rules for non-iterable data types}
 
+\paragraph{Lists} Lists are a little more involved, due to the need to
+explicitly manage a context that applies to all elements of the
+list. Let $\mathrm{List}(B)$ be the set of lists with elements from a
+set $B$. If we have $A : \Set$ and $B : A \to \Set$ and
+$X \in L(\Sigma a:A.\, B a)$, then we the resourced lists predicate
+$\mathrm{RList}(X) \in L(\Sigma a : A.\, \mathrm{List}(B a))$ must
+satisfy the equation:
+\begin{displaymath}
+  \mathrm{RList}(X) =
+  \begin{array}[t]{l}
+    \{ ((a, []), \alpha, (\synFalse, *)) \mid \alpha \in M \} \\
+    \cup \\
+    \{ \begin{array}[t]{@{}l}
+         ((a, b :: bs), \alpha, (\synTrue, (v_1, v_2))) \mid \\
+         \quad \exists \alpha_1, \alpha_2. 0 \leq M(\alpha, \alpha_1 \oplus \alpha_2) \land ((a, b), \alpha_1, v_1) \in X \land ((a, bs), \alpha_2, v_2) \in \mathrm{RList}(X) \}
+       \end{array}
+  \end{array}
+\end{displaymath}
+This equation has a least solution, by induction on the length of the
+list being realised. This definition is somewhat involved, but in
+essence states that a list is represented by tagged pairs, where
+$\synFalse$ represents nil and $\synTrue$ represents cons, and that
+the potential is distributed amongst the elements of the list as
+needed.
 
-\paragraph{Lists}
+Realisability of the nil and cons constructors, and of pattern
+matching on lists is similar to case for booleans. We refer the reader
+to the Agda development for the details.
+
+\subsubsection{Realising QTT}
+
+Summing up the previous sections, we have the following key theorem
+paving the way to soundness:
+\begin{theorem}\label{thm:basic-qtt-realisability-model}
+  For every resource monoid with a distinguished sub-monoid
+  $(M, M_0)$, we obtain a realisability model of $\mathbb{N}$-QTT with
+  $\Pi$ and $\Sigma$ types, a universe, and non-iterable datatypes.
+
+  \bob{State the realisability property of closed programs.}
+\end{theorem}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1196,22 +1658,146 @@ allow arbitrary potentials to be attached.
 \section{Realising Iteration for Implicit Polynomial Time}
 \label{sec:realising-iteration}
 
-Explain why the polytime iterators work.
+The models constructed in the previous section only allow for
+constant-time programs to be realised.
+
+If we use the natural number resource monoid (\bob{Ref})...
+
+\subsection{Iteration Resource Monoids}
+
+To interpret iteration over a resource monoid $(M, M_0)$, we require
+additional structure, which we call an \emph{Iteration Resource
+  Monoid} to account for measurement of the sizes of iterable data
+structures and the effects of iteration on potentials.
+
+\subsubsection{Definition}
+We require:
+\begin{enumerate}
+\item a function $\mathit{size} : \mathbb{N} \to M$ that gives the
+  potential of an iterable data structure of a given
+  size;
+\item a function $\mathit{raise} : M \to M$ that raises the
+  (polynomial) degree of some potential; and
+\item a function $\mathit{scale} : \mathbb{N} \times M \to M$ that
+  scales a potential for a fixed number of iterations.
+\end{enumerate}
+These functions must satisfy the following properties:
+\begin{enumerate}
+\item $M_0$ is closed under the $\mathit{raise}$ operation;
+\item for all $\alpha$ and $n$,
+  $0 \leq M(\mathit{raise}(\alpha) \oplus \mathit{size}(n),
+  \mathit{scale}(n,\alpha) \oplus \mathit{size}(n))$; and
+\item for all $\alpha \in M_0$ and $n$,
+  $0 \leq M(\mathit{scale}(1 + n, \alpha), \alpha \oplus
+  \mathit{scale}(n, \alpha))$.
+\end{enumerate}
+The first property states that $\mathit{raise}$ is suitable as
+potential for whole programs2, meaning that it does not make any
+requirements on the existence of iterable data. Note that we do
+\emph{not} require $M_0$ to contain $\mathit{size}(n)$ -- programs
+themselves may not contain iterable data, all potential for iteration
+must be delivered externally. A useful intuition is that
+$\mathit{scale}(n,\alpha)$ represents the potential required for at
+most $n$ iterations that require potential $\alpha$, whereas
+$\mathit{raise}(\alpha)$ represents the potential required for a
+number of iterations that depends on the context. This is the
+motivation behind the second required property, which states that
+having $\mathit{raise}(\alpha)$ potential implies having
+$\mathit{scale}(n,\alpha)$ potential when the current size is $n$. The
+third property states that $\mathit{scale}$ decomposes as expected on
+potentials that do not include any size potential.
+
+Note that $\mathit{scale}(n,\alpha)$ is not the same as the action
+$n \cdot \alpha$ defined in \autoref{FIXME}. The latter operation
+scales both size and function potential, but the former only scales
+the function potential.
+
+\subsubsection{Polynomial Iteration Resource Monoids}
+
+Both of the polymonial resource monoids defined in
+\autoref{sec:polynomial-resource-monoids} support the structure of an
+Iteration Resource Monoid. We define:
+\begin{enumerate}
+\item $\mathit{size}(n) = (n, 0)$
+\item $\mathit{raise}(n, p) = (n, xp)$
+\item $\mathit{scale}(m, (n, p)) = (n, m \cdot p)$
+\end{enumerate}
+Note that $\mathit{raise}$ does indeed raise the degree of the
+polynomial involved. Property 2 above is satisfied because for any
+polynomial we have $(m \cdot p)(x) \leq (xp)(x)$ whenever $m \leq x$.
+
+\subsubsection{Realising Iterable Natural Numbers}
+
+For any natural number $n$, we define its representation as a value
+$\mathrm{natValue}(n) \in \ValSet$ by recursion.
+\begin{displaymath}
+  \begin{array}{lcl}
+    \mathrm{natValue}(0) &=& (\synTrue , *) \\
+    \mathrm{natValue}(1 + n) &=& (\synFalse, \mathrm{natValue}(n))
+  \end{array}
+\end{displaymath}
+This representation uses a tagged pair approach similar to our
+representation of lists in \autoref{sec:lists}. Using this, we can
+define what it means for a natural number to be realisable via
+$\mathrm{Nat} \in L(\mathbb{N})$:
+\begin{displaymath}
+  \mathrm{Nat} = \{(n, \alpha, \mathrm{natValue}(n)) \mid n \in \mathbb{N}, 0 \leq M(\alpha, \mathit{size}(n)) \}
+\end{displaymath}
+So a natural number $n$ is realised by the value
+$\mathrm{natValue}(n)$ as long as we have at least $\mathit{size}(n)$
+potential.  This gives us the ability to represent natural numbers as
+a type in QTT, but in order to iterate (and construct in the case of
+LFPL), we need to construct specific realisers for the Cons-Free and
+LFPL systems.
+
+\subsection{The Cons-Free System}
+
+The Cons-Free system uses the $\MaxPoly$ resource monoid, with the
+distinguished sub-monoid being those elements that are $0$ in the size
+component.
+
+\begin{enumerate}
+\item We can duplicate natural numbers
+\item We \emph{cannot} construct natural numbers
+\item We can construct a recursor
+\end{enumerate}
 
 \begin{theorem}[Soundness for the Cons-free System]
   \label{thm:cons-free-soundness}
+  \bob{State the poly-time property for this system}
 \end{theorem}
+
+\subsection{The LFPL System}
+
+The LFPL system uses the $\PlusPoly$ resource monoid, with the
+distinguished sub-monoid again being those elements that are $0$ in
+the size component.
+
+\begin{enumerate}
+\item We can no longer duplicate natural numbers
+\item Define diamonds
+\item We can construct natural numbers given diamonds
+\item We can construct a recursor
+\end{enumerate}
 
 \begin{theorem}[Soundness for the LFPL-style System]
   \label{thm:lfpl-soundness}
+  \bob{State the poly-time property for this system}
 \end{theorem}
+
+
+\subsection{Beyond Natural Numbers}
+
+\bob{Theoretically possible, bit useless in the Cons-Free system,
+  useful in the LFPL one}.
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Realising Explicit Amortised Complexity}
-\label{sec:explicit-amortised-complexity}
+% \section{Realising Explicit Amortised Complexity}
+% \label{sec:explicit-amortised-complexity}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1227,28 +1813,6 @@ Explain why the polytime iterators work.
   \item In the SAL case, we have $\oc A \multimap A^n$, which allows
     us to
   \end{enumerate}
-\end{enumerate}
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Programming in Polytime}
-\label{sec:programming-polytime}
-
-\begin{enumerate}
-\item Non-deterministic polytime via a bit oracle -- needs a statement
-  of success
-\item Previous could also be interpreted as probabilistic polytime
-  (access to coin flips); can we formalise some kind of cryptographic
-  property this way? Have a look at hash functions in the
-  Authenticated Data Structures paper.
-\item Insertion sort, quicksort as polytime functions.
-\item A type of polytime functions; via a reflection operator
-\item Programming with explicit resource annotations, including
-  reasoning about the resource requirements directly.
 \end{enumerate}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
