@@ -404,6 +404,7 @@ dependent types is one of the reasons we turn to QTT when we wish to
 add dependent types in \autoref{sec:qtt}.
 
 \subsection{No Recursion, Only Case Analysis}
+\label{sec:linear-case-analysis}
 
 It is not too difficult to see that reduction of linear
 $\lambda$-terms always takes a number of steps linearly proprotional
@@ -552,6 +553,7 @@ where $n$ is the input $\tyNat$. Thus, the \emph{Cons-free} system can
 represent all polytime computations.
 
 \subsection{Diamond Trading with LFPL}
+\label{sec:lfpl-intro}
 
 The Cons-free system is sound and complete for polytime, but is quite
 awkward from the point of view of functional programming. It allows us
@@ -651,96 +653,227 @@ to the eliminators.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Quantitative Type Theory}
+\section{Polytime Quantitative Type Theory}
 \label{sec:qtt}
 
-We have now seen two systems for controlling resource usage by means
-of linear typing. We now look to extend these systems to include
-dependent types. Our motivation is threefold:
-\begin{enumerate}
-\item We would like to have a means for reasoning about the behaviour
-  of the programs we write in our systems. FIXME: why dependent types
-  then? Why not a program logic?
-\item In case of the explicitly resource accounted system, simple
-  typing is limited in the reasoning the programmer can perform about
-  the resources required by a particular program. While we could in
-  principle
-\item As well as constructing proofs \emph{about} complexity
-  constrained programs, we would also be able to write constructive
-  proofs that are themselves of constrained complexity.
-\end{enumerate}
+We have now seen the \emph{Cons-free} and \emph{LFPL} systems for
+capturing polytime by means of linear typing and restricted
+iteration. We now look to extend these systems to include dependent
+types.
 
 To integrate linear typing for controlling time complexity with
 dependent types we use \emph{Quantitative Type Theory} (QTT)
-\cite{atkey18qtt}. In this section, we review the definition of QTT
-and how we have adapted it to the polytime systems we saw in the
-previous section.
+\cite{atkey18qtt}. We now review the definition of QTT and describe
+how we have adapted it to the polytime systems we saw in the previous
+section.
 
 \subsection{Quantitative Type Theory}
 
-\bob{Explain the judgements and general idea of QTT, and the admissibility of $0$-ing}
+Integrating linear and dependent types is not straightforward due to
+the conflict between the linear typing discipline regarding presence
+of a variable as only bestowing the right to use it once, and the
+dependent typing regime that uses variables both in types (for
+specification purposes) and in terms (for computational purposes),
+syntactically yield multiple uses of the same variable.
+
+QTT is a system that resolves this conflict by recording usage of
+variables with annotations from a semiring. It sits in the general
+area of systems that use semiring annotatons to measure resource usage
+\cite{BLAH}. The key feature of QTT, originally due to
+\cite{mcbride16}, is that usage of variables in types counts for
+$0$-usage in terms of the semiring used. This allows us to use normal
+type theory as a specification language, while also enjoying the
+benefits of linear typing for programs. The term typing judgement of
+QTT has the following form:
+\begin{displaymath}
+  x_1 \stackrel{\rho_1}: S_1, \dots, x_n \stackrel{\rho_n}: S_n \vdash M \stackrel\sigma: T
+\end{displaymath}
+where the annotations $\rho_i$ are all from the semiring being
+used. The annotation $\sigma$ is either $0$ or $1$, indicating whether
+we are in the erased ($\sigma = 0$) fragment, where all the normal
+rules of type theory apply, or the in the non-erased (``present'',
+$\sigma = 1$) fragment, where a restricted typing discipline applies.
+As we shall see below in the cases of $\Sigma$-types, iterable types,
+and LFPL's $\Diamond$ type, the separation of QTT into these two
+fragments allows an expressive combination of reasoning using full
+type theory with the benefits of linear typing.
+
+In the remainder of this sub-section, we describe the core of QTT. As
+well as the term typing judgement given above, QTT also has judgements
+for well-formed contexts ($\Gamma~\isctxt$) and types
+($\Gamma \vdash T~\istype$), and definition equality of types and
+terms ($\Gamma \vdash S \equiv T~\istype$ and
+$\Gamma \vdash M \equiv N \stackrel\sigma: S$). It is an invariant of
+the system that types are always well-formed in a context with all
+annotations $0$, i.e., $\Gamma \vdash S~\istype$ implies
+$0\Gamma = \Gamma$. An important admissible rule of the system, along
+with weakening and substitution, is that of $0$-ing:
+\begin{displaymath}
+  \inferrule*
+  {\Gamma \vdash M \stackrel1: S}
+  {0\Gamma \vdash M \stackrel0: S}
+\end{displaymath}
+This rule allows us to take any term $M$ in the $\sigma = 1$ fragment
+and treat it as if it were in the $\sigma = 0$ fragment, and hence use
+it for specification purposes in types. As we add novel rules to QTT
+in the following sections, we will be careful to maintain the
+admissibility of this rule.
+
+\subsubsection{Natural-number usages}
+
+We use an instantiation of QTT with the natural number semiring, with
+the usual semiring structure of addition and multiplication. In a mild
+generalisation of the original presentation of QTT, we also allow
+sub-usaging via the \emph{reverse} ordering on the naturals. That is,
+if a variable is marked as usage $n$ and $m \geq n$, then we can also
+regard it as usage $m$. This makes the system more like affine linear
+logic, since $m \leq 0$ for all $m$, matching the system in
+\autoref{sec:linear-intro}. We do \emph{not} have an unrestricted
+usage $\omega$, since this would allow the possibility of unrestricted
+duplication, and hence violate our polytime soundness properties.
 
 \subsubsection{Contexts, variables, and conversion}
+
+As we saw above, contexts in QTT are comprised of variable
+$\stackrel\rho:$ type triples, where $\rho$ is a natural number
+indicating how many times the variable $x$ is available for use in a
+$\sigma = 1$ term. There are two operations on raw contexts: scaling
+$\pi\Gamma$, which multiplies each $\rho$ in $\Gamma$ by $\pi$, and
+addition $\Gamma_1 + \Gamma_2$, which adds two contexts' usage
+annotations assuming that the lengths and types are equal.  The basic
+usage-annotation discipline of QTT is demonstrated by the context
+formation and variable rules:
 \begin{mathpar}
-  \inferrule* [right=Ctxt-Emp]
+  \inferrule*
   { }
   {\epsilon~\isctxt}
 
-  \inferrule* [right=Ctxt-Ext]
+  \inferrule*
   {\Gamma~\isctxt \\ 0\Gamma \vdash S~\istype}
   {\Gamma, x \stackrel\rho: S~\isctxt}
-\end{mathpar}
 
-\begin{mathpar}
-  \inferrule* [right=Tm-Var]
+  \inferrule*
   {0\Gamma, x \stackrel\sigma: S, 0\Gamma'~\isctxt}
   {0\Gamma, x \stackrel\sigma: S, 0\Gamma' \vdash x \stackrel\sigma: S}
-
-  \inferrule* [right=Tm-Conv]
-  {\Gamma \vdash M \stackrel\sigma: S \\ 0\Gamma \vdash S \equiv T~\istype}
-  {\Gamma \vdash M \stackrel\sigma: T}
 \end{mathpar}
+As with most dependent type theories, contexts are built inductively
+from the empty context $\epsilon$ and extension of a context by a
+variable with a type that is well-formed in the preceding
+context. Usage annotations $\rho$ on variables are arbitrary, and
+types are always judged in a $0$-annotated context. The variable rule
+marks unused variables as usage $0$ and the selected variable with
+usage $\sigma$.
+
+% \begin{mathpar}
+
+%   \inferrule* [right=Tm-Conv]
+%   {\Gamma \vdash M \stackrel\sigma: S \\ 0\Gamma \vdash S \equiv T~\istype}
+%   {\Gamma \vdash M \stackrel\sigma: T}
+% \end{mathpar}
 
 \subsubsection{$\Pi$- and $\Sigma$-types}
+
+QTT's $\Pi$-types have the form $(x \stackrel\rho: S) \to T$,
+indicating functions that, in the $\sigma = 1$ fragment, use their
+arguments $\rho$-many times. The formation, introduction and
+elimination rules are similar to the standard ones, except for the
+addition of usage annotations:
 \begin{mathpar}
-  \inferrule* [right=$\Pi$-type]
+  \inferrule*
   {0\Gamma \vdash S~\istype \\ 0\Gamma, x \stackrel0: S \vdash T~\istype}
   {0\Gamma \vdash (x \stackrel\rho: S) \to T~\istype}
 
-  \inferrule* [right=$\Pi$-Intro]
+  \inferrule*
   {\Gamma, x \stackrel{\sigma\rho}: S \vdash M \stackrel\sigma: T}
   {\Gamma \vdash \lambda x.M \stackrel\sigma: (x \stackrel\rho: S) \to T}
 
-  \inferrule* [right=$\Pi$-Elim]
+  \inferrule*
   {\Gamma_1 \vdash M \stackrel\sigma: (x \stackrel\rho: S) \to T \\
     \Gamma_2 \vdash N \stackrel{\sigma'}: S \\
-    FIXME}
+    0\Gamma_1 = 0\Gamma_2 \\
+    \sigma' = 0 \Leftrightarrow (\rho = 0 \lor \sigma = 0)}
   {\Gamma_1 + \rho\Gamma_2 \vdash M\,N \stackrel\sigma: T[N/x]}
 \end{mathpar}
+The side conditions on the elimination rule state that (i) both
+$\Gamma_1$ and $\Gamma_2$ erase to the same context, so their sum is
+defined; and (ii) the argument $N$ is erased (i.e., $\sigma' = 0$) iff
+either the function does not use its argument, or we are in the
+$\sigma = 0$ fragment and everything is being erased.
 
-\bob{$\Sigma$-types, from the LICS paper}
+$\Sigma$-types are a little more involved, and demonstrate the
+flexibility in QTT in allowing additional power in the $\sigma = 0$
+fragment, where we do not need to care about
+implementability. Formation and introduction are given by the rules:
+\begin{mathpar}
+  \inferrule*
+  {0\Gamma \vdash S \\ 0\Gamma, x \stackrel0: S \vdash T}
+  {0\Gamma \vdash (x \stackrel\pi: S) \otimes T}
+
+  \inferrule*
+  {\Gamma_1 \vdash M \stackrel{\sigma'}: S \\
+    \Gamma_2 \vdash N \stackrel\sigma: T[M/x] \\\\
+    0\Gamma_1 = 0\Gamma_2 \\
+    \sigma' = 0 \Leftrightarrow (\pi = 0 \lor \sigma = 0)}
+  {\pi\Gamma_1 + \Gamma_2 \vdash (M, N) \stackrel\sigma: (x \stackrel\pi: S) \otimes T}
+\end{mathpar}
+As with $\Pi$-typed, the first component of a $\Sigma$ type is
+annotated with a usage for how many times it can be used, and this is
+respected by the introduction rule. Elimination of $\Sigma$-types
+depends on whether we are in the $\sigma = 0$ fragment or not. In the
+$\sigma = 0$ fragment, we are free to disregard usage restrictions,
+and use projections as normal:
+\begin{mathpar}
+  \inferrule*
+  {\Gamma \vdash M \stackrel0: (x \stackrel\pi: S) \otimes T}
+  {\Gamma \vdash \mathrm{fst}(M) \stackrel0: S}
+
+  \inferrule*
+  {\Gamma \vdash M \stackrel0: (x \stackrel\pi: S) \otimes T}
+  {\Gamma \vdash \mathrm{snd}(M) \stackrel0: T[\mathrm{fst}(M)/x]}
+\end{mathpar}
+Hence, $\Sigma$-types act as normal in the $\sigma = 0$ fragment, and
+we can use them as for normal type-theoretic constructions.  In the
+$\sigma = 1$ fragment, we must take into account the resource content
+of objects and use a pattern matching construct; the dependently typed
+analogue of the $\otimes$-eliminator in \autoref{sec:lineartype}:
+\begin{mathpar}
+  \inferrule*
+  {0\Gamma, z \stackrel0: (x \stackrel\pi: A) \otimes B \vdash C \\
+    \Gamma_1 \vdash M \stackrel\sigma: (x \stackrel\pi: A) \otimes B \\
+    \Gamma_2, x \stackrel{\sigma\pi}: A, y \stackrel{\sigma}: B \vdash N \stackrel\sigma: C[(x,y)/z]\\
+    0\Gamma_1 = 0\Gamma_2}
+  {\Gamma_1 + \Gamma_2 \vdash \mathrm{let}~(x,y) = M~\mathrm{in}~N \stackrel\sigma: C[M/z]}
+\end{mathpar}
 
 \subsubsection{The Identity Type}
+
+QTT also supports an extensional equality type with equality reflection:
 \begin{mathpar}
-  \inferrule* [right=Eq-type]
+  \inferrule*
   {0\Gamma \vdash S~\istype \\
     0\Gamma \vdash M \stackrel0: S \\
     0\Gamma \vdash N \stackrel0: S}
   {0\Gamma \vdash M =_S N~\istype}
 
-  \inferrule* [right=Eq-Intro]
+  \inferrule*
   {\Gamma \vdash M \stackrel\sigma: S}
   {\Gamma \vdash \conRefl(M) \stackrel\sigma: M =_S M}
-\end{mathpar}
-\bob{Equality reflection}
 
-\subsubsection{Universe}
-\bob{Copy from LICS paper}
+  \inferrule*
+  {\Gamma \vdash N \stackrel\sigma: M_1 =_S M_2}
+  {\Gamma \vdash M_1 \equiv M_2 \stackrel\sigma: S}
+\end{mathpar}
+The equality type also has an $\eta$ rule demonstrating $\conRefl(M)$
+as the only proof of equality \cite{hoffmann99dependent}.
+
+\subsubsection{Universe} QTT can also be equipped in universe types,
+just as in standard type theory. We refer to the rules presented in
+\cite{atkey18qtt}.
 
 \subsubsection{Datatypes} QTT, as we have presented it so far, has no
 interesting base types to perform computation on. Following our
 presentation of the simply typed linear systems in
-\autoref{sec:lin-intro}, we add two kinds of datatype to QTT. First,
+\autoref{sec:linear-intro}, we add two kinds of datatype to QTT. First,
 \autoref{sec:noniter-qtt}, we add non-iterable datatypes that allow
 construction and case analysis, but no recursion. In
 \autoref{sec:cons-free-qtt} we describe how to extend QTT to be a
@@ -751,11 +884,12 @@ same treatment to the LFPL-style system.
 \subsection{Non-iterable Datatypes}
 \label{sec:noniter-qtt}
 
-\subsubsection{Booleans} The boolean type was already described in
+\subsubsection{Booleans} The boolean type for QTT was described in
 \cite{atkey18qtt}, but we repeat it here for completeness. Booleans
-offer no possibility for iteration in any case, but it is useful to
-see how their typing rules handle resource distribution before moving
-to more complex types.
+offer no possibility for iteration, but it is useful to see how the
+QTT versions of the rules extend the simply typed rules from
+\autoref{sec:linear-case-analysis} before moving to more complex
+types.
 \begin{mathpar}
   \inferrule*
   {\Gamma~\isctxt}
@@ -841,15 +975,14 @@ annotated as $0$ usage.
 \subsection{Cons-free Natural Numbers and their Recursor}
 \label{sec:cons-free-qtt}
 
-\bob{Reword this paragraph in light of whatever is said in the
-  previous section.} The datatypes of the previous section still only
-allow us to write programs in the $\sigma = 1$ fragment that are
-constant time in the size of their input. If we are handed a list of
-an unknown length, we can only explore it to a fixed depth determined
-statically. As we saw above, to write programs that perform work
-proportional to the length of their input, we need some form of
-iterable datatype. In both our cons-free and LFPL-style systems, we
-use a natural number datatype.
+The datatypes of the previous section still only allow us to write
+programs in the $\sigma = 1$ fragment that are constant time in the
+size of their input. As with the simply typed linear system, if we are
+handed a list of an unknown length, we can only explore it to a fixed
+depth determined statically. To write programs that do work
+proportional to the size of their input, we need some form of iterable
+datatype. In both our Cons-free and LFPL-style QTT systems, we use a
+natural number datatype.
 
 The cons-free system cannot allow the programmer to construct natural
 numbers in the $\sigma = 1$ fragment, as this would violate the
@@ -918,7 +1051,7 @@ recursor for natural numbers, and so we can use it in the types to
 prove properties of programs just as we do in normal type theory. We
 will see in \autoref{sec:cons-free-sound} that this rule is realisable
 by polynomial-time amortised computation, and so is sound for
-polynomial time. \bob{And we do some examples?}
+polynomial time.
 
 \subsection{LFPL-style Diamonds and Natural Numbers}
 \label{sec:lfpl-qtt}
@@ -1751,6 +1884,7 @@ LFPL), we need to construct specific realisers for the Cons-Free and
 LFPL systems.
 
 \subsection{The Cons-Free System}
+\label{sec:cons-free-sound}
 
 The Cons-Free system uses the $\MaxPoly$ resource monoid, with the
 distinguished sub-monoid being those elements that are $0$ in the size
@@ -1768,6 +1902,7 @@ component.
 \end{theorem}
 
 \subsection{The LFPL System}
+\label{sec:lfpl-sound}
 
 The LFPL system uses the $\PlusPoly$ resource monoid, with the
 distinguished sub-monoid again being those elements that are $0$ in
