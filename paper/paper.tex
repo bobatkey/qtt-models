@@ -1,4 +1,4 @@
-\documentclass[acmsmall,review,screen,anonymous]{acmart}
+\documentclass[acmsmall,review,screen]{acmart}
 \settopmatter{printfolios=true,printccs=true,printacmref=true}
 
 \usepackage{cmll}
@@ -759,9 +759,11 @@ indicating how many times the variable $x$ is available for use in a
 $\sigma = 1$ term. There are two operations on raw contexts: scaling
 $\pi\Gamma$, which multiplies each $\rho$ in $\Gamma$ by $\pi$, and
 addition $\Gamma_1 + \Gamma_2$, which adds two contexts' usage
-annotations assuming that the lengths and types are equal.  The basic
-usage-annotation discipline of QTT is demonstrated by the context
-formation and variable rules:
+annotations assuming that the lengths and types are equal. Contexts
+are ordered pointwise $\Gamma' \sqsubseteq \Gamma$ on the usage
+annotations (which is the \emph{reverse} ordering on naturals) The
+basic usage-annotation discipline of QTT is demonstrated by the
+context formation and variable rules:
 \begin{mathpar}
   \inferrule*
   { }
@@ -774,6 +776,10 @@ formation and variable rules:
   \inferrule*
   {0\Gamma, x \stackrel\sigma: S, 0\Gamma'~\isctxt}
   {0\Gamma, x \stackrel\sigma: S, 0\Gamma' \vdash x \stackrel\sigma: S}
+
+  \inferrule*
+  {\Gamma \vdash M : S \\ \Gamma' \sqsubseteq \Gamma}
+  {\Gamma' \vdash M : S}
 \end{mathpar}
 As with most dependent type theories, contexts are built inductively
 from the empty context $\epsilon$ and extension of a context by a
@@ -782,15 +788,6 @@ context. Usage annotations $\rho$ on variables are arbitrary, and
 types are always judged in a $0$-annotated context. The variable rule
 marks unused variables as usage $0$ and the selected variable with
 usage $\sigma$.
-
-\bob{Usage weakening somewhere}
-
-% \begin{mathpar}
-
-%   \inferrule* [right=Tm-Conv]
-%   {\Gamma \vdash M \stackrel\sigma: S \\ 0\Gamma \vdash S \equiv T~\istype}
-%   {\Gamma \vdash M \stackrel\sigma: T}
-% \end{mathpar}
 
 \subsubsection{$\Pi$- and $\Sigma$-types}
 
@@ -1513,13 +1510,21 @@ reformulate a resource monoid as a symmetric monoidal category
 enriched in the symmetric monoidal category $\natinf$, where the
 monoid structure is addition. The conditions in the definition above
 amount to the usual identity and composition laws for enriched
-categories.
+categories. With this reading, we can see the value $M(\alpha,\beta)$
+when it is $\geq 0$ as the possibility of moving from $\alpha$ to
+$\beta$ levels of potential resource with some amount of residual
+resource emitted for computation; when it is $-\infty$, moving from
+$\alpha$ to $\beta$ is not possible.
 
 \paragraph{Agda Formalisation} Resource monoids are defined in the
 module \AgdaModule{Algebra.ResourceMonoid}. We use a formulation
 closer to the enriched category theory definition for the actual
 formalisation, because it avoids having to treat equality in the
-monoid structure separately from the induced preorder on elements.
+monoid structure separately from the induced preorder on
+elements. Thinking of proofs involving the resource monoid as a
+process of finding a composable sequence of morphisms in a category
+was a helpful intuition when constructing the realisability model
+below.
 
 \subsubsection{Specific Resource Monoids}
 
@@ -1760,12 +1765,12 @@ $\beta \in M$ with:
   difference between the initial potential and the result potential).
 \end{enumerate}
 Note that the definition of realisablity is uniform in the element $a$
--- the realising expression $e$ and the potential $\gamma$ must work
+-- the realising expression $E$ and the potential $\gamma$ must work
 for all $a$ -- thus the implementation and complexity measure of the
 transition being modelled cannot depend on what the input is. Put in
 implementation terms, the input $a$ is not present at
 runtime. Moreover note that the potential $\gamma$ attached to the
-expression $e$ must come from the sub-monoid $M_0$, indicating that is
+expression $E$ must come from the sub-monoid $M_0$, indicating that is
 intended to be data-free, while the potential $\alpha$ for the input
 is from the full monoid $M$, so it can contain data and functions.
 
@@ -2169,13 +2174,18 @@ in the Agda modules \AgdaModule{LFPL} and \AgdaModule{LFPL.Iterator}.
 \label{sec:conclusion}
 
 We have presented an two extensions of Quantitative Type Theory that
-soundly and completely captures polynomial time.
+soundly and completely capture polynomial time. We have seen that this
+allows for an expressive combination of verification and complexity
+constrained computation. We now discuss some related work in implicit
+computational complexity and linear dependent types, and take a look
+at where the combination of resource conciousness and dependent types
+could take us.
 
 \subsection{Systems for Polytime}
 
-BLL, SAL, LAL
+BLL, SAL, LAL, LFPL
 
-THe ones from Fossacs 2022, and POPL23(?) Romain Per...
+The ones from Fossacs 2022, and POPL23(?) Romain Per...
 
 Neil Jones
 
@@ -2223,9 +2233,6 @@ Cryptography?
 
 Synthetic computability theory Bauer, Forster
 
-Blah
-
-
 
 %%
 %% The acknowledgments section is defined using the "acks" environment
@@ -2240,7 +2247,7 @@ Blah
 %% The next two lines define the bibliography style to be used, and
 %% the bibliography file.
 \bibliographystyle{ACM-Reference-Format}
-\bibliography{sample-base}
+\bibliography{bibliography}
 
 
 \end{document}
