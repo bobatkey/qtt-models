@@ -1,0 +1,13 @@
+# Supplementary material for "Polynomial Time and Dependent Types"
+
+The Agda source files referred to in Sections 5 and 6 of the
+submission are in the directory `src/`.
+
+They have been checked with Agda 2.6.2.2 and standard library version
+1.7.1.
+
+The module `Everything.agda` imports the main modules referred to in
+the submission.
+
+The HTML generated from the source files is in `html/`. Again, please
+refer to the `Everything.html` module for entry points.
