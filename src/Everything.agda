@@ -8,6 +8,7 @@ open import Algebra.ResourceMonoid
 
 open import Algebra.ResourceMonoid.Polynomial
 
+-- Indexed Linear Preorders (Section 5.3)
 open import IndexedLinear
 
 -- The core amortised complexity realisability model (Section 5.4.1)

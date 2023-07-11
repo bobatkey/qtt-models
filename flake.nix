@@ -54,14 +54,15 @@
             phases = [ "unpackPhase" "buildPhase" "installPhase" ];
             buildPhase = ''
 mkdir -p html;
-agda --html --html-dir=html src/Everything.agda
+agda --html --html-dir=html src/Everything.agda;
+find src/ -name '*.agdai' | xargs rm;
 '';
             installPhase = ''
-mkdir -p $out/html;
+mkdir -p $out;
 cp -R src $out/;
-find $out/src -name '*.adgai' -print0 | xargs -0 -i % rm %;
 cp poly-time.agda-lib $out/;
 cp supplementary/README $out/README;
+mkdir -p $out/html;
 cp html/* $out/html;
 '';
           };
