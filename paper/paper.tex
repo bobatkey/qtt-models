@@ -1,4 +1,4 @@
-\documentclass[acmsmall,review,screen]{acmart}
+\documentclass[acmsmall,review,screen,anonymous]{acmart}
 \settopmatter{printfolios=true,printccs=true,printacmref=true}
 
 \usepackage{cmll}
@@ -153,12 +153,15 @@
   Martin Hofmann, that controls construction via a payment
   method. Both of these are extend to full dependent types, allowing
   for arbitrary computation in types alongside guaranteed polynomial
-  time computation in terms.
+  time computation in terms. We prove the soundness of the systems
+  using a realisability technique due to Hofmann and Dal Lago.
 
-  The resulting system smoothly combines reasoning with dependent
-  types and restricted computational complexity. \bob{Elaborate after
-    Section 3 is written.}We prove the soundness of the systems using
-  a realisability technique due to Hofmann and Dal Lago.
+  Our long-term goal is to combine the extensional reasoning of type
+  theory with intensional reasoning about the resources intrinsically
+  consumed by programs. This paper is a step along this path, which we
+  hope will lead both to practical systems for reasoning about
+  programs' resource usage, and to theoretical use as a form of
+  \emph{synthetic computational complexity theory}.
 \end{abstract}
 
 %%
@@ -213,149 +216,139 @@
 \section{Introduction}
 \label{sec:introduction}
 
-{\bf New story:}
-\begin{enumerate}
-\item Introduction: The goal of this paper is to unify implicit
-  computational complexity with full dependent types. ICC enables us
-  to ensure that \emph{programs} are within a certain complexity
-  class, while dependent types allow us to state and prove that these
-  programs solve the problems that we intend them to, and to construct
-  reductions between problems. We can marry complexity-controlled
-  implementations with problems, paving the way for a \emph{synthetic
-    computational complexity theory}.
-\item Section 1: Linear types and Implicit Polynomial Time.
-  \begin{enumerate}
-  \item Total typed functional programming, as we see in type theory,
-    is restricted to the use of higher order functions and iteration
-    over inductive data types.
-  \item Polynomial time is the smallest class closed under nested
-    iteration over the input -- i.e. we consider iteration over the
-    input as feasible, and compositions thereof. The key thing is to
-    avoid iteration over data constructed from the input.
-  \item Key is to control iteration. So we split inductive datatypes
-    into iterable and non-iterable versions. We can
-  \item One way to capture polytime is to ensure that all iteration is
-    only done over the input. So we can duplicate iterable things, but
-    we can't construct new iterable things (at least not from an
-    iteration). We also can't duplicate higher order things, because
-    that effectively acts as a way to duplicate iterations (half
-    instantiated iterators). Compare to Jones' CONS-FREE programming.
-  \item Another approach is to allow ``borrowing'' of iterability by
-    means of diamonds. Iterability becomes a first-class object, so we
-    can use it to construct new data structures from the input. This
-    allows the construction of new iterable data structures. LFPL.
-  \end{enumerate}
-\item Section 2: Extending to Dependent Types
-  \begin{enumerate}
-  \item Combining linear types and dependent types is subtle, because
-    there is a fundamental incompatibility in the syntax of the two
-    systems.
-  \item There have been several approaches, though they are all
-    somewhat similar (list them all here). We will use QTT, because it
-    offers a firm semantic foundation as well as a relatively
-    straightforward syntax.
-  \item Recap the syntax of QTT, with extensional equality. Key point
-    is that there is a normal dependently typed language with a linear
-    sub-language. We can have special constructs in the linear
-    sub-language that ``erase'' to normal type theory -- products are
-    the prime example.
-  \item Non iterable datatypes -- have normal eliminators in the DTT
-    fragment, but
-  \end{enumerate}
-\item Section 3: Programming and Proving with Poly-time
-  \begin{enumerate}
-  \item Internalised completeness proofs.
-  \item Construct the type of problems that are solvable in polynomial
-    time.
-  \item Construct reductions between problems.
-  \item NP. Doesn't make sense to talk about this without dependent
-    types, because we can't say when we've solved the problem being
-    stated.
-  \item PP (Probabilistic), using a monad. Again, need to be able to
-    state connection with the problem to know that we are solving it.
-  \end{enumerate}
-\item Section 4: Soundness via Realisability
-  \begin{enumerate}
-  \item The underlying CBV language and its
-  \end{enumerate}
-\item Section 5: Extensions
-  \begin{enumerate}
-  \item Explicit Complexity via Diamond Counting
-  \item Poly-time univalence
-  \item Towards P- and NP-completeness proofs. Issue here is the
-    extensionality. Towards a synthetic (poly-time based)
-    computational complexity theory.
-  \end{enumerate}
-\item Section 6: Related Work
-  \begin{enumerate}
-  \item ICC stuff
-    \begin{enumerate}
-    \item LFPL
-    \item CONS-free
-    \item Soft Affine Logic; which has the same underlying idea as
-      CONS-free (is this a novel observation?)
-    \item Other systems based on information flow.
-    \end{enumerate}
-  \item Explicit complexity: lambda-amor, and things by Deepak Garg
-    and Marco Gaboardi.
-  \item Recent CMU stuff on calf
-  \end{enumerate}
+Type theory is often claimed to be ideal for Computer Science,
+combining programming and proof in one unifying system, so a happy
+programmer can verify while they program, and program while they
+verify. From a broader Computer Science view, however, type theory
+lacks the ability to talk about the very thing that makes Computer
+Science interesting -- the fact that computation is everywhere bounded
+by the resources in time and space that we can afford to give it.
 
+Typical Type Theory only speaks of the public face that programs
+present to the world -- if you input things like this, you get things
+that look like that -- but cannot bring itself to mention the true
+cost of programs' execution. One can encode costs by embedding another
+programming language in type theory \cite{pottier}, or one can
+synthesise costs by treating resource counting as a computational
+effect \cite{daniellsson,calf}, but neither of these capture the
+intrinsic costs of the programs we write in type theory. These
+techniques deliver only \emph{conspicuous consumption}, not speaking
+of the real resources consumed.
+
+In this paper, we propose a method for extending dependent type theory
+with a means for constraining the intrinsic computational complexity
+of programs written in the theory. We concentrate on linear type
+systems that soundly and completely capture polynomial time
+computation, the commonly used standard for feasible resource usage,
+and extend these systems to dependent types. The additional
+expressivity of dependent types allows us use these characterisations
+of polytime to further functionally characterise
+
+We use techniques from \emph{Implicit Computational Complexity}
+theory, which seeks to provide intrinsic characterisations of
+complexity classes in terms of logical systems or programming
+languages. We review the techniques that we use in
+\autoref{sec:linear-intro}. To adapt these systems to dependent types,
+we use \emph{Quantitative Type Theory} (QTT)
+\cite{atkey18qtt,mcbride16}, a combination of linear and dependent
+types. We review QTT in \autoref{sec:qtt}.
+
+Our long-term goal is to combine the extensional reasoning of type
+theory with intensional reasoning about the resources intrinsically
+consumed by programs. This paper is a first step along this path,
+which we hope will lead both to practical systems for reasoning about
+programs' resource usage, and to theoretical use as a form of
+\emph{synthetic computational complexity theory}. We discuss these
+possibilities further in \autoref{sec:conclusion}.
+
+
+% The goal of this paper is to unify implicit computational complexity
+% with full dependent types. ICC enables us to ensure that
+% \emph{programs} are within a certain complexity class, while dependent
+% types allow us to state and prove that these programs solve the
+% problems that we intend them to, and to construct reductions between
+% problems. We can marry complexity-controlled implementations with
+% problems, paving the way for a \emph{synthetic computational
+%   complexity theory}.
+
+% \item Section 5: Extensions
+%   \begin{enumerate}
+%   \item Explicit Complexity via Diamond Counting
+%   \item Poly-time univalence
+%   \item Towards P- and NP-completeness proofs. Issue here is the
+%     extensionality. Towards a synthetic (poly-time based)
+%     computational complexity theory.
+%   \end{enumerate}
+% \item Section 6: Related Work
+%   \begin{enumerate}
+%   \item ICC stuff
+%     \begin{enumerate}
+%     \item LFPL
+%     \item CONS-free
+%     \item Soft Affine Logic; which has the same underlying idea as
+%       CONS-free (is this a novel observation?)
+%     \item Other systems based on information flow.
+%     \end{enumerate}
+%   \item Explicit complexity: lambda-amor, and things by Deepak Garg
+%     and Marco Gaboardi.
+%   \item Recent CMU stuff on calf
+%   \end{enumerate}
+
+
+\subsection{Contributions and Content}
+
+This paper makes the following contributions to the theory and use of
+linear dependent type theory and implicit computational complexity:
+\begin{enumerate}
+\item We formulate two systems that combine linear type theory for
+  polytime computation with full dependent types, using Quantitative
+  Type Theory. The system is presented in \autoref{sec:qtt}. The
+  linear typing discipline required for enforcing polytime is provided
+  by QTT, but we also need to carefully add constructs for
+  non-iterable datatypes (\autoref{sec:noniter-qtt}) and the two kinds
+  of natural number iterator that we consider
+  (\autoref{sec:cons-free-qtt} and \autoref{sec:lfpl-qtt}). Porting
+  the natural number iterators from the simply typed to the
+  dependently typed setting requires careful annotation of the rules
+  to ensure that the correct information is available for type
+  checking, while also not allowing too much information to be made
+  available at runtime that would violate the polytime soundness
+  property. A further contribution of this paper is the addition of
+  reflection types to QTT, \autoref{sec:qtt-reflection}, which allow
+  statements about polytime realisability to be reflected into
+  types. We explain in \autoref{Sec:realisability-future} how this
+  will have applications in QTT beyond the polytime systems presented
+  here.
+\item We demonstrate the utility of the combination of polytime and
+  dependent types in \autoref{sec:programming-polytime}. Just as in
+  the simply typed world, we have an expressive language for writing
+  polytime programs. With the additional power of dependent types, we
+  can also prove properties of these programs. A simple example is
+  proving that a sorting program actually sorts. Using QTT reflection,
+  we can go further and represent the class of polytime problems, with
+  polytime reductions between them, as dependent pairs
+  (\autoref{sec:polytime-problems}). Our final examples use dependent
+  types to give monadic presentations of the complexity classes of
+  Non-deterministic Polynomial (NP) time and Probabilistic Polynomial
+  (PP) time. Since these classes rely on specific correctness
+  criteria, it is not possible to capture them in a simply typed
+  system for polytime.
+\item We prove the polytime soundness of our systems via a
+  realisability argument in \autoref{sec:soundness}. Our construction
+  is an extension of the amortised complexity realisability
+  constructions of \cite{hofmann-dallago}. We extend their work to our
+  dependently typed setting, and also give a realisability
+  interpretation of datatypes directly, instead of via second-order
+  impredicative encodings. The technical content of this section has
+  been formalised in the Agda proof assistant \cite{agda}, and the
+  development is available in the supplementary material.
 \end{enumerate}
 
-{\bf Old story:}
-\begin{enumerate}
-\item There are systems for implicit computational complexity based on
-  linear logic (e.g. LFPL, SAL, LLL, BLL) that seek to capture
-  complexity classes (most often polynomial time) implicitly
-  (i.e. without directly talking about time bounds). This work has
-  also led to followup work on explicitly resourced calculi such as
-  RAML, which seek to use static analysis to determine complexity
-  bounds on programs.
-\item In dependent type theory, we can reason about the extensional
-  behaviour of programs (within the limits of intensional type
-  theory), but not about intenstional properties. The only way to
-  formalise something like ``for all polynomial time functions
-  $\mathbb{N} \to \mathbb{N}$'' is to develop a deep emebdding of
-  polynomial time functions and to work with that, which is tedious.
-\item The goal of this paper is to unify dependent types for reasoning
-  about programs with implicit computational complexity type
-  systems. In the first instance, we do not seek to use dependent
-  types to state precise bounds on programs' time consumption, but we
-  intend to use dependent types to reason about the extensional
-  behaviour of programs that we know to be polynomial time. At the end
-  of the paper, we show how to adapt our framework to explicit
-  resource accounting, in the style of RAML.
-\item The plan of the paper is as follows:
-  \begin{enumerate}
-  \item We first introduction the ideas behind the use of linear logic
-    for capturing polynomial time, by studying two systems Lafont's
-    SAL, and Hofmann's LFPL. In Hofmann and Dal Lago's presentation,
-    these are two variants of Second order Multiplicative Linear
-    Logic, with restricted $\oc$ modalities for duplication. We also
-    recall the realisability semantics of Dal Lago and Hofmann (FIXME:
-    move this later?)
-  \item The most modern presentations of these systems use second
-    order quantification to represent data types. This is incompatible
-    with the form of dependent types we use here, so we seek a direct
-    representation of natural numbers that captures
-  \item We then recall QTT, a extension of Martin-Löf type theory with
-    linear types, which can accomodate intensional restrictions on
-    computability as well as full reasoning about programs. Since
-    allowing an unrestricted $\oc$ modality would violate our
-    polynomial time bounds, we instead choose the natural number
-    semiring for resource accounting.
-  \item We then transplant the simply typed rules into QTT, showing
-    how to carefully distinguish between data that is available to the
-    program, and data that is only available for type formation.
-  \item We finish by showing that we can also do explicit resource
-    tracking.
-  \end{enumerate}
-\end{enumerate}
-
-Related work: only applications of Linear TT so far are erasure (Abel
-et al.) and quantum stuff (Selinger et al.), and (sort of) dependency
-analysis. This is another one.
+Before we get to the contributions above, we present, in
+\autoref{sec:linear-intro}, two linear simply typed systems for
+polytime, adaptations of systems already present in the
+literature. Our paper concludes with a discussion of further related
+work and the outlook for future work in \autoref{sec:conclusion}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -396,12 +389,12 @@ encodings via universal types. Thus, we are closer to Hofmann's
 original LFPL (though not later presentations of it
 \cite{dallago-hofmann}) than BLL, SALL, or LAL.
 
-For this section, the linear $\lambda$-calculus we will use will have
-linear functions and $\otimes$-products:
+For this section, the affine linear $\lambda$-calculus we will use
+will have linear functions and $\otimes$-products:
 \begin{mathpar}
   \inferrule*
   { }
-  {x : A \vdash x : A}
+  {\Gamma, x : A, \Gamma' \vdash x : A}
 
   \inferrule*
   {\Gamma, x : A \vdash M : B}
@@ -421,11 +414,12 @@ linear functions and $\otimes$-products:
   {\Gamma_1, \Gamma_2 \vdash \Let\,(x,y)=M\,\In\,N : C}
 \end{mathpar}
 These rules are standard, so we do not describe them further except to
-note how linear typing uses presence or absences in a context to
-control resource usage -- if a variable is in the context it must be
-used exactly once. The fact that this discipline interferes with
-dependent types is one of the reasons we turn to QTT when we wish to
-add dependent types in \autoref{sec:qtt}.
+note how affine linear typing uses presence or absences in a context
+to control resource usage. If a variable is in the context it must be
+used at most once (variables that are not used are absorbed by the
+additional context in the variable rule). The fact that this
+discipline interferes with dependent types is one of the reasons we
+turn to QTT when we wish to add dependent types in \autoref{sec:qtt}.
 
 \subsection{No Recursion, Only Case Analysis}
 \label{sec:linear-case-analysis}
@@ -862,7 +856,7 @@ Hence, $\Sigma$-types act as normal in the $\sigma = 0$ fragment, and
 we can use them as for normal type-theoretic constructions.  In the
 $\sigma = 1$ fragment, we must take into account the resource content
 of objects and use a pattern matching construct; the dependently typed
-analogue of the $\otimes$-eliminator in \autoref{sec:lineartype}:
+analogue of the $\otimes$-eliminator in \autoref{sec:linear-intro}:
 \begin{mathpar}
   \inferrule*
   {0\Gamma, z \stackrel0: (x \stackrel\pi: A) \otimes B \vdash C \\
@@ -895,9 +889,9 @@ as the only proof of equality \cite{hoffmann99dependent}. Note that
 equality reflection only targets the $\sigma = 0$ fragment, we cannot
 use equality reflection to convey realisability information.
 
-\subsubsection{Universe} QTT can also be equipped in universe types,
-just as in standard type theory. We refer to the rules presented in
-\cite{atkey18qtt}.
+\subsubsection{Universe} QTT can also be equipped in universe types
+$\mathsf{U}$, just as in standard type theory. We refer to the rules
+presented in \cite{atkey18qtt}.
 
 \subsubsection{Datatypes} QTT, as we have presented it so far, has no
 interesting base types to perform computation on. Following our
@@ -1260,6 +1254,7 @@ List iterator:
 \end{enumerate}
 
 \subsection{Polytime Problems}
+\label{sec:polytime-problems}
 
 Uses
 
@@ -1516,10 +1511,9 @@ partial ordering on its carrier set by $\alpha \leq \beta$ iff
 $0 \leq M(\alpha, \beta)$. Taking this idea further, we can
 reformulate a resource monoid as a symmetric monoidal category
 enriched in the symmetric monoidal category $\natinf$, where the
-monoid structure is addition. Isomorphism of objects $\alpha, \beta$
-in such a category amounts to having $M(\alpha, \beta) = 0$. The
-conditions in the definition above amount to the usual identity and
-composition laws for enriched categories.
+monoid structure is addition. The conditions in the definition above
+amount to the usual identity and composition laws for enriched
+categories.
 
 \paragraph{Agda Formalisation} Resource monoids are defined in the
 module \AgdaModule{Algebra.ResourceMonoid}. We use a formulation
@@ -1602,9 +1596,9 @@ LFPL-style systems respectively, as we explain in
 \autoref{sec:realising-iteration} and show how these resource monoids
 yield the required polytime bounds on programs.
 
-\paragraph{Agda Formalisation} The natural number resource monoid is
-defined in the Agda module \AgdaModule{Algebra.ResourceMonoid.Nat} and the
- polynomial monoids are both defined in
+\paragraph{Agda Formalisation} The $\mathbb{N}$ resource monoid is
+defined in \AgdaModule{Algebra.ResourceMonoid.Nat} and the polynomial
+monoids are both defined in
 \AgdaModule{Algebra.ResourceMonoid.Polynomial}. The definition is
 parameterised by the ``size monoid'' operation (either $\sqcup$ or
 $+$) used to compose sizes.
@@ -2195,9 +2189,9 @@ Neil Jones
 \subsection{Explicit Resource Accounting}
 
 \begin{enumerate}
-\item RAML, Hofmann-Jost, etc.
-\item lambda-amor
-\item
+\item RAML, Hofmann-Jost, Raja, etc.
+\item lambda-amor,
+\item calf from CMU
 \end{enumerate}
 
 \subsection{Linear and Substructural Dependent Types}
@@ -2212,12 +2206,22 @@ Penn
 
 Abel
 
+Related work: only applications of Linear TT so far are erasure (Abel
+et al.) and quantum stuff (Selinger et al.), and (sort of) dependency
+analysis. This is another one.
 
+What we didn't do: polytime typechecking guarantees.
 
 \subsection{Implementation} Could use Idris, but it has the wrong
 semiring, and its datatype definition facility is too permissive.
 
+\subsection{Towards Applications}
+
+Cryptography?
+
 \subsection{Towards Synthetic Computational Complexity Theory?}
+
+Synthetic computability theory Bauer, Forster
 
 Blah
 
