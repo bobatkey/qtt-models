@@ -47,8 +47,8 @@
       cp paper.pdf $out/
     '';
           };
-          agda-html-doc = pkgs.stdenvNoCC.mkDerivation rec {
-            name = "poly-time-doc";
+          supplementary-material = pkgs.stdenvNoCC.mkDerivation rec {
+            name = "supplementary-material";
             src = self;
             buildInputs = [ agda ];
             phases = [ "unpackPhase" "buildPhase" "installPhase" ];
@@ -57,8 +57,9 @@ mkdir -p html;
 agda --html --html-dir=html src/Everything.agda
 '';
             installPhase = ''
-mkdir -p $out;
-cp html/* $out/;
+mkdir -p $out/html;
+cp -R src $out/;
+cp html/* $out/html;
 '';
           };
         };
