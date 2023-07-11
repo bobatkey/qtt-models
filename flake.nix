@@ -54,7 +54,7 @@
             phases = [ "unpackPhase" "buildPhase" "installPhase" ];
             buildPhase = ''
 mkdir -p html;
-agda --html --html-dir=html src/amort-realisers.agda
+agda --html --html-dir=html src/Everything.agda
 '';
             installPhase = ''
 mkdir -p $out;

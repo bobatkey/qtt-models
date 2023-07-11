@@ -28,9 +28,6 @@ open import MachineModel
 `Bool true .realises α false = ⊥
 `Bool true .realises α (clo _ _) = ⊥
 
-K : ∀ {A B : Set} → A → B → A
-K a _ = a
-
 `true : ∀ {Γ} → Γ ⊢ I ⇒ (⟨ K true ⟩ `Bool)
 `true .realiser .expr _ = true
 `true .realiser .potential = acct 1
