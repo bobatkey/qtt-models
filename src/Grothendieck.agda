@@ -1,5 +1,3 @@
-{-# OPTIONS --postfix-projections --without-K #-}
-
 module Grothendieck where
 
 open import Data.Nat using (ℕ; zero; _+_; _*_)
@@ -44,6 +42,7 @@ postulate
   fext : ∀ {A : Set}{B : A → Set} {f g : (a : A) → B a} →
          (∀ a → f a ≡ g a) → f ≡ g
 
+-- FIXME: Convert this to use displayed categories?
 
 ⟪_⟫ : ∀ {Γ₁ Γ₂ : Set} → (Γ₁ → Γ₂) → (Γ₂ → Set) → (Γ₁ → Set)
 ⟪ f ⟫ A γ = A (f γ)
@@ -117,14 +116,17 @@ record IndexedPreorder : Set₂ where
 
     -- FIXME: booleans, indexed in a certain way
 
-    -- FIXME: graded exponentials
   field
-    -- FIXME: generalise to any semiring
+    -- FIXME: generalise to any suitable semiring
     ![_] : ∀ {Γ} → ℕ → Obj Γ → Obj Γ   -- FIXME: why not over Γ × ℕ ???
     ![_]-map : ∀ {Γ} n {X Y} → Γ ⊢ X ⇒ Y → Γ ⊢ ![ n ] X ⇒ ![ n ] Y
     !-subst : ∀ {Γ₁ Γ₂ n A} (f : Γ₁ → Γ₂) → Γ₁ ⊢ ⟨ f ⟩ ![ n ] A ≅ ![ n ] (⟨ f ⟩ A)
     discard : ∀ {Γ X} → Γ ⊢ ![ 0 ] X ≅ I --- FIXME: any way to do without this being an iso?
     derelict : ∀ {Γ X} → Γ ⊢ ![ 1 ] X ⇒ X
+    -- FIXME: duplicate
+    -- FIXME: weaken
+    -- FIXME: comult
+    -- FIXME: monoidal
 
 module Make (L : IndexedPreorder) where
 
@@ -246,7 +248,7 @@ module Make (L : IndexedPreorder) where
   ![ n ] X .Lo = ![ n ]L (X .Lo)
 
 {-
-  ![_]-map : ∀ n {X Y} → (f : X ⇒ Y) → ![ n ] X ⇒ ![ n ] Y
+m  ![_]-map : ∀ n {X Y} → (f : X ⇒ Y) → ![ n ] X ⇒ ![ n ] Y
   ![ n ]-map f .mor = f .mor
   ![ n ]-map f .morlo = {!!}
 -}

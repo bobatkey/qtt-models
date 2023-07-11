@@ -59,8 +59,9 @@ agda --html --html-dir=html src/Everything.agda
             installPhase = ''
 mkdir -p $out/html;
 cp -R src $out/;
-find $out/src '*.adgai' | xargs rm;
+find $out/src -name '*.adgai' | xargs rm;
 cp poly-time.agda-lib $out/;
+cp supplementary/README $out/README;
 cp html/* $out/html;
 '';
           };

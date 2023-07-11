@@ -8,6 +8,8 @@ open import Algebra.ResourceMonoid
 
 open import Algebra.ResourceMonoid.Polynomial
 
+open import IndexedLinear
+
 -- The core amortised complexity realisability model (Section 5.4.1)
 open import AmortisedRealisabilityModel
 
