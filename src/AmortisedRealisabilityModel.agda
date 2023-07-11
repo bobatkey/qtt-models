@@ -552,3 +552,11 @@ discard .realises γ η α v (β , α-∅ , _) = is-realisable
    is-realisable .evaluation = mkunit
    is-realisable .result-realises = α-∅
    is-realisable .accounted = acct⊕-
+
+-------
+
+κ : ∀ {Γ A : Set} → A → Γ → Γ × A
+κ a γ = (γ , a)
+
+κ-map : ∀ {Γ : Set}{A B : Set} → (A → B) → Γ × A → Γ × B
+κ-map f (γ , a) = (γ , f a)

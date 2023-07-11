@@ -16,14 +16,14 @@ open ResourceMonoid ℳ renaming (Carrier to |ℳ|)
 open SubResourceMonoid ℳ₀ renaming (member to mor-potential)
 open import MachineModel
 
-list : ∀ {Γ} A → (Γ × A) -Obj → (Γ × List A) -Obj
+list : ∀ {Γ} A → (Σ Γ A) -Obj → (Σ[ γ ∈ Γ ] (List (A γ))) -Obj
 list A X (γ , []) .realises α (false , ⋆) = 0 ≤D⟨ α , ∅ ⟩
 list A X (γ , []) .realises α _ = ⊥
 list A X (γ , e ∷ elems) .realises α (true , (v₁ , v₂)) =
   Σ[ α₁ ∈ |ℳ| ] Σ[ α₂ ∈ |ℳ| ] (0 ≤D⟨ α , α₁ ⊕ α₂ ⟩ × X (γ , e) .realises α₁ v₁ × list A X (γ , elems) .realises α₂ v₂)
 list A X (γ , e ∷ elems) .realises α _ = ⊥
 
-`nil : ∀ {Γ A X} → Γ ⊢ I ⇒ ⟨ κ [] ⟩ list A X
+`nil : ∀ {Γ A X} → Γ ⊢ I ⇒ ⟨ (λ γ → (γ , [])) ⟩ list A X
 `nil .realiser .expr n = seq false then (zero , suc zero)
 `nil .realiser .potential = acct 3
 `nil .realiser .potential-ok = `acct
@@ -35,7 +35,7 @@ list A X (γ , e ∷ elems) .realises α _ = ⊥
 `nil .realises γ η α ⋆ x .accounted = acct⊕-
 
 `cons : ∀ {Γ A X} →
-        (Γ × A × List A) ⊢
+        (Σ[ γ ∈ Γ ] (A γ × List (A γ))) ⊢
           ⟨ (λ (γ , e , es) → (γ , e)) ⟩ X ⊗ ⟨ (λ (γ , e , es) → (γ , es)) ⟩ list A X
           ⇒
           ⟨ (λ (γ , e , es) → (γ , e ∷ es)) ⟩ list A X
@@ -51,8 +51,8 @@ list A X (γ , e ∷ elems) .realises α _ = ⊥
 
 `match : ∀ {Γ A X Y Z} →
          Γ ⊢ X ⇒ ⟨ (λ γ → (γ , [])) ⟩ Z →
-         (Γ × A × List A) ⊢ (⟨ (λ (γ , e , es) → γ) ⟩ X ⊗ (⟨ (λ (γ , e , es) → (γ , e)) ⟩ Y ⊗ ⟨ (λ (γ , e , es) → (γ , es)) ⟩ list A Y)) ⇒ ⟨ (λ (γ , e , es) → (γ , e ∷ es)) ⟩ Z →
-         (Γ × List A) ⊢ ⟨ proj₁ ⟩ X ⊗ list A Y ⇒ Z
+         (Σ[ γ ∈ Γ ] (A γ × List (A γ))) ⊢ (⟨ (λ (γ , e , es) → γ) ⟩ X ⊗ (⟨ (λ (γ , e , es) → (γ , e)) ⟩ Y ⊗ ⟨ (λ (γ , e , es) → (γ , es)) ⟩ list A Y)) ⇒ ⟨ (λ (γ , e , es) → (γ , e ∷ es)) ⟩ Z →
+         (Σ[ γ ∈ Γ ] List (A γ)) ⊢ ⟨ proj₁ ⟩ X ⊗ list A Y ⇒ Z
 `match nilCase consCase .realiser .expr n =
   letpair zero then
   letpair zero then

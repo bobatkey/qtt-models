@@ -53,12 +53,6 @@ K a _ = a
 `false .realises γ η α ⋆ r .result-realises = identity
 `false .realises γ η α ⋆ r .accounted = acct⊕- ； r
 
-κ : ∀ {Γ A : Set} → A → Γ → Γ × A
-κ a γ = (γ , a)
-
-κ-map : ∀ {Γ : Set}{A B : Set} → (A → B) → Γ × A → Γ × B
-κ-map f (γ , a) = (γ , f a)
-
 `cond : ∀ {Γ : Set}{X : Γ -Obj}{Y : (Γ × Bool) -Obj} →
         Γ ⊢ X ⇒ ⟨ κ true ⟩ Y →
         Γ ⊢ X ⇒ ⟨ κ false ⟩ Y →
