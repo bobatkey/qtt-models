@@ -1,5 +1,5 @@
-\documentclass[acmsmall,review]{acmart}
-\settopmatter{printfolios=true,printccs=false,printacmref=false}
+\documentclass[acmsmall,review,screen]{acmart}
+\settopmatter{printfolios=true,printccs=true,printacmref=true}
 
 \usepackage{cmll}
 \usepackage{mathpartir}
@@ -54,6 +54,18 @@
 \renewcommand{\sectionautorefname}{Section}
 \renewcommand{\subsectionautorefname}{Section} % PS
 \renewcommand{\subsubsectionautorefname}{Section}
+
+\newcommand{\lemref}[1]{\hyperref[#1]{Lemma \ref*{#1}}}
+\newcommand{\exref}[1]{\hyperref[#1]{Example \ref*{#1}}}
+\newcommand{\judgeref}[1]{\hyperref[#1]{Judgement \ref*{#1}}}
+\newcommand{\propref}[1]{\hyperref[#1]{Proposition \ref*{#1}}}
+\newcommand{\diagref}[1]{\hyperref[#1]{Diagram \ref*{#1}}}
+\newcommand{\thmref}[1]{\hyperref[#1]{Theorem \ref*{#1}}}
+\newcommand{\defref}[1]{\hyperref[#1]{Definition \ref*{#1}}}
+
+
+
+\newcommand{\AgdaModule}[1]{\textcolor{blue}{\tt #1}}
 
 
 %% Rights management information.  This information is sent to you
@@ -133,8 +145,20 @@
 %% The abstract is a short summary of the work to be presented in the
 %% article.
 \begin{abstract}
-  We combine dependent types for reasoning about programs with linear
-  type systems for implicit polynomial time.
+  We combine dependent types with linear type systems that soundly and
+  completely capture polynomial time computation. To combine dependent
+  and linear types, we use \emph{Quantitative Type Theory}. We explore
+  two systems for capturing polynomial time: one system that disallows
+  construction of iterable data, and one, based on the LFPL system of
+  Martin Hofmann, that controls construction via a payment
+  method. Both of these are extend to full dependent types, allowing
+  for arbitrary computation in types alongside guaranteed polynomial
+  time computation in terms.
+
+  The resulting system smoothly combines reasoning with dependent
+  types and restricted computational complexity. \bob{Elaborate after
+    Section 3 is written.}We prove the soundness of the systems using
+  a realisability technique due to Hofmann and Dal Lago.
 \end{abstract}
 
 %%
@@ -174,7 +198,7 @@
 %%
 %% Keywords. The author(s) should pick words that accurately describe
 %% the work being presented. Separate the keywords with commas.
-\keywords{type theory, implicit computational complexity, linear types}
+\keywords{type theory, implicit computational complexity, linear logic, computational complexity}
 
 
 %%
@@ -668,6 +692,7 @@ how we have adapted it to the polytime systems we saw in the previous
 section.
 
 \subsection{Quantitative Type Theory}
+\label{sec:qtt-basic}
 
 Integrating linear and dependent types is not straightforward due to
 the conflict between the linear typing discipline regarding presence
@@ -763,6 +788,8 @@ context. Usage annotations $\rho$ on variables are arbitrary, and
 types are always judged in a $0$-annotated context. The variable rule
 marks unused variables as usage $0$ and the selected variable with
 usage $\sigma$.
+
+\bob{Usage weakening somewhere}
 
 % \begin{mathpar}
 
@@ -860,11 +887,13 @@ QTT also supports an extensional equality type with equality reflection:
   {\Gamma \vdash \conRefl(M) \stackrel\sigma: M =_S M}
 
   \inferrule*
-  {\Gamma \vdash N \stackrel\sigma: M_1 =_S M_2}
-  {\Gamma \vdash M_1 \equiv M_2 \stackrel\sigma: S}
+  {\Gamma \vdash N \stackrel0: M_1 =_S M_2}
+  {\Gamma \vdash M_1 \equiv M_2 \stackrel0: S}
 \end{mathpar}
 The equality type also has an $\eta$ rule demonstrating $\conRefl(M)$
-as the only proof of equality \cite{hoffmann99dependent}.
+as the only proof of equality \cite{hoffmann99dependent}. Note that
+equality reflection only targets the $\sigma = 0$ fragment, we cannot
+use equality reflection to convey realisability information.
 
 \subsubsection{Universe} QTT can also be equipped in universe types,
 just as in standard type theory. We refer to the rules presented in
@@ -1190,18 +1219,67 @@ Krishnaswami and Benton \cite{pradic}.
 \section{Programming and Proving with Polytime}
 \label{sec:programming-polytime}
 
+% \begin{enumerate}
+% \item Non-deterministic polytime via a bit oracle -- needs a statement
+%   of success
+% \item Previous could also be interpreted as probabilistic polytime
+%   (access to coin flips); can we formalise some kind of cryptographic
+%   property this way? Have a look at hash functions in the
+%   Authenticated Data Structures paper.
+% \item Insertion sort, quicksort as polytime functions.
+% \item A type of polytime functions; via a reflection operator
+% \item Programming with explicit resource annotations, including
+%   reasoning about the resource requirements directly.
+% \end{enumerate}
+
+\subsection{Building Datatypes}
+\label{sec:prog-datatypes}
+
+We have only defined an iterable natural number datatype for both of
+our systems above. Using the power of dependent types with a universe
+we can use these natural numbers to create further datatypes whose
+size is measured by a natural. Iteration on the size yields iteration
+over the full datastructure. For example, in the LFPL system, we can
+define a type of iterable lists by pairing a size with a type of
+elements defined by recursion:
+\begin{displaymath}
+  \mathrm{IList}(A) = \Sigma n \stackrel1: \tyNat.\,\mathrm{rec}_{x.\mathsf{U}}\,n\,\{ \conZero(d) \mapsto I; \conSucc(d,n;p) \mapsto A \otimes p \}
+\end{displaymath}
+
+Nil and Cons constructors.
+
+List iterator:
+
+
+\bob{U notation for the universe above}
+
+
 \begin{enumerate}
-\item Non-deterministic polytime via a bit oracle -- needs a statement
-  of success
-\item Previous could also be interpreted as probabilistic polytime
-  (access to coin flips); can we formalise some kind of cryptographic
-  property this way? Have a look at hash functions in the
-  Authenticated Data Structures paper.
-\item Insertion sort, quicksort as polytime functions.
-\item A type of polytime functions; via a reflection operator
-\item Programming with explicit resource annotations, including
-  reasoning about the resource requirements directly.
+\item Insertion sort in LFPL.
+\item Insertion sort in LFPL with correctness specification.
 \end{enumerate}
+
+\subsection{Polytime Problems}
+
+Uses
+
+\begin{displaymath}
+  (A : \mathsf{U}, P : A \to \mathsf{U})
+\end{displaymath}
+
+Cartesian container morphisms
+
+\subsection{Polytime-based Complexity Classes}
+
+Monads
+
+\subsubsection{Non-deterministic Polynomial Time}
+
+
+
+\subsubsection{Probabilistic Polynomial Time}
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1210,16 +1288,28 @@ Krishnaswami and Benton \cite{pradic}.
 \section{Polytime Soundness via Realisability}
 \label{sec:soundness}
 
-\newcommand{\cstaccess}{c_{\mathit{access}}}
-\newcommand{\cstmkclo}{c_{\mathit{mkclo}}}
-\newcommand{\cstapp}{c_{\mathit{app}}}
-\newcommand{\cstmkpair}{c_{\mathit{mkpair}}}
-\newcommand{\cstmkunit}{c_{\mathit{mkunit}}}
-\newcommand{\cstTrue}{c_{\mathit{mktrue}}}
-\newcommand{\cstFalse}{c_{\mathit{mkfalse}}}
-\newcommand{\cstLetpair}{c_{\mathit{letpair}}}
-\newcommand{\cstSeq}{c_{\mathit{seq}}}
-\newcommand{\cstIf}{c_{\mathit{if}}}
+\newcommand{\cstaccess}{1}
+\newcommand{\cstmkclo}{1}
+\newcommand{\cstapp}{1}
+\newcommand{\cstmkpair}{1}
+\newcommand{\cstmkunit}{1}
+\newcommand{\cstTrue}{1}
+\newcommand{\cstFalse}{1}
+\newcommand{\cstLetpair}{1}
+\newcommand{\cstSeq}{1}
+\newcommand{\cstIf}{1}
+
+% \newcommand{\cstaccess}{c_{\mathit{access}}}
+% \newcommand{\cstmkclo}{c_{\mathit{mkclo}}}
+% \newcommand{\cstapp}{c_{\mathit{app}}}
+% \newcommand{\cstmkpair}{c_{\mathit{mkpair}}}
+% \newcommand{\cstmkunit}{c_{\mathit{mkunit}}}
+% \newcommand{\cstTrue}{c_{\mathit{mktrue}}}
+% \newcommand{\cstFalse}{c_{\mathit{mkfalse}}}
+% \newcommand{\cstLetpair}{c_{\mathit{letpair}}}
+% \newcommand{\cstSeq}{c_{\mathit{seq}}}
+% \newcommand{\cstIf}{c_{\mathit{if}}}
+
 
 \newcommand{\clo}[2]{\mathsf{clo}\langle #1 , #2 \rangle}
 \newcommand{\synTrue}{\mathsf{true}}
@@ -1231,10 +1321,9 @@ Krishnaswami and Benton \cite{pradic}.
 \newcommand{\rplus}{\oplus}
 \newcommand{\rzero}{\emptyset}
 
-\bob{introductory paragraph.}
-
-The Hofmann-Dal Lago approach to proving the soundness of implicit
-computational complexity systems is based on a three way coupling
+In this section and the next, we establish the polytime soundness of
+our extensions of QTT by adapting a realisability method due to
+\cite{hofmann-dallago}. This approach is based on a three way coupling
 between abstract mathematical elements (the \emph{what}), values from
 a machine model (the \emph{how}), and resource potentials (the
 \emph{fuel}). Each type in the system is defined as a three way
@@ -1247,6 +1336,13 @@ into \emph{resource monoids} that we define in
 \autoref{sec:resource-monoids}. Following Hofmann and Dal Lago, we
 will select resource monoids appropriate to the kind of system that we
 want to prove complexity soundness for.
+
+\paragraph{Agda Formalisation} The key soundness results in this
+section have been formalised in the Agda proof assistant
+\cite{agda}. The Agda formalisation can be found in the supplementary
+material. After each definition and result we provide a pointer to the
+Agda modules where the corresponding formalisation can be found, and
+note interesting features of the mechanisation.
 
 \subsection{Machine Model and Operational Semantics}
 \label{sec:machine-model}
@@ -1329,34 +1425,51 @@ want to prove complexity soundness for.
   \label{fig:opsem}
 \end{figure}
 
-Note: the Agda formalisation is intrinsically well-scoped, which
-makes expressing things a bit easier.
-
-The syntax and rules of our target language are given in
+We demonstrate that every program that can be written in extensions of
+QTT has the complexity bounds that we claim by translating QTT terms
+into an untyped CBV $\lambda$-calculus with a costed operational
+semantics. The syntax and rules of our target language are given in
 \autoref{fig:opsem}.
 
-\begin{enumerate}
-\item Justification that looking up variables is constant: Due to
-  lexical scoping, the size of the maximum variable lookup is bounded
-  for a fixed program.
-\item An advantage of our more ``elementary'' operational semantics
-  (rather than encoding everything in the $\lambda$-calculus)
-\end{enumerate}
+Variables are represented as de Bruijn indicies $i, j$. Expressions
+$E \in \ExpSet$ can be (anonymous) $\lambda$-abstractions, unit,
+pairing and boolean values, variables, sequencing, application, pair
+elimination, and conditionals. Note that, with the exception of
+$\lambda$-abstraction and sequencing, expressions never contain nested
+expressions; instead referring to variables already defined. Values
+$V \in \ValSet$ can be closures $\clo{E}{\eta}$, where $\eta$ is an
+environment for the closure, unit values, pairs and booleans.
+
+Costed evaluation of expressions in environments is defined by a
+big-step operational semantics $E, \eta \Downarrow_k V$, where $k$ is
+the number of steps. For simplicity, all operations cost $1$ unit,
+though this could be generalised to allow for different operations to
+have different costs. We use $\eta[i]$ to access the $i$th variable in
+the environment, counting from the right. The evaluation rules are
+mostly as one would expect, except for the application rule which
+includes a self reference to the closure being invoked, in order to
+allow recursive definitions.
+
+\paragraph{Agda Formalisation} The machine model is defined in the
+Agda module \AgdaModule{MachineModel}. We use an intrinsicaly
+well-scoped syntax, which ensures that all variable look up operations
+are always well defined.
 
 \subsection{Resource Monoids}
 \label{sec:resource-monoids}
 
-Resource potentials are attached to values to represent the amount of
-intrinsic potential they have to fuel computation. Resource potentials
-are organised into resource monoids. To motivate the definition, we
-first enumerate the structure we will. To be able to account for the
-combined potential attached to composite data and programs (e.g.,
-pairs, or functions applied to arguments) we will require monoid
-structure on potentials. The action of turning potential difference
-into fuel for computation will be modelled by a difference
-function. Finally, we require that our resource monoid contains
-sufficient elements to fuel constant time operations. We gather these
-requirements into a formal definition as follows:
+As we mentioned above, resource potentials are attached to values to
+represent the amount of intrinsic potential they have to fuel
+computation. Resource potentials are organised into resource
+monoids. To be able to account for the combined potential attached to
+composite data and programs (e.g., pairs, or functions applied to
+arguments) we will require monoid structure on potentials. The action
+of turning potential difference into fuel for computation will be
+modelled by a difference function. Finally, we require that our
+resource monoid contains sufficient elements to fuel constant time
+operations. We gather these requirements into a formal definition as
+follows, which is a reformulation of the resource monoids of
+\cite{hoffman-dallago}:
 
 \begin{definition}
   A \emph{resource monoid} $M$ consists of:
@@ -1366,7 +1479,7 @@ requirements into a formal definition as follows:
     denote elements of a resource monoid.
   \item Commutative monoid structure $(\rplus,\rzero)$ on $|M|$, so
     we can add potentials.
-  \item A \emph{difference function} $M : |M| \times |M| \to \natinf$,
+  \item a \emph{difference function} $M : |M| \times |M| \to \natinf$,
     where $\natinf$ is the natural numbers extended with a negative
     infinity $- \infty$ and $- \infty + k = -\infty$. A difference
     $M(\alpha, \beta) = k \in \mathbb{N}$ means that starting with
@@ -1377,18 +1490,42 @@ requirements into a formal definition as follows:
     \begin{enumerate}
     \item for all $\alpha$, $M(\alpha,\alpha) = 0$; and
     \item for all $\alpha, \beta, \gamma$,
-      $M(\alpha, \beta) \rplus M(\beta, \gamma) \leq M(\alpha, \gamma)$.
+      $M(\alpha, \beta) + M(\beta, \gamma) \leq M(\alpha, \gamma)$.
     \end{enumerate}
     The latter is a ``reverse triangle inequality'': the fuel
     recoverable by moving between potential levels $\alpha$ and
     $\gamma$ via $\beta$ may be less than the fuel recoverable
     moving from $\alpha$ to $\gamma$ directly.
-  \item \bob{Interaction between $(\rplus,\rzero)$ and $M(\alpha,\beta)$.}
+  \item Differencing and the commutative monoid structure must satisfy:
+    \begin{enumerate}
+    \item $M(\alpha, \beta) \leq M(\alpha \rplus \gamma, \beta \rplus \gamma)$; and
+    \item $M(\alpha, \rzero) = 0$.
+    \end{enumerate}
   \item An \emph{accounting function}
     $\mathit{acct} : \mathbb{N} \to |M|$ such that for all $k$,
     $k \leq M(\mathit{acct}(k),\rzero)$.
   \end{enumerate}
 \end{definition}
+
+For any resource monoid $M$, we can define an action of $\mathbb{N}$
+on $M$ as $n \cdot \alpha = \alpha \oplus \cdots \oplus \alpha$, where
+the right-hand side has $n$ summands.
+
+\paragraph{Alternative definition} Every resource monoid induces a
+partial ordering on its carrier set by $\alpha \leq \beta$ iff
+$0 \leq M(\alpha, \beta)$. Taking this idea further, we can
+reformulate a resource monoid as a symmetric monoidal category
+enriched in the symmetric monoidal category $\natinf$, where the
+monoid structure is addition. Isomorphism of objects $\alpha, \beta$
+in such a category amounts to having $M(\alpha, \beta) = 0$. The
+conditions in the definition above amount to the usual identity and
+composition laws for enriched categories.
+
+\paragraph{Agda Formalisation} Resource monoids are defined in the
+module \AgdaModule{Algebra.ResourceMonoid}. We use a formulation
+closer to the enriched category theory definition for the actual
+formalisation, because it avoids having to treat equality in the
+monoid structure separately from the induced preorder on elements.
 
 \subsubsection{Specific Resource Monoids}
 
@@ -1408,38 +1545,36 @@ stored fuel.
   \end{displaymath}
   and $\mathit{acct}(k) = k$. Note that this is the simplest possible
   resource monoid due to the requirement that the $\mathit{acct}$
-  function exists. \bob{Forward ref to where this is used.}
+  function must exist.
 \end{definition}
-
-Every resource monoid induces a partial ordering on its carrier set by
-$\alpha \leq \beta$ iff $0 \leq M(\alpha, \beta)$. In the case of the
-natural number resource monoid, this yields the usual ordering on the
-naturals.
 
 \newcommand{\MaxPoly}{\mathrm{MaxPoly}}
 \newcommand{\PlusPoly}{\mathrm{PlusPoly}}
 
 The differencing operator of the natural number resource monoid can
-only supply as much fuel as is contained in the potential. This makes
-it suitable for amortised analysis, where we directly store potential
-in data structures. For the two polynomial time systems, we need more
-sophisticated structures originally presented by Dal Lago and
-Hofmann. The fundamental idea with both is to represent potentials as
-pairs $(m,p)$, where $m$ is a natural number and $p$ is a
-polynomial. The $m$ tracks the ``size'' of data as it pertains to the
-number of times an operation will be repeated by iterating over it ---
-for example, an iterable natural number will have size equal to
-itself, but a non-iterable natural number may be assigned zero
-size. The polynomial $p$ tracks the complexity of a program as a
-function of the size of the input. This leads to a differencing
-operator that evaluates the polynomial with the size of the data:
+only supply as much fuel as is contained in the potential.
+% This makes
+% it suitable for amortised analysis, where we directly store potential
+% in data structures.
+For the two polynomial time systems, we need more sophisticated
+structures, both originally presented by Dal Lago and Hofmann. The
+fundamental idea with both is to represent potentials as pairs
+$(m,p)$, where $m$ is a natural number and $p$ is a polynomial. The
+$m$ tracks the ``size'' of data as it pertains to the number of times
+an operation will be repeated by iterating over it --- for example, an
+iterable natural number will have size equal to itself, but a
+non-iterable natural number may be assigned zero size. The polynomial
+$p$ tracks the complexity of a program as a function of the size of
+the input. This leads to a differencing operator that evaluates the
+polynomial with the size of the data:
 
-\begin{definition}[Polynomial Resource Monoids]
-  The \emph{Max-Polynomial} resource monoid $\MaxPoly$ has carrier
-  set consisting of pairs $(m,p)$ where $m$ is natural number and $p$
-  is a polynomial with natural number coefficients. Addition of
-  elements is defined as $(m,p) \oplus (n,q) = (m \sqcup n, p+q)$ with
-  $\emptyset = (0,0)$. Difference is defined as:
+\begin{definition}[Polynomial Resource Monoids]\label{def:polynomial-resource-monoids}
+  The \emph{Max-Polynomial} resource monoid $\MaxPoly$ has carrier set
+  consisting of pairs $(m,p)$ where $m$ is natural number and $p$ is a
+  polynomial with natural number coefficients. Addition of elements is
+  defined as $(m,p) \oplus (n,q) = (m \sqcup n, p+q)$, where $\sqcup$
+  is the max operator, with $\emptyset = (0,0)$. Difference is defined
+  as:
   \begin{displaymath}
     \MaxPoly((m,p),(n,q)) = \left\{
       \begin{array}{ll}
@@ -1461,17 +1596,22 @@ It is perhaps easier to see how the differencing operator works in the
 special case of the difference $\MaxPoly((m,p),(0,0)) = p(m)$. I.e.,
 if we have code that contains data of size $m$ and a program with
 complexity $p$, then running the combination with no expectation of
-remaining potential yields $p(m)$ available steps.
+remaining potential yields $p(m)$ available steps. The $\MaxPoly$ and
+$\PlusPoly$ resource monoids will be used for the \emph{Cons-free} and
+LFPL-style systems respectively, as we explain in
+\autoref{sec:realising-iteration} and show how these resource monoids
+yield the required polytime bounds on programs.
 
-The $\MaxPoly$ and $\PlusPoly$ resource monoids will be used for the
-cons-free and LFPL-style (i.e., with diamonds) systems
-respectively. We will elaborate on how in
-\autoref{sec:realisability-model} and how they support the two kinds
-of natural number iteration in \autoref{sec:realising-iteration}.
+\paragraph{Agda Formalisation} The natural number resource monoid is
+defined in the Agda module \AgdaModule{Algebra.ResourceMonoid.Nat} and the
+ polynomial monoids are both defined in
+\AgdaModule{Algebra.ResourceMonoid.Polynomial}. The definition is
+parameterised by the ``size monoid'' operation (either $\sqcup$ or
+$+$) used to compose sizes.
 
-FIXME: difference between this definition and Hofmann-Dal Lago's: we
-use polynomials with natural number coefficients instead of a function
-that is bounded by a polynomial.
+% FIXME: difference between this definition and Hofmann-Dal Lago's: we
+% use polynomials with natural number coefficients instead of a function
+% that is bounded by a polynomial.
 
 \subsubsection{Resource sub-monoids}
 
@@ -1491,120 +1631,130 @@ from a specified resource sub-monoid:
 For both $\MaxPoly$ and $\PlusPoly$, the elements with zero size
 component, i.e., of the form $(0,p)$, form a resource sub-monoid that
 we will use for interpreting programs. We will call these sub-monoids
-$\MaxPoly_0$ and $\PlusPoly_0$. We make use of resource sub-monoids
-in our definitions of the interpretations of simultaneous
-substitutions (\autoref{defn:rl-morphism}) and terms
-(\autoref{defn:rl-terms}).
+$\MaxPoly_0$ and $\PlusPoly_0$.
 
-\subsubsection{Resource Monoids as Enriched Categories}
-
-\bob{move this to below the definition of resource monoid}
-
-An alternative perspective on resource monoids is to see them as a
-kind of entriched category \cite{kelly}. Enriched categories replace
-the sets of morphisms between objects with objects from some category
-other than $\Set$. Define the posetal category $\natinf$ with objects $\mathbb{N} \cup \{\infty\}$ and
-
-$\natinf$ as a category.
-
-\bob{remember to look at the Marsden and thingy paper about
-  quantitative resources and enriched categories.}  A concise
-definition of Hofmann and Dal Lago's resource monoids can be given as:
-\begin{definition}
-  A \emph{resource monoid} is a strict symmetric monoidal
-  $\natinf$-enriched category.
-\end{definition}
-
-\subsection{Models of Quantitative Type Theory}
+\subsection{Models of Quantitative Type Theory from Indexed Preorders}
 \label{sec:qtt-models}
 
-\bob{PLAN: RCwFs, and state that they can be constructed from Indexed Linear Posets}
-
-\cite{atkey18} describes a general class of QTT models termed
+\cite{atkey18qtt} described a general class of QTT models termed
 \emph{Quantitative Categories with Families} (QCwFs). This class of
-models fits will with the syntax of QTT, but to actually build models
-it is revealing to construct them from certain indexed partial orders,
-as we explain now. In the next section, we will construct a class of
-specific models that prove the soundness of our complexity constrained
-systems.
+models fits well with the syntax of QTT, but to actually build models
+it is convenient to construct them from certain indexed linear
+preorders. The BCI-realisability model construction in
+\cite{atkey18qtt} is a special case of this construction, but most of
+the details are the same, so we only sketch a special case here to
+concentrate on the specifics of complexity bounded realisability.
 
-\begin{definition}[Category with Families]
-  BLAH
-\end{definition}
-
-\begin{definition}
-  A \emph{linear preorder} is a preordered set $(A, \leq)$ with
+\begin{definition}\label{def:indexed-linear-preorder}
+  A \emph{$\mathbb{N}$-linear preorder} is a preordered set
+  $(L, \leq)$ with
   \begin{enumerate}
-  \item A commutative monoid $(I, -\otimes-)$ that is monotone
-    w.r.t. the order; and
-  \item Is closed: there is an operation
-    $\multimap : A \times A \to A$ such that $x \otimes y \leq z$ iff
-    $x \leq y \multimap z$.
-  \item Right adjoint
+  \item a commutative monoid $(I, -\otimes-)$ that is monotone
+    w.r.t. the order;
+  \item is closed: there is an operation
+    $\multimap : L \times L \to L$ such that $x \otimes y \leq z$ iff
+    $x \leq y \multimap z$; and
+  \item has a function $\oc : \mathbb{N} \to L \to L$, to interpret
+    resource requirement adjustments, which satisfies the following
+    inequalities:
+    \begin{enumerate}
+    \item $\oc_0 X \simeq I$, for discarding;
+    \item $\oc_{m+n} X \leq (\oc_m X) \otimes (\oc_n X)$, for duplication;
+    \item $\oc_m\oc_n X \leq \oc_{mn} X$ for nesting;
+    \item $\oc_1 X \leq X$ for extraction / dereliction;
+    \item $(\oc_n X) \otimes (\oc_n Y) \leq \oc_n(X \otimes Y)$, for distribution; and
+    \item $n \leq m$ implies $\oc_n X \leq \oc_m X$, for usage weakening.
+    \end{enumerate}
   \end{enumerate}
   The collection of all linear preorders and functions that preserve the
   order and the operations forms a category $\LinPreorder$.
+
+  An \emph{indexed linear preorder} $L : \Set^\op \to \LinPreorder$ is
+  a contravariant function, where we write $f^* : L(B) \to L(A)$ for
+  the action of $L$ on functions $f : A \to B$, such that such that
+  reindexing along projections has a right adjoint
+  $L_{\Sigma_{a \in A}.B}(\pi_1^*X, Y) \cong L_{A}(X, \forall_B Y)$
+  that commutes with reindexing.
 \end{definition}
 
-\begin{definition}
-  \begin{enumerate}
-  \item A CwF $(\cat{C}, \top, \langle-,-\rangle, ...)$ that supports
-    $\Pi$ and $\Sigma$ types.
-  \item A functor $L : \cat{C}^\op \to \LinPreorder$, such that
-    reindexing along projections has a right adjoint:
-    \begin{displaymath}
-      L_{\Gamma.A}(\pi^*X, Y) \cong L_{\Gamma}(X, \forall_A Y)
-    \end{displaymath}
-  \end{enumerate}
-\end{definition}
-
-\bob{define the construction}
+Given an indexed linear preorder $L : \Set^\op \to \LinPreorder$, we
+construct a QCwF model of QTT with the basic type formers from
+\autoref{sec:qtt-basic}:
 \begin{enumerate}
-\item Start with a CwF $\cat{C}$ that supports $\Pi$, $\Sigma$ and
-  natural numbers.
-\item Assume a functor $L : \cat{C}^\top \to \LinPreorder$ with
-  reindexing along projections having a right adjoint.
-\item Construct a new CwF with the same base category as $\cat{C}$,
-  but with $\Ty'(\Delta) = \Sigma A : \Ty(\Delta).~L(\Delta.A)$ and
-  $\Tm'(\Delta, (T, X)) = \Tm(\Delta, T)$.
-\item
+\item Define a category $\cat{L}$ of interpretations of contexts with
+  objects that are pairs $(A \in \Set, X \in L(A))$ and morphisms
+  $f : (A,X) \to (B, Y)$ that are functions $f : A \to B$ such that
+  $X \leq f^*Y$ (this is the Grothendieck category of $L$). There is a
+  faithful functor $U : \cat{L} \to \Set$. The category $\cat{L}$ will
+  be used for interpreting contexts in the $\sigma = 1$ fragment of
+  QTT.
+\item Define scaling of objects of $\cat{L}$ by
+  $\pi(A,X) = (A, \oc_\pi X)$, and addition of $(A, X)$ and $(A, Y)$
+  as $(A, X \otimes Y)$.
+\item For each set $A$, define the collection of semantics types
+  $\Ty(A)$ as the collection of $B : A \to \Set$ and
+  $X \in L(\Sigma_{a \in A}.B(a))$. Thus a QTT type consists of an
+  extensional meaning $B$ and its realisability specification $X$.
+\item For each $A$ and $(B,X) \in \Ty(A)$, the $\sigma = 0$ fragment
+  terms $\Tm(A,(B,X))$ are functions $\Pi_{a \in A}.\,B(a)$. For each
+  context interpretation $(A, X)$ in $\cat{L}$ and type intepretation
+  $(B,Y) \in \Ty(A)$, the $\sigma = 1$ fragment terms
+  $\RTm((A,X),(B,Y))$ are functions $f : \Pi_{a \in A}.\,B(a)$ such
+  that $X \leq \overline{f}^*Y$, where
+  $\overline{f} : A \to \Sigma_{a \in A}.\,B(a)$ is the section
+  associated with $f$.
+\item The empty context is interpreted as $(\{*\}, I)$ and context
+  extension $(A,X).(B,Y)$ (i.e., comprehension) by
+  $(\Sigma_{a \in A}.B(a), \pi_1^* X \otimes Y)$.
+\item Given $(A,X) \in \Ty(C)$ and
+  $(B,Y) \in \Ty(\Sigma_{c \in C}.A(c))$, $\Sigma$-types are
+  interpreted similarly to context extension and $\Pi$-types are
+  interpreted as
+  $(\lambda c.~(\Pi_{a \in A(c)}.\,B(c,a)), \forall_{A}(X \multimap
+  (\mathit{ev}\,f)^*Y))$, where
+  $\mathit{ev}\,f : (\Sigma_{c \in C}.A(c)) \to (\Sigma_{c \in
+    C}.\Sigma_{a \in A(c)}.B(c,a))$ is defined using application of
+  $f$.
+\item Universe and Equality types are interpreted as normal in $\Set$
+  with the realisability component set to $I$ in both cases. Note that
+  the universe of small types includes realisability information for
+  each type.
+\item Realisability reflection for a type $(B,X) \in \Ty(A)$ is
+  intepreted as the type
+  $(\lambda a. \{ b \in B(a) \mid I \leq (\lambda a. (a,b))^*X \},
+  I)$. Thus the set-component of the type is restricted to the
+  elements that are realisable, while the actual realisability
+  component is the ``empty'' $I$ realisability specification.
 \end{enumerate}
 
-This construction is implicit in \cite{atkey2018qtt}, where the
-indexed linear poset is defined from a $\mathcal{R}$-LCA.
-
+\paragraph{Agda Formalisation} The indexed linear preorders are
+defined in the Agda module \AgdaModule{IndexedLinear}. We have not yet
+completed a formalisation of the construction of a full model of QTT
+from an indexed linear preorder, nor have we constructed the syntax of
+QTT in Agda, so these parts are currently unmechanised.
 
 \subsection{Amortised Complexity Realisability Model}
 \label{sec:realisability-model}
 
 Equipped with our underlying costed model of computation
 (\autoref{sec:machine-model}) and a compositional notion of resource
-potential (\autoref{sec:resource-monoids}), we construct models of QTT
-that witness the resource and type soundness of our complexity
-constrained systems.
-
-\bob{Tie back to previous section}
-
-We fix a resource monoid $M$ with distinguished sub-monoid $M_0$.
-
-\subsubsection{Base CwF}
-\label{sec:realisability-base-cwf}
-
-As our base CwF, we use the category $\Set$ of sets and functions with
-the standard interpretation of $\Pi$, $\Sigma$ types and the
-$\mathbb{N}$ type.
+potential (\autoref{sec:resource-monoids}), we can construct models of
+QTT that witness the resource and type soundness of our complexity
+constrained systems. We fix a resource monoid $M$ with distinguished
+sub-monoid $M_0$.
 
 \subsubsection{Indexed Linear Preorder}
 \label{sec:realisability-indexed-linear-preorder}
 
 We now define an indexed linear poset $L$ of realisers over $\Set$
 that ties together our ``mathematical'' model of types in $\Set$ with
-our machine model and resource monoid. For a set $A$, the carrier of
-$L(A)$ is the set of ternary relations
-$X \subseteq A \times M \times \ValSet$ and we define the ordering
-$X \leq Y$ to hold iff there exists realising expression
-$E \in \ExpSet$ and potential $\gamma \in M_0$ such that for all
-$a \in A$, $\alpha \in M$ and $v \in \ValSet$ with
+our machine model and resource monoid. This construction is a
+reformulation of \cite{hoffmann-dallago} suitable for modelling
+dependent types. For a set $A$, the carrier of $L(A)$ is the set of
+ternary relations $X \subseteq A \times M \times \ValSet$ and we
+define the ordering $X \leq Y$ to hold iff there exists realising
+expression $E \in \ExpSet$ and potential $\gamma \in M_0$ such that
+for all $a \in A$, $\alpha \in M$ and $v \in \ValSet$ with
 $(a,\alpha,v) \in X$, we have that there exists a result
 $v' \in \ValSet$, step count $k \in \mathbb{N}$ and result potential
 $\beta \in M$ with:
@@ -1656,9 +1806,9 @@ $\alpha$ here is unrestricted, so $I_A$ can consume an arbitrary
 resource.
 
 $\mathbb{N}$-Graded exponentials in each $L(A)$ are defined using the
-action $(\cdot)$ of $(\mathbb{N}, \leq)$ on $M$ defined above \bob{do
-  this}. At the level of realising values, the modality $\oc_n$ has no
-effect; it only serves to alter the required potentials.
+action $(\cdot)$ of $(\mathbb{N}, \leq)$ on $M$ defined above. At the
+level of the realising values, the modality $\oc_n$ has no effect; it
+only serves to alter the required potentials.
 \begin{displaymath}
   \oc_n\,X = \{(a,\alpha,v) \mid \exists \alpha'.\,M(n \cdot \alpha', \alpha) = 0 \land (a, \alpha', v) \in X \}
 \end{displaymath}
@@ -1680,44 +1830,41 @@ the administrative costs of applying the function.
 
 To complete the construction of $L$ as an indexed linear preorder, we
 need to give realisers for each of the required inequalities in
-\autoref{def:indexed-linear-preorder}. In each case, this is a matter
-of programming in the language of \autoref{sec:machine-model}. The
-corresponding potentials are calculated by counting the steps in the
-ensuing programs. Note that, so far, all realisers are constant time
-(relative to their input), so the constructions so far work for any
-resource monoid. For systems that require iteration, we will need more
-structure on our resource monoids \bob{fwd ref}.
+\defref{def:indexed-linear-preorder}. In each case, this is a matter
+of programming in the language of \autoref{sec:machine-model}. For
+example, transitivity of the order is realised by sequencing of
+realising expressions. The corresponding potentials are calculated by
+counting the steps in the ensuing programs.
 
-\begin{proposition}
-  $L$, with $I$, $\otimes$, $\multimap$, $\oc_n$, and $\forall_{B}$ defined above, is
-  an indexed linear preorder.
+\begin{proposition}\label{prop:realisability-model}
+  $L$, with $I$, $\otimes$, $\multimap$, $\oc_n$, and $\forall_{B}$
+  defined above, is an indexed linear preorder.
 \end{proposition}
 
-\begin{proof}
-  See the Agda development.
-\end{proof}
+\paragraph{Agda Formalisation} The construction of this indexed linear
+preorder and the proof of \propref{prop:realisability-model} are
+formalised in the Adga module
+\AgdaModule{AmortisedRealisabilityModel}.
 
 \subsubsection{Non-iterable Data Types}
+\label{sec:noniter-model}
 
-The model of QTT constructed in
-\autoref{prop:basic-qtt-realisability-model} does not yet include any
-useful base types. Handling iterable types, which are the ones that
-induce non-constant-time complexities, requires specific properties of
-resource monoids that we introduce in
+The model of QTT constructed in \propref{prop:realisability-model}
+does not yet include any useful base types. Handling iterable types,
+which are the ones that induce non-constant-time complexities,
+requires specific properties of resource monoids that we introduce in
 \autoref{sec:realising-iteration}.
 
 Rather than perform a complex generic construction of datatypes to
-show how non-iterable versions may be realised, we focus on two
-representative examples. Booleans are the simplest case, with only two
-cases and no chance of iteration. Lists are more complex; we can have
-non-iterable lists containing iterable data. Combining lists and
-booleans allows us to represent other datatypes, such as the
-$\TapeType$ type used to represent Turing machine tapes in
-\autoref{sec:completeness}.
+show how non-iterable versions may be realised, we focus on the two
+representative examples from \autoref{sec:linear-case-analysis} and
+\autoref{sec:noniter-qtt}. Booleans are the simplest case, with only
+two cases and no chance of iteration. Lists are more complex; we can
+have non-iterable lists containing iterable data.
 
 \paragraph{Booleans} Fix $\mathbb{B} = \{ \mathit{tt}, \mathit{ff} \}$
-as our set of boolean elements. We define an element of $L(\mathbb{B}$
-to represent boolean values:
+as our set of boolean elements. We define an element of
+$L(\mathbb{B})$ to represent boolean values:
 \begin{displaymath}
   \mathrm{Bool} = \{ (\mathit{tt}, \alpha, \synTrue) \mid \alpha \in M \} \cup \{ (\mathit{ff}, \alpha, \synFalse) \mid \alpha \in M \}
 \end{displaymath}
@@ -1740,8 +1887,9 @@ for the target type) and the existence in $L(A)$ of inequalities
 $X \leq (\lambda a. (a, \mathit{tt}))^* Y$, for the true case, and
 $X \leq (\lambda a. (a, \mathit{ff}))^* Y$, for the false case. When
 we have all these, we get in $L(A \times \mathbb{B})$ an inequality
-$\pi_1^* X \otimes \pi_2^* \mathrm{Bool} \leq Y$. \bob{back ref to the
-  typing rules for non-iterable data types}
+$\pi_1^* X \otimes \pi_2^* \mathrm{Bool} \leq Y$. This construction
+suffices to realise the rules for QTT booleans in
+\autoref{sec:noniter-qtt}.
 
 \paragraph{Lists} Lists are a little more involved, due to the need to
 explicitly manage a context that applies to all elements of the
@@ -1772,16 +1920,21 @@ Realisability of the nil and cons constructors, and of pattern
 matching on lists is similar to case for booleans. We refer the reader
 to the Agda development for the details.
 
+\paragraph{Agda Formalisation} The construction of realisers for
+booleans is carried out in the Agda module
+\AgdaModule{AmortisedModel.Bool}. The constructions for lists with
+case analysis are carried out in the module
+\AgdaModule{AmortisedModel.List}.
+
 \subsubsection{Realising QTT}
 
 Summing up the previous sections, we have the following key theorem
-paving the way to soundness:
+paving the way to polytime soundness:
 \begin{theorem}\label{thm:basic-qtt-realisability-model}
   For every resource monoid with a distinguished sub-monoid
   $(M, M_0)$, we obtain a realisability model of $\mathbb{N}$-QTT with
-  $\Pi$ and $\Sigma$ types, a universe, and non-iterable datatypes.
-
-  \bob{State the realisability property of closed programs.}
+  $\Pi$ and $\Sigma$ types, a universe, extensional equality types,
+  realisability reflection, and non-iterable datatypes.
 \end{theorem}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1792,9 +1945,12 @@ paving the way to soundness:
 \label{sec:realising-iteration}
 
 The models constructed in the previous section only allow for
-constant-time programs to be realised.
-
-If we use the natural number resource monoid (\bob{Ref})...
+constant-time programs to be realised. To interpret the iterators of
+the \emph{Cons-free} and LFPL-style systems, we need to use the
+$\MaxPoly$ and $\PlusPoly$ resource monoids. We do this in this
+section, where first we establish some operations that will be useful
+to see how they capture the nesting of iterations inherent to polytime
+computation.
 
 \subsection{Iteration Resource Monoids}
 
@@ -1841,14 +1997,14 @@ third property states that $\mathit{scale}$ decomposes as expected on
 potentials that do not include any size potential.
 
 Note that $\mathit{scale}(n,\alpha)$ is not the same as the action
-$n \cdot \alpha$ defined in \autoref{FIXME}. The latter operation
-scales both size and function potential, but the former only scales
-the function potential.
+$n \cdot \alpha$ defined in \autoref{sec:resource-monoids}. The latter
+operation scales both size and function potential, but the former only
+scales the function potential.
 
 \subsubsection{Polynomial Iteration Resource Monoids}
 
 Both of the polymonial resource monoids defined in
-\autoref{sec:polynomial-resource-monoids} support the structure of an
+\defref{def:polynomial-resource-monoids} support the structure of an
 Iteration Resource Monoid. We define:
 \begin{enumerate}
 \item $\mathit{size}(n) = (n, 0)$
@@ -1870,102 +2026,201 @@ $\mathrm{natValue}(n) \in \ValSet$ by recursion.
   \end{array}
 \end{displaymath}
 This representation uses a tagged pair approach similar to our
-representation of lists in \autoref{sec:lists}. Using this, we can
-define what it means for a natural number to be realisable via
+representation of lists in \autoref{sec:noniter-model}. Using this, we
+can define what it means for a natural number to be realisable via
 $\mathrm{Nat} \in L(\mathbb{N})$:
 \begin{displaymath}
-  \mathrm{Nat} = \{(n, \alpha, \mathrm{natValue}(n)) \mid n \in \mathbb{N}, 0 \leq M(\alpha, \mathit{size}(n)) \}
+  \mathrm{Nat} = \{(n, \alpha, \mathrm{natValue}(n)) \mid n \in \mathbb{N}, 0 \leq M(\alpha, \mathit{size}(n+1)) \}
 \end{displaymath}
 So a natural number $n$ is realised by the value
-$\mathrm{natValue}(n)$ as long as we have at least $\mathit{size}(n)$
-potential.  This gives us the ability to represent natural numbers as
-a type in QTT, but in order to iterate (and construct in the case of
-LFPL), we need to construct specific realisers for the Cons-Free and
-LFPL systems.
+$\mathrm{natValue}(n)$ as long as we have at least
+$\mathit{size}(n+1)$ potential (we add one to make the LFPL soundness
+proof easier).  This gives us the ability to represent natural numbers
+as a type in QTT, but in order to iterate (and construct in the case
+of LFPL), we need to construct specific realisers for the
+\emph{Cons-free} and LFPL systems.
 
 \subsection{The Cons-Free System}
 \label{sec:cons-free-sound}
 
-The Cons-Free system uses the $\MaxPoly$ resource monoid, with the
-distinguished sub-monoid being those elements that are $0$ in the size
-component.
-
+The \emph{Cons-free} system uses the $\MaxPoly$ resource monoid, with
+the distinguished sub-monoid being those elements that are $0$ in the
+size component. We enumerate the features of the \emph{Cons-free}
+system and justify their realisability with the $\MaxPoly$ resource
+monoid:
 \begin{enumerate}
-\item We can duplicate natural numbers
-\item We \emph{cannot} construct natural numbers
-\item We can construct a recursor
+\item Duplication of natural numbers by $\dupNat(M)$ is realisable by
+  the expression $(0,0)$, which creates a pair by copying the input
+  variable twice. By the cost semantics in
+  \autoref{sec:machine-model}, this takes $1$ step of computation (we
+  assume that it is actually implemented via some pointer copy).  The
+  resource accounting for this realiser works because the size
+  component required for the output is the maximum of the size
+  components of the two elements, and since $n \sqcup n = n$, we have
+  enough resources to fulfil this.
+\item Construction of natural numbers is not realisable. In a putative
+  $\conSucc$ rule, we would need to get an additional unit of size
+  resource from nowhere.
+\item Iteration is realised by constructing a realising expression in
+  the expression language from the given expressions for the zero and
+  successor cases that uses the in-built recursion of the
+  language. The proof that resources are correctly accounted for is
+  carried out by induction on the natural being iterated over. For
+  $n$, we require potential
+  $\mathit{scale}(n,\mathit{acct}(4) \rplus \gamma_{\mathit{succ}})
+  \rplus (\mathit{acct}(2) \rplus \gamma_{\mathit{zero}})$, where
+  $\gamma_{\mathit{succ}}$ and $\gamma_{\mathit{zero}}$ are the
+  potentials required by the successor and zero cases respectively. By
+  Property (2) of iteration resource monoids, above, we know that
+  $\mathit{raise}(\mathit{acct}(4) \rplus \gamma_{\mathit{succ}})
+  \rplus (\mathit{acct}(2) \rplus \gamma_{\mathit{zero}})$ always
+  dominates this requirement when paired with the potential
+  $\mathit{size}(n)$ from the input. Therefore, this latter
+  expression, plus some administrative set up costs, is the required
+  potential for the whole iterator.
 \end{enumerate}
-
+Together, we have a soundness result for the \emph{Cons-free} system,
+that ensures that every term in the $\sigma = 1$ fragment is
+realisable by a \emph{correct} program that terminates in polynomial
+time for all inputs:
 \begin{theorem}[Soundness for the Cons-free System]
   \label{thm:cons-free-soundness}
-  \bob{State the poly-time property for this system}
+  If we have a term $n : \tyNat \vdash M \stackrel1: T(n)$ then there
+  exists a realising expression $E$ and polynomial $p$ such that for
+  all $n \in \mathbb{N}$, there exists $v \in \ValSet$ and
+  $k \in \mathbb{N}$ such that
+  $E, [\mathrm{natValue}(n)] \Downarrow_k v$, $k \leq p(n)$ and $v$ is
+  a realising value for
+  $\llbracket M \rrbracket(n) \in \llbracket X \rrbracket(n)$.
 \end{theorem}
+
+\paragraph{Agda Formalisation} The realisability of the
+\emph{Cons-free} system iterator and the soundness property of the
+whole system are formalised in the Agda modules \AgdaModule{ConsFree}
+and \AgdaModule{ConsFree.Iterator}. The soundness theorem above is a
+combination of the inequality definition in our indexed linear
+preorder and the QTT model sketched in \autoref{sec:qtt-models}.
 
 \subsection{The LFPL System}
 \label{sec:lfpl-sound}
 
 The LFPL system uses the $\PlusPoly$ resource monoid, with the
 distinguished sub-monoid again being those elements that are $0$ in
-the size component.
-
+the size component. With this resource monoid, the capabilities
+offered at the QTT level are altered:
 \begin{enumerate}
-\item We can no longer duplicate natural numbers
-\item Define diamonds
-\item We can construct natural numbers given diamonds
-\item We can construct a recursor
+\item We can no longer duplicate natural numbers, because
+  $\tyNat \otimes \tyNat$ requires twice as much size resource as
+  $\tyNat$, due to the combining operation on size potentials being
+  addition.
+\item We define the realisability specification for diamonds
+  $\Diamond \in L(1)$ to be:
+  \begin{displaymath}
+    \Diamond = \{ (*, \alpha, *) \mid 0 \leq M(\alpha, \mathit{size}(1)) \}
+  \end{displaymath}
+  Hence a diamond represents at least one unit of size resource,
+  matching the intuitive explanation given in
+  \autoref{sec:lfpl-intro}.
+\item With this definition of realisability for $\Diamond$s, it is
+  possible to realise the $\conZero$ and $\conSucc$ constructors for
+  natural numbers. By the additive combination of size resources we
+  get $1$ from the diamond and $n+1$ from the predecessor to total
+  $n+2$ for a new number. Note that, even if we add a $\Diamond$ type
+  to the \emph{Cons-free} system, it would still not be possible to
+  realise the constructors, because we would only have
+  $1 \sqcup (n+1) = n+1$ size resource for the output.
+\item The construction of the recursor follows a very similar proof to
+  the realisability of \emph{Cons-free} iterator, up to some
+  additional work to make sure that the dummy $*$ values representing
+  the diamond components end up in the right places. This additional
+  work is revealed in the required potential for the LFPL iterator
+  being
+  $\mathit{raise}(\mathit{acct}(8) \rplus \gamma_{\mathit{succ}})
+  \rplus (\mathit{acct}(2) \rplus \gamma_{\mathit{zero}})$, so
+  slightly higher in the successor case.
 \end{enumerate}
 
+Soundness for the LFPL system is similar to the \emph{Cons-free}
+system, except for a $+1$ to the input to the polynomial, to account
+for the fact that we cost one size unit for the $\conZero$
+constructor.
 \begin{theorem}[Soundness for the LFPL-style System]
   \label{thm:lfpl-soundness}
-  \bob{State the poly-time property for this system}
+  If we have a term $n : \tyNat \vdash M \stackrel1: T(n)$ then there
+  exists a realising expression $E$ and polynomial $p$ such that for
+  all $n \in \mathbb{N}$, there exists $v \in \ValSet$ and
+  $k \in \mathbb{N}$ such that
+  $E, [\mathrm{natValue}(n)] \Downarrow_k v$, $k \leq p(n+1)$ and $v$
+  is a realising value for
+  $\llbracket M \rrbracket(n) \in \llbracket X \rrbracket(n)$.
 \end{theorem}
 
+The proofs of well-accounted realisability for the LFPL iterator, and
+the \emph{Cons-free} iterator, could be adapted to any other
+inductively defined type that is finitely branching. This is not
+immediately necessary, as evidenced by the construction of other
+datatypes in \autoref{sec:prog-datatypes}. Nevertheless, native tree
+type where the iterability is proportional to the total number of
+nodes would be useful.
 
-\subsection{Beyond Natural Numbers}
-
-\bob{Theoretically possible, bit useless in the Cons-Free system,
-  useful in the LFPL one}.
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% \section{Realising Explicit Amortised Complexity}
-% \label{sec:explicit-amortised-complexity}
+\paragraph{Agda Formalisation} The realisability of the LFPL system
+iterator and the soundness property of the whole system are formalised
+in the Agda modules \AgdaModule{LFPL} and \AgdaModule{LFPL.Iterator}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Relationship to Second-order MALL with Modalities}
-\label{sec:poly-mall}
-
-\begin{enumerate}
-\item Compare the SAL and LFPL modalities to the natural number
-  constructions
-  \begin{enumerate}
-  \item In the SAL case, we have $\oc A \multimap A^n$, which allows
-    us to
-  \end{enumerate}
-\end{enumerate}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Conclusion}
+\section{Related and Future Work}
 \label{sec:conclusion}
 
+We have presented an two extensions of Quantitative Type Theory that
+soundly and completely captures polynomial time.
+
+\subsection{Systems for Polytime}
+
+BLL, SAL, LAL
+
+THe ones from Fossacs 2022, and POPL23(?) Romain Per...
+
+Neil Jones
+
+\subsection{Other Complexity Classes}
+
 \begin{enumerate}
-\item Brunel's classical quantitative realisability
-\item Works on polytime realisability for proof extraction (Schwictenberg, Soft Set Theory)
 \item Lower complexity classes, like LOGSPACE
 \item Higher complexity classes, like EXPTIME, ELEMENTARY
-\item More fine-granied classes, like PTIME($k$)
-\item Automation, in the style of Jan's stuff
-\item Circuits and shit.
 \end{enumerate}
+
+\subsection{Explicit Resource Accounting}
+
+\begin{enumerate}
+\item RAML, Hofmann-Jost, etc.
+\item lambda-amor
+\item
+\end{enumerate}
+
+\subsection{Linear and Substructural Dependent Types}
+
+Linear LF
+
+Pradic et al
+
+Grtt
+
+Penn
+
+Abel
+
+
+
+\subsection{Implementation} Could use Idris, but it has the wrong
+semiring, and its datatype definition facility is too permissive.
+
+\subsection{Towards Synthetic Computational Complexity Theory?}
+
+Blah
+
 
 
 %%
