@@ -1,4 +1,4 @@
-\documentclass[acmsmall,review,screen]{acmart}
+\documentclass[acmsmall,review,screen,anonymous]{acmart}
 \settopmatter{printfolios=true,printccs=true,printacmref=true}
 
 \usepackage{cmll}
@@ -104,7 +104,7 @@
 %% citations and references.
 %% Uncommenting
 %% the next command will enable that style.
-%%\citestyle{acmauthoryear}
+\citestyle{acmauthoryear}
 
 %%
 %% end of the preamble, start of the body of the document source.
@@ -123,7 +123,7 @@
 %% used to denote shared contribution to the research.
 \author{Robert Atkey}
 \email{robert.atkey@strath.ac.uk}
-\orcid{1234-5678-9012}
+\orcid{0000-0002-4414-5047}
 \affiliation{%
   \institution{University of Strathclyde}
   \streetaddress{26 Richmond Street}
@@ -154,7 +154,7 @@
   method. Both of these are extend to full dependent types, allowing
   for arbitrary computation in types alongside guaranteed polynomial
   time computation in terms. We prove the soundness of the systems
-  using a realisability technique due to Hofmann and Dal Lago.
+  using a realisability technique due to Dal Lago and Hofmann.
 
   Our long-term goal is to combine the extensional reasoning of type
   theory with intensional reasoning about the resources intrinsically
@@ -201,7 +201,7 @@
 %%
 %% Keywords. The author(s) should pick words that accurately describe
 %% the work being presented. Separate the keywords with commas.
-\keywords{type theory, implicit computational complexity, linear logic, computational complexity}
+\keywords{type theory, implicit computational complexity, linear logic}
 
 
 %%
@@ -228,12 +228,12 @@ Typical Type Theory only speaks of the public face that programs
 present to the world -- if you input things like this, you get things
 that look like that -- but cannot bring itself to mention the true
 cost of programs' execution. One can encode costs by embedding another
-programming language in type theory \cite{pottier}, or one can
-synthesise costs by treating resource counting as a computational
-effect \cite{daniellsson,calf}, but neither of these capture the
-intrinsic costs of the programs we write in type theory. These
-techniques deliver only \emph{conspicuous consumption}, not speaking
-of the real resources consumed.
+programming language in type theory, for example \cite{GueneauCP18},
+or one can synthesise costs by treating resource counting as a
+computational effect, for example \cite{Danielsson08,NiuSGH22}, but
+neither of these capture the intrinsic costs of the programs we write
+in type theory. These techniques deliver only \emph{conspicuous
+  consumption}, not speaking of the real resources consumed.
 
 In this paper, we propose a method for extending dependent type theory
 with a means for constraining the intrinsic computational complexity
@@ -316,9 +316,9 @@ linear dependent type theory and implicit computational complexity:
   property. A further contribution of this paper is the addition of
   reflection types to QTT, \autoref{sec:qtt-reflection}, which allow
   statements about polytime realisability to be reflected into
-  types. We explain in \autoref{Sec:realisability-future} how this
-  will have applications in QTT beyond the polytime systems presented
-  here.
+  types. % We explain in \autoref{Sec:realisability-future} how this
+  % will have applications in QTT beyond the polytime systems presented
+  % here.
 \item We demonstrate the utility of the combination of polytime and
   dependent types in \autoref{sec:programming-polytime}. Just as in
   the simply typed world, we have an expressive language for writing
@@ -336,12 +336,13 @@ linear dependent type theory and implicit computational complexity:
 \item We prove the polytime soundness of our systems via a
   realisability argument in \autoref{sec:soundness}. Our construction
   is an extension of the amortised complexity realisability
-  constructions of \cite{hofmann-dallago}. We extend their work to our
-  dependently typed setting, and also give a realisability
+  constructions of \citet{dallago11realisability}. We extend their
+  work to our dependently typed setting, and also give a realisability
   interpretation of datatypes directly, instead of via second-order
   impredicative encodings. The technical content of this section has
-  been formalised in the Agda proof assistant \cite{agda}, and the
-  development is available in the supplementary material.
+  been formalised in the Agda proof assistant
+  \cite{norell2008dependently}, and is included in the supplementary
+  material.
 \end{enumerate}
 
 Before we get to the contributions above, we present, in
@@ -354,7 +355,7 @@ work and the outlook for future work in \autoref{sec:conclusion}.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\section{Linear $\lambda$-Calculus and Polytime}
+\section{Affine Linear $\lambda$-Calculus and Polytime}
 \label{sec:linear-intro}
 
 Not long after Girard introduced Linear Logic \cite{girard87}, it was
@@ -476,7 +477,7 @@ next two sections.
 
 With booleans and lists, we can construct several other useful
 types. For example, to simulate Turing machines, one can construct a
-$\mathit{Tape}$ type as a Zipper \cite{huet}
+$\mathrm{Tape}$ type as a Zipper \cite{huet}
 $\ListTy(\BoolTy) \otimes \BoolTy \otimes \ListTy(\BoolTy)$,
 representing a position on the tape with the items before, under, and
 after the head.
@@ -816,7 +817,10 @@ The side conditions on the elimination rule state that (i) both
 $\Gamma_1$ and $\Gamma_2$ erase to the same context, so their sum is
 defined; and (ii) the argument $N$ is erased (i.e., $\sigma' = 0$) iff
 either the function does not use its argument, or we are in the
-$\sigma = 0$ fragment and everything is being erased.
+$\sigma = 0$ fragment and everything is being erased. In the
+following, when we write $S \to T$ for a non-dependent function type,
+we mean that the argument is to be used linearly:
+$(x \stackrel1: S) \to T$.
 
 $\Sigma$-types are a little more involved, and demonstrate the
 flexibility in QTT in allowing additional power in the $\sigma = 0$
@@ -862,6 +866,8 @@ analogue of the $\otimes$-eliminator in \autoref{sec:linear-intro}:
     0\Gamma_1 = 0\Gamma_2}
   {\Gamma_1 + \Gamma_2 \vdash \mathrm{let}~(x,y) = M~\mathrm{in}~N \stackrel\sigma: C[M/z]}
 \end{mathpar}
+QTT also supports a unit type $I$ with constructor $*$ and
+pattern-matching elimination. See \cite{atkey18qtt} for details.
 
 \subsubsection{The Identity Type}
 
@@ -1133,9 +1139,9 @@ augments the simply typed linear recursor from
   \mprset{flushleft}
   \inferrule*
   {0\Gamma, x \stackrel0: \tyNat \vdash P~\istype \\\\
-    \Gamma \vdash M \stackrel\sigma: \tyNat
-    0\Gamma, d \stackrel1: \Diamond \vdash N_z \stackrel\sigma: P[\conZero(*)/x] \\\\
-    0\Gamma, d \stackrel1: \Diamond, n \stackrel0: \tyNat, p \stackrel1: P[n/x] \vdash N_s \stackrel\sigma : P[\conSucc(*,n)/x]}
+    \Gamma \vdash M \stackrel\sigma: \tyNat \\\\
+    0\Gamma, d \stackrel\sigma: \Diamond \vdash N_z \stackrel\sigma: P[\conZero(*)/x] \\\\
+    0\Gamma, d \stackrel\sigma: \Diamond, n \stackrel0: \tyNat, p \stackrel\sigma: P[n/x] \vdash N_s \stackrel\sigma : P[\conSucc(*,n)/x]}
   {\Gamma \vdash \tmRec\,M\,\{\conZero(d) \mapsto N_z; \conSucc(d,n;p) \mapsto N_s\} \stackrel\sigma: P[M/x]}
 \end{mathpar}
 We have used $* : \Diamond$ as the value in the types for the zero and
@@ -1210,6 +1216,10 @@ Krishnaswami and Benton \cite{pradic}.
 \section{Programming and Proving with Polytime}
 \label{sec:programming-polytime}
 
+We now explore the possibilities afforded by the combination of
+polytime guarantees with the specification expressivity of dependent
+types.
+
 % \begin{enumerate}
 % \item Non-deterministic polytime via a bit oracle -- needs a statement
 %   of success
@@ -1227,50 +1237,237 @@ Krishnaswami and Benton \cite{pradic}.
 \label{sec:prog-datatypes}
 
 We have only defined an iterable natural number datatype for both of
-our systems above. Using the power of dependent types with a universe
-we can use these natural numbers to create further datatypes whose
-size is measured by a natural. Iteration on the size yields iteration
-over the full datastructure. For example, in the LFPL system, we can
-define a type of iterable lists by pairing a size with a type of
-elements defined by recursion:
+our systems above. We could extend both systems to include further
+iterable inductive types, although in the \emph{Cons-free} system this
+is not particularly useful due to the prohibition of on
+construction. However, sticking with just the natural numbers, we can
+use the power of dependent types with a universe to create further
+datatypes whose size is measured by some iterable natural
+number. Iteration on the size yields iteration over the full
+datastructure. For example, in the LFPL system, we can define a type
+of iterable lists by pairing a size with a type of elements defined by
+recursion on the size:
 \begin{displaymath}
-  \mathrm{IList}(A) = \Sigma n \stackrel1: \tyNat.\,\mathrm{rec}_{x.\mathsf{U}}\,n\,\{ \conZero(d) \mapsto I; \conSucc(d,n;p) \mapsto A \otimes p \}
+  \mathrm{IList}\,A = (n \stackrel1: \tyNat) \otimes \left(\mathrm{rec}_{x.\mathsf{U}}\,n\,\{ \conZero(d) \mapsto I; \conSucc(d,n;p) \mapsto A \otimes p \}\right)
 \end{displaymath}
+The $\cNil$ and $\cCons$ constructors can now be defined in terms of
+$\conZero$ and $\conSucc$, provided the caller supplies sufficient
+$\Diamond$s. These definitions live in the $\sigma = 1$ fragment, so
+we annotate them appropriately:
+\begin{mathpar}
+  \begin{array}{l}
+    \mathrm{nil} \stackrel1: \Diamond \to \mathrm{IList}\,A \\
+    \mathrm{nil}\,d = (\conZero(d), *)
+  \end{array}
 
-Nil and Cons constructors.
+  \begin{array}{l}
+    \mathrm{cons} \stackrel1: \Diamond \to A \to \mathrm{IList}\,A \to \mathrm{IList}\,A \\
+    \mathrm{cons}\,d\,x\,\mathit{xs} = \mathrm{let}\,(n,\mathit{elems}) = \mathit{xs}\,\textrm{in}\,(\conSucc(d,n),(x,\mathit{elems}))
+  \end{array}
+\end{mathpar}
+Using the LFPL iterator it is also possible to construct a dependently
+typed iterator for $\mathrm{IList}\,A$ values. Unfortunately, the
+current types of the LFPL system are not sufficient to type this as a
+function, as we have no way of stating that the successor case must be
+arbitrarily duplicable. Lifting this restrict by means of some
+modality is future work. The typing rule for the derived list iterator
+is:
+\begin{mathpar}
+  \mprset{flushleft}
+  \inferrule*
+  {0\Gamma \vdash A~\istype \\
+    0\Gamma, x \stackrel0: \mathrm{IList}\,A \vdash P~\istype \\\\
+    \Gamma \vdash M \stackrel\sigma: \mathrm{IList}\,A \\\\
+    0\Gamma, d \stackrel1: \Diamond \vdash N_1 \stackrel\sigma: P[\mathrm{nil}(*)/x] \\\\
+    0\Gamma, d \stackrel1: \Diamond, x \stackrel\sigma: A, \mathrm{xs} \stackrel0: \mathrm{IList}\,A, p \stackrel\sigma: P[\mathit{xs}/x] \vdash N_2 \stackrel\sigma : P[\mathrm{cons}(*,x,\mathit{xs})/x]}
+  {\Gamma \vdash \tmRec_{x.P}\,M\,\{\mathrm{nil}(d) \mapsto N_1; \mathrm{cons}(d,x,\mathit{xs};p) \mapsto N_2\} \stackrel\sigma: P[M/x]}
+\end{mathpar}
+Note that, in the cons case, we have access to the result of iterating
+over the tail of the list ($p$), but not to the actual tail of the
+list ($\mathit{xs}$).
 
-List iterator:
+With our list iterator, it is now possible to write interesting
+polytime programs. For example, insertion of a natural into a sorted
+list:
+\begin{displaymath}
+  \mathrm{insert} \stackrel1: \Diamond \to \tyNat \to \mathrm{IList}\,\tyNat \to \mathrm{IList}\,\tyNat
+\end{displaymath}
+which requires some ingenuity to write to handle the case where we
+find the place to insert the item and need access to the remainder of
+the list. Note that, also, the function consumes a $\Diamond$ to
+construct the new element of the output list, and also that the items
+in the list are themselves iterable natural numbers. This is needed to
+account for the
 
-
-\bob{U notation for the universe above}
-
-
-\begin{enumerate}
-\item Insertion sort in LFPL.
-\item Insertion sort in LFPL with correctness specification.
-\end{enumerate}
+Insertion sort is repeated insertion of elements from an original list
+into a new list. The new list is constructed from the $\Diamond$s
+yielded by the original list:
+\begin{displaymath}
+  \mathrm{insertionSort} \stackrel1: \mathrm{IList}\,A \to \mathrm{IList}\,A
+\end{displaymath}
+The immediate benefit of dependent types in this situation is that it
+is now possible to state and prove the correctness property of this
+sorting procedure. Using the fact that the $\sigma = 0$ fragment of
+QTT is exactly normal type theory, we can use normal dependently typed
+programmming techniques to establish:
+\begin{displaymath}
+  \mathrm{insertionSortCorrect} \stackrel0: (\mathit{xs} \stackrel1: \mathrm{IList}\,A) \to \mathrm{Sorted}(\mathit{xs},\mathrm{insertionSort}\,\mathrm{xs})
+\end{displaymath}
+where $\mathrm{Sorted}(x,y)$ is some predicate stating that $y$ is a
+sorted permutation of $x$.  Note that, despite the $1$ annotation on
+the $\Pi$-type here, we are free to duplicate $\mathit{xs}$ because
+types are constructed in the $\sigma = 0$ fragment.
 
 \subsection{Polytime Problems}
 \label{sec:polytime-problems}
 
-Uses
+Define a decision problem to be a pair $(A, P)$, where $A$ is a type
+in the universe $\mathsf{U}$, and $P : A \to \mathsf{U}$ is a
+predicate on $A$. For what follows, we are only interested in whether
+or not $P\,a$ is inhabited for each $a$. Therefore, we use
+$P \Leftrightarrow Q$ to stand for equi-inhabitation of two
+$P, Q : \mathsf{U}$, i.e.,
+$P \Leftrightarrow Q \equiv (P \to Q) \times (Q \to P)$.
 
+We can use the reflection type former defined in
+\autoref{sec:qtt-reflection} to define a predicate on decision
+problems that establishes whether or not they are polytime decision
+problems. Specifically, we can state that there is a polytime
+realisable boolean-value predicate that reports true exactly when the
+given element of $a$ is in the predicate:
 \begin{displaymath}
-  (A : \mathsf{U}, P : A \to \mathsf{U})
+  \mathrm{PTIME}(A,P) =
+    (f \stackrel1: \mathbf{R}(A \to \BoolTy)) \otimes (a \stackrel1: A) \to (\mathbf{R}^{-1}(f)\, a = \cTrue) \Leftrightarrow P\,a
 \end{displaymath}
+Thus, $\mathrm{PTIME}(A,P)$ is a logical proposition stating that the
+decision problem $(A,P)$ is deciable in polytime. We make two notes
+about this definition: (i) this definition is intrinsic, in the sense
+that, whichever of the polytime systems is chosen, proving that a
+decision problem is solvable in polytime is a matter of programming,
+without having to reason directly about machine models and step
+counting; and (ii) we have defined problems to have arbitrary types
+$A$ as domains, rather than bitstrings, and so the notion of size
+attached to an input is intrinsic to the type $A$ chosen.
 
-Cartesian container morphisms
+We can also declare a type of polytime \emph{reductions} between
+problems. A problem $(A, P)$ can be polytime reduced to a problem
+$(B,Q)$ if there is an inhabitant of the following type:
+\begin{displaymath}
+  (A,P) \stackrel{\textsc{Poly}}\Rightarrow (B,Q) = (f \stackrel1: \mathbf{R}(A \to B)) \otimes (a \stackrel1: A) \to Q(\mathbf{R}^{-1}(f)\,a) \Leftrightarrow P\,a
+\end{displaymath}
+In words, there must be a polytime function $f$ that preserves and
+reflects decisions. With this definition, it is possible to prove in
+our systems that polytime computations are closed under polytime
+reductions. We note that this definition is, up to the reflection
+modality, the same as the definition of cartesian container morphism,
+well known in dependent type theory \cite{abbott03categories}, and
+speaks to a general conception of containers as ``problem/solution''
+pairings.
 
 \subsection{Polytime-based Complexity Classes}
 
-Monads
+The fact that we can characterise polytime decision problems is
+perhaps to be expected from a system designed to capture polynomial
+time realisable programs. However, we can go further to capture the
+complexity classes of Non-deterministic Polynomial time (NP) and
+Probabilistic Polynomial time (PP), both of which are based on
+polytime. We do this by augmenting our polytime functions with
+additional power in the form of computation effects.
 
 \subsubsection{Non-deterministic Polynomial Time}
 
+To capture the complexity class NP, we use polynomial time programs
+augmented with non-determinism, as one might expect. We will not need
+to reason about equality of these non-deterministic programs, so we
+can represent non-deterministic choices as \emph{additive} binary
+trees. We suppose a non-iterable datatype defined like so:
+\begin{displaymath}
+  \begin{array}{l}
+    \textbf{data}\,\mathrm{ND}\,(A : \mathsf{U}) : \mathsf{U}\,\textbf{where} \\
+    \quad \mathsf{return} : A \to \mathrm{ND}\,A \\
+    \quad \mathsf{choice} : (\BoolTy \to \mathrm{ND}\,A) \to \mathrm{ND}\,A
+  \end{array}
+\end{displaymath}
+The crucial point here is that the subtrees are represented as a
+function $\BoolTy \to \mathrm{ND}\,A$. By the typing rules of QTT,
+this means that the two branches of this function can share resources
+(see the encoding of the additive product types in
+\cite{atkey18qtt}). Thus, each branch of this tree is polynomial time,
+not the whole tree itself.
 
+The type $\mathrm{ND}$ supports a monad interface via the usual free
+monad construction, as well as an effect
+$\mathrm{flip} \stackrel1: \mathrm{ND}\,\BoolTy$ providing access to a
+bit of non-deterministic information. Thus a program of type
+$A \to \mathrm{ND}\,B$ in the $\sigma = 1$ fragment will be a polytime
+program with access to an oracle. In the $\sigma = 0$ fragment, we can
+write a function that resolves non-determinism using a list of
+booleans. This function returns $\mathsf{nothing}$ if the list of
+booleans is insufficient to resolve all the $\mathsf{choice}$s:
+\begin{displaymath}
+  \mathrm{runWithOracle} \stackrel0: \mathrm{ND}\,A \to \ListTy(\BoolTy) \to \mathrm{Maybe}\,A
+\end{displaymath}
+With these definitions, we can define Non-deterministic Polynomial
+time as a predicate on problems:
+\begin{displaymath}
+  \mathrm{NP}(A,P) =
+  \begin{array}[t]{l}
+    (f \stackrel1: \mathbf{R}(A \multimap \mathrm{ND}(\BoolTy)))\, \otimes \\
+    \quad (a \stackrel1: A) \to \left((\mathit{bs} \stackrel1: \ListTy(\BoolTy)) \otimes (\mathrm{runWithOracle}\,(\mathbf{R}^{-1}(f)\,a)\,\mathit{bs} = \mathsf{just}\,\cTrue)\right) \Leftrightarrow P\,a
+  \end{array}
+\end{displaymath}
+Thus, a problem is in NP if there is a non-deterministic
+boolean-valued polynomial time function that has a path to returning
+$\cTrue$ exactly when the input is in predicate. Moreover, it is a
+quick matter of programming to see that problems in NP are closed
+under the type of polytime reductions given above.
+
+% \begin{displaymath}
+%   \begin{array}{l}
+%     \mathrm{runWithOracle} \stackrel0: \mathrm{ND}\,A \to \ListTy(\BoolTy) \to \mathrm{Maybe}\,A \\
+%     \mathrm{runWithOracle}\,(\mathsf{return}\,a)\,\mathit{bs} = \mathsf{just}\,a \\
+%     \mathrm{runWithOracle}\,(\mathsf{choice}\,x\,y)\,(\cTrue :: \mathit{bs}) = \mathrm{runWithOracle}\,x\,\mathit{bs} \\
+%     \mathrm{runWithOracle}\,(\mathsf{choice}\,x\,y)\,(\cFalse :: \mathit{bs}) = \mathrm{runWithOracle}\,y\,\mathit{bs} \\
+%     \mathrm{runWithOracle}\,(\mathsf{choice}\,x\,y)\,\cNil = \mathsf{nothing}
+%   \end{array}
+% \end{displaymath}
 
 \subsubsection{Probabilistic Polynomial Time}
 
+By changing the computation effects supplied to a program, we can
+change the complexity class. To capture Probabilistic Polynomial time,
+we use a (non-iterable) data structure representing trees of
+probabilistic choices, where $\mathbb{Q}[0,1]$ is some type of
+(non-iterable) rationals in the closed interval $[0,1]$:
+\begin{displaymath}
+  \begin{array}{l}
+    \textbf{data}\,\mathrm{Dist}\,(A : \mathsf{U}) : \mathsf{U}\,\textbf{where} \\
+    \quad \mathsf{return} : A \to \mathrm{Dist}\,A \\
+    \quad \mathsf{choice} : \mathbb{Q}[0,1] \to (\BoolTy\ to \mathrm{Dist}\,A) \to \mathrm{Dist}\,A
+  \end{array}
+\end{displaymath}
+As in the non-deterministic case, a function $A \to \mathrm{Dist}\,B$
+in the $\sigma = 1$ fragment is a polytime probabilistic
+computation. Again, the use of a function type here ensures that each
+branch of the tree is constructable in polynomial time, not the whole
+tree. In the $\sigma = 0$ fragment we can write a function that
+computes the probability of a $\mathrm{Dist}\,\BoolTy$ computation
+being true:
+\begin{displaymath}
+  \mathrm{probTrue} \stackrel0: \mathrm{Dist}\,\BoolTy \to \mathbb{Q}[0,1]
+\end{displaymath}
+We can now define the class of probabilistic polynomial time decision
+problems, where the decider is allowed to make probabilistic choices
+as long as it is correct with probability at least $\frac{1}{3}$:
+\begin{displaymath}
+  \mathrm{PP}(A,P) =
+  \begin{array}[t]{l}
+    (f \stackrel1: \mathbf{R}(A \multimap \mathrm{Dist}(\BoolTy))) \, \otimes
+    (a \stackrel1: A) \to (\mathrm{probTrue}\,(\mathbf{R}^{-1}(f)\,a) \geq \frac{1}{3}) \Leftrightarrow P\,a
+  \end{array}
+\end{displaymath}
+Again, problems in PP are easily seen to be closed under polytime
+reductions.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1331,10 +1528,11 @@ want to prove complexity soundness for.
 
 \paragraph{Agda Formalisation} The key soundness results in this
 section have been formalised in the Agda proof assistant
-\cite{agda}. The Agda formalisation can be found in the supplementary
-material. After each definition and result we provide a pointer to the
-Agda modules where the corresponding formalisation can be found, and
-note interesting features of the mechanisation.
+\cite{norell2008dependently}. The Agda formalisation can be found in
+the supplementary material. After each definition and result we
+provide a pointer to the Agda modules where the corresponding
+formalisation can be found, and note interesting features of the
+mechanisation.
 
 \subsection{Machine Model and Operational Semantics}
 \label{sec:machine-model}
@@ -1729,8 +1927,7 @@ construct a QCwF model of QTT with the basic type formers from
 \paragraph{Agda Formalisation} The indexed linear preorders are
 defined in the Agda module \AgdaModule{IndexedLinear}. We have not yet
 completed a formalisation of the construction of a full model of QTT
-from an indexed linear preorder, nor have we constructed the syntax of
-QTT in Agda, so these parts are currently unmechanised.
+from an indexed linear preorder so this part is currently unmechanised.
 
 \subsection{Amortised Complexity Realisability Model}
 \label{sec:realisability-model}
@@ -1739,8 +1936,9 @@ Equipped with our underlying costed model of computation
 (\autoref{sec:machine-model}) and a compositional notion of resource
 potential (\autoref{sec:resource-monoids}), we can construct models of
 QTT that witness the resource and type soundness of our complexity
-constrained systems. We fix a resource monoid $M$ with distinguished
-sub-monoid $M_0$.
+constrained systems. We fix a resource monoid $M$ with sub-monoid
+$M_0$ and proceed to build an indexed linear preorder of resource
+accounted realisers.
 
 \subsubsection{Indexed Linear Preorder}
 \label{sec:realisability-indexed-linear-preorder}
@@ -2173,7 +2371,7 @@ in the Agda modules \AgdaModule{LFPL} and \AgdaModule{LFPL.Iterator}.
 \section{Related and Future Work}
 \label{sec:conclusion}
 
-We have presented an two extensions of Quantitative Type Theory that
+We have presented two extensions of Quantitative Type Theory that
 soundly and completely capture polynomial time. We have seen that this
 allows for an expressive combination of verification and complexity
 constrained computation. We now discuss some related work in implicit
@@ -2185,7 +2383,7 @@ could take us.
 
 BLL, SAL, LAL, LFPL
 
-The ones from Fossacs 2022, and POPL23(?) Romain Per...
+The ones from Fossacs 2022, and POPL23(?) Romain Perchoux
 
 Neil Jones
 
@@ -2201,6 +2399,7 @@ Neil Jones
 \begin{enumerate}
 \item RAML, Hofmann-Jost, Raja, etc.
 \item lambda-amor,
+\item Daniellson
 \item calf from CMU
 \end{enumerate}
 
@@ -2230,6 +2429,7 @@ semiring, and its datatype definition facility is too permissive.
 Cryptography?
 
 \subsection{Towards Synthetic Computational Complexity Theory?}
+\label{sec:towards-synthetic-complexity-theory}
 
 Synthetic computability theory Bauer, Forster
 
