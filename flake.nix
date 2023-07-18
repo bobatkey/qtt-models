@@ -61,6 +61,17 @@ mkdir -p $out/html;
 cp html/* $out/html;
 '';
           };
+          supplementary-material-zip = pkgs.stdenvNoCC.mkDerivation rec {
+            name = "supplementary-material-zip";
+            src = self;
+            buildInputs = [ supplementary-material pkgs.zip ];
+            phases = [ "installPhase" ];
+            installPhase = ''
+mkdir -p $out;
+cd ${supplementary-material};
+zip -r $out/polytime-dependent-types.zip *
+'';
+          };
         };
 
         devShells.default = pkgs.mkShell {
