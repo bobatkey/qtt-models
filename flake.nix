@@ -34,20 +34,12 @@
           paper = pkgs.stdenvNoCC.mkDerivation rec {
             name = "paper";
             src = self;
-            buildInputs = [ pkgs.coreutils tex ];
+            buildInputs = [ pkgs.coreutils pkgs.gnumake pkgs.bash tex ];
             phases = ["unpackPhase" "buildPhase" "installPhase"];
-            buildPhase = ''
-	      export PATH="${pkgs.lib.makeBinPath buildInputs}";
-        make paper/paper.pdf
-        # mkdir -p .cache/texmf-var;
-
-	      # cd paper;
-	      # mkdir -p .cache/texmf-var;
-	      # env TEXMFHOME=.cache TEXMFVAR=.cache/texmf-var latexmk -interaction=nonstopmode -pdf paper.tex
-    '';
+            buildPhase = "make paper/paper.pdf";
             installPhase = ''
       mkdir -p $out;
-      cp paper.pdf $out/
+      cp paper/paper.pdf $out/
     '';
           };
           supplementary-material = pkgs.stdenvNoCC.mkDerivation rec {
