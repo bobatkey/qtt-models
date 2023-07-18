@@ -38,9 +38,12 @@
             phases = ["unpackPhase" "buildPhase" "installPhase"];
             buildPhase = ''
 	      export PATH="${pkgs.lib.makeBinPath buildInputs}";
-	      cd paper;
-	      mkdir -p .cache/texmf-var;
-	      env TEXMFHOME=.cache TEXMFVAR=.cache/texmf-var latexmk -interaction=nonstopmode -pdf paper.tex
+        make paper/paper.pdf
+        # mkdir -p .cache/texmf-var;
+
+	      # cd paper;
+	      # mkdir -p .cache/texmf-var;
+	      # env TEXMFHOME=.cache TEXMFVAR=.cache/texmf-var latexmk -interaction=nonstopmode -pdf paper.tex
     '';
             installPhase = ''
       mkdir -p $out;

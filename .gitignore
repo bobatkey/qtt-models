@@ -17,3 +17,4 @@ result
 *.fdb_latexmk
 *.thm
 /.direnv/
+/arxiv.tar.gz
