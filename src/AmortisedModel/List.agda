@@ -13,7 +13,7 @@ open import Data.Product using (Σ-syntax; _×_; Σ; _,_; proj₁; proj₂)
 open import AmortisedModel.Preorder ℳ ℳ₀
 open import AmortisedModel.SMC ℳ ℳ₀
 
-open import MachineModel
+open import AmortisedModel.Machine
 
 open ResourceMonoid ℳ renaming (Carrier to |ℳ|)
 open SubResourceMonoid ℳ₀ renaming (member to mor-potential)

@@ -1,8 +1,5 @@
 module Everything where
 
--- The machine model (Section 5.1)
-import MachineModel
-
 -- Resource monoids (Section 5.2)
 import Algebra.ResourceMonoid
 
@@ -10,6 +7,9 @@ import Algebra.ResourceMonoid.Polynomial
 
 -- Indexed Linear Preorders (Section 5.3)
 import IndexedLinear
+
+-- The machine model (Section 5.1)
+import AmortisedModel.Machine
 
 -- The core amortised complexity realisability model (Section 5.4.1)
 import AmortisedModel.Preorder

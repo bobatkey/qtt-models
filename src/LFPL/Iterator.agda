@@ -8,7 +8,7 @@ open import Data.Empty using (⊥)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
 open import Util
 
-open import MachineModel
+open import AmortisedModel.Machine
 open import Algebra.ResourceMonoid
 
 -- ultimately would like to prove that for any finitary polynomial

@@ -10,7 +10,7 @@ open import Data.Nat.Properties using (≤-reflexive)
 open import Data.Nat.Solver using (module +-*-Solver)
 open import Data.Product using (Σ-syntax; _×_; Σ; _,_; proj₁; proj₂)
 
-open import MachineModel
+open import AmortisedModel.Machine
 
 open ResourceMonoid ℳ renaming (Carrier to |ℳ|)
 open SubResourceMonoid ℳ₀ renaming (member to mor-potential)

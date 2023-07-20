@@ -13,7 +13,7 @@ open import Util
 
 open ResourceMonoid ℳ renaming (Carrier to |ℳ|)
 open SubResourceMonoid ℳ₀ renaming (member to mor-potential)
-open import MachineModel
+open import AmortisedModel.Machine
 
 open import AmortisedModel.Preorder ℳ ℳ₀
 open import AmortisedModel.SMC ℳ ℳ₀

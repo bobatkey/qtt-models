@@ -8,7 +8,7 @@ open import Data.Empty using (⊥)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong)
 open import Util
 
-open import MachineModel
+open import AmortisedModel.Machine
 open import Algebra.ResourceMonoid
 
 module ConsFree.Iterator

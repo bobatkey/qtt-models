@@ -9,7 +9,7 @@ open import Data.Fin using (suc; zero)
 open import Data.Nat using (ℕ; suc; zero; _+_; _*_; _≤_)
 open import Data.Product using (Σ-syntax; _×_; Σ; _,_; proj₁; proj₂)
 
-open import MachineModel
+open import AmortisedModel.Machine
 
 open ResourceMonoid ℳ renaming (Carrier to |ℳ|)
 open SubResourceMonoid ℳ₀ renaming (member to mor-potential)

@@ -1,6 +1,6 @@
 {-# OPTIONS --safe #-}
 
-module MachineModel where
+module AmortisedModel.Machine where
 
 open import Data.Fin using (Fin; zero; suc)
 open import Data.Nat using (ℕ; zero; suc; _+_)
