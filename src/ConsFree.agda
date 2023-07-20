@@ -21,8 +21,6 @@ open import ConsFree.Iterator
    (λ { refl → refl })
    scale raise→scale scale-zero scale-suc
    (duplicate-size λ n → ≤-reflexive (⊔-idem n))
-   hiding (⟪_⟫)
-
 
 -- The polytime property for this calculus
 poly-time : ∀ {X} →

@@ -22,7 +22,6 @@ open import LFPL.Iterator
    scale raise→scale scale-zero scale-suc
    (λ n → (≤-reflexive (+-comm n 1)) , (λ _ _ → ≤-refl))
    (λ n → (≤-reflexive (+-comm 1 n)) , (λ _ _ → ≤-refl))
-   hiding (⟪_⟫)
 
 -- The polytime property for LFPL
 poly-time : ∀ {X} →

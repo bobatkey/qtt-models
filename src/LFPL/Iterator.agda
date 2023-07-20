@@ -6,6 +6,7 @@ open import Data.Nat.Properties using (module ≤-Reasoning)
 open import Data.Product using (_×_; _,_; proj₂)
 open import Data.Empty using (⊥)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl)
+open import Util
 
 open import MachineModel
 open import Algebra.ResourceMonoid
@@ -28,7 +29,11 @@ module LFPL.Iterator
   (suc-size     : ∀ n → 0 ≤D⟨ size n ⊕ size 1 , size (suc n) ⟩)
       where
 
-open import AmortisedRealisabilityModel M M₀ public
+open import AmortisedModel.Preorder M M₀ public
+open import AmortisedModel.SMC M M₀ public
+open import AmortisedModel.Quantifiers M M₀ public
+open import AmortisedModel.GradedExponential M M₀ public
+
 open SubResourceMonoid M₀
 
 `nat : ℕ -Obj

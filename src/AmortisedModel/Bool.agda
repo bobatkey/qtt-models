@@ -9,12 +9,14 @@ open import Data.Nat using (_+_; suc; zero)
 open import Data.Empty using (⊥)
 open import Data.Fin using (suc; zero)
 open import Data.Product using (Σ-syntax; _×_; Σ; _,_; proj₁; proj₂)
-
-open import AmortisedRealisabilityModel ℳ ℳ₀
+open import Util
 
 open ResourceMonoid ℳ renaming (Carrier to |ℳ|)
 open SubResourceMonoid ℳ₀ renaming (member to mor-potential)
 open import MachineModel
+
+open import AmortisedModel.Preorder ℳ ℳ₀
+open import AmortisedModel.SMC ℳ ℳ₀
 
 `Bool : Bool -Obj
 `Bool false .realises α false = 0 ≤D⟨ α , ∅ ⟩

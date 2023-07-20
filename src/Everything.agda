@@ -1,26 +1,29 @@
 module Everything where
 
 -- The machine model (Section 5.1)
-open import MachineModel
+import MachineModel
 
 -- Resource monoids (Section 5.2)
-open import Algebra.ResourceMonoid
+import Algebra.ResourceMonoid
 
-open import Algebra.ResourceMonoid.Polynomial
+import Algebra.ResourceMonoid.Polynomial
 
 -- Indexed Linear Preorders (Section 5.3)
-open import IndexedLinear
+import IndexedLinear
 
 -- The core amortised complexity realisability model (Section 5.4.1)
-open import AmortisedRealisabilityModel
+import AmortisedModel.Preorder
+import AmortisedModel.SMC
+import AmortisedModel.Quantifiers
+import AmortisedModel.GradedExponential
 
 -- Non-iterable datatypes (Section 5.4.2)
-open import AmortisedModel.Bool
+import AmortisedModel.Bool
 
-open import AmortisedModel.List
+import AmortisedModel.List
 
 -- The iterator and soundness for the Cons-free system (Section 6.2)
-open import ConsFree
+import ConsFree
 
 -- The iterator and soundness for the LFPL system (Section 6.3)
-open import LFPL
+import LFPL

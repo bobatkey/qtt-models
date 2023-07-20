@@ -10,11 +10,14 @@ open import Data.Fin using (suc; zero)
 open import Data.List using (List; []; _∷_)
 open import Data.Product using (Σ-syntax; _×_; Σ; _,_; proj₁; proj₂)
 
-open import AmortisedRealisabilityModel ℳ ℳ₀
+open import AmortisedModel.Preorder ℳ ℳ₀
+open import AmortisedModel.SMC ℳ ℳ₀
+
+open import MachineModel
 
 open ResourceMonoid ℳ renaming (Carrier to |ℳ|)
 open SubResourceMonoid ℳ₀ renaming (member to mor-potential)
-open import MachineModel
+
 
 list : ∀ {Γ} A → (Σ Γ A) -Obj → (Σ[ γ ∈ Γ ] (List (A γ))) -Obj
 list A X (γ , []) .realises α (false , ⋆) = 0 ≤D⟨ α , ∅ ⟩
@@ -39,15 +42,15 @@ list A X (γ , e ∷ elems) .realises α _ = ⊥
           ⟨ (λ (γ , e , es) → (γ , e)) ⟩ X ⊗ ⟨ (λ (γ , e , es) → (γ , es)) ⟩ list A X
           ⇒
           ⟨ (λ (γ , e , es) → (γ , e ∷ es)) ⟩ list A X
-`cons {Γ} {A} {X} .realiser .expr n = seq true then (zero , suc zero)
-`cons {Γ} {A} {X} .realiser .potential = acct 3
-`cons {Γ} {A} {X} .realiser .potential-ok = `acct
-`cons {Γ} {A} {X} .realises γ η α (v₁ , v₂) x .result = true , (v₁ , v₂)
-`cons {Γ} {A} {X} .realises γ η α (v₁ , v₂) x .steps = 3
-`cons {Γ} {A} {X} .realises γ η α (v₁ , v₂) x .result-potential = α
-`cons {Γ} {A} {X} .realises γ η α (v₁ , v₂) x .evaluation = seq true (mkpair zero (suc zero))
-`cons {Γ} {A} {X} .realises γ η α (v₁ , v₂) x .result-realises = x
-`cons {Γ} {A} {X} .realises γ η α (v₁ , v₂) x .accounted = acct⊕-
+`cons .realiser .expr n = seq true then (zero , suc zero)
+`cons .realiser .potential = acct 3
+`cons .realiser .potential-ok = `acct
+`cons .realises γ η α (v₁ , v₂) x .result = true , (v₁ , v₂)
+`cons .realises γ η α (v₁ , v₂) x .steps = 3
+`cons .realises γ η α (v₁ , v₂) x .result-potential = α
+`cons .realises γ η α (v₁ , v₂) x .evaluation = seq true (mkpair zero (suc zero))
+`cons .realises γ η α (v₁ , v₂) x .result-realises = x
+`cons .realises γ η α (v₁ , v₂) x .accounted = acct⊕-
 
 `match : ∀ {Γ A X Y Z} →
          Γ ⊢ X ⇒ ⟨ (λ γ → (γ , [])) ⟩ Z →
