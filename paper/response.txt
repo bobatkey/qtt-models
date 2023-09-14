@@ -1,0 +1,225 @@
+Thank you to all the reviewers for their engaging and detailed reviews. We are glad that all of the reviewers said they enjoyed reading our submission and came up with interesting questions. We have enjoyed writing a response to them, and think that incorporating the many suggestions will make a much improved paper.
+
+## Proposed Changes
+
+- We will address Reviewer A and Reviewer C's point that the exact definitional equality of QTT is unclear by including the equality rules in an appendix. We will also include a discussion of the metatheory of the systems presented in this work, as described in the response to Reviewer A below. (Reviews A and C).
+
+- We will elaborate on the exact meaning of poly-time soundness earlier in the paper, to avoid confusion (Review C).
+
+- We add more examples of programming in the LFPL-style, to highlight the exact way that the resource discipline shows itself (Reviews B and D).
+
+- We will consider switching the presentation of resource monoid to the enriched category theory definition used in the formalisation (Review C).
+
+- We will add some more background on Implicit Computational Complexity (Review D).
+
+- We will fix the many minor typos and confusing bits of wording found by the reviewers.
+
+## Review A
+
+Thank you for the review. You bring up important points about the presentation of QTT and its metatheoretic properties, and the prospects for a theory of synthetic computational complexity. We have tried to itemize and summarise these points to respond to them.
+
+1. *Lack of closed system of PTIME-QTT*
+
+   As we also state below in our response to Review C, the omission of the definitional equality rules was for brevity. QTT has the usual $\beta\eta$-laws for $\Pi$-types and $\Sigma$-types, and $\beta$-laws for the inductive types. In the $\sigma=1$ fragment this means that the $\eta$-law for the `let` eliminator also includes commuting conversions, which might actually be infeasible for implementation. The $R$ and $R^{-1}$ terms are definitionally mutually inverse.
+
+   We will include the full definitional equality rules in any revision of the submission.
+
+   The definitional equality rules are all justified by the Set part of the model and the fact that the resource component is a preorder.
+
+   You are right that the Agda development does not prove anything about equalities (this is the main component of the gap in the development identified on ine 917). The construction of the preorder is proof relevant "by default" in Agda. Our preferred way to proceed is to actually construct a Setoid QCwF in Agda, which simply ignores the realisability component for the purposes of equality. Definitional equality is then interpreted up to the setoid equality.
+
+2. *Lack of metatheory*
+
+   Again, this was for brevity. The weakening and substitution properties carry over from (Atkey, 2018). Type checking is undeciable for the presented system due to equality reflection. We conjecture that a system with intensional equality would have decidable conversion and typechecking, but we have not proved this.
+
+   Consistency is a consequence of the consistency of the Set model, though as you say it would need an empty type to state it. It is possible to interpret the whole system in the usual Set CwF, ignoring the linearity. This would no longer be possible if axioms were added to the system to internalise the polytime property however, please see the next point.
+
+   For canonicity, there are two questions, external and internal. The realisability semantics described in the paper demonstrates that every closed term of boolean type has a realiser that evaluates to a boolean, or, more usefully, that every closed term of function type $\mathrm{Nat} \multimap \mathrm{Nat}$ has a realiser that evaluates to a function that evaluates to natural number values when supplied with natural number values.
+
+   Internal canonicity, that every closed *source* language term of ground type is $\beta\eta$-equal to a closed value, is not proven. It would probably be a corollary of decidability of conversion. We do not think there would be a conflict between the full $\beta\eta$ equational theory and the underlying CBV implementation. The realisability model ensures that they compute the same answers, no matter how they get there.
+
+3. *Prospects for a synthetic complexity theory*
+
+   We think that the relativisation that you propose would be accounted for by use of the realisability predicate we introduced in Section 3.5, which attaches realisability information to the values manipulated by the set-theoretic parts.
+
+   The idea then would be that there would be a strict proposition type (like Agda's Prop or Coq's SProp) with (somehow) an axiom in that proposition type that states $(f : \mathbf{R}(\mathrm{Nat} \to \mathrm{Nat})) \to \exists c:\mathrm{Code}.~\exists p:\mathrm{Poly}.~\forall n:\mathrm{Nat}.~\exists k:\mathrm{Nat}.~\llbracket c \rrbracket n = (\mathrm{R}^{-1}(f)~n,k) \times (k \leq p(n))$, where $\mathrm{Code}$ is some type of representations of code and $\llbracket - \rrbracket$ is an interpretation function that returns the result and the number of computation steps. This axiom is not interpretable in a plain Set model, but it is justified by the realisability model. The existential must live in Prop so that the code representation cannot leak out and destroy extensionality of functions. (We hope this quick sketch is understandable!)
+
+## Review B
+
+Thank you for the review. You raise an important point about the relationship between dependent types and the kind of complexity control we are interested in here. We respond to this first, and then your smaller comments.
+
+> Can you provide an example program with a (tight) cost bound that can be expressed in this system but not with just linear types?
+
+The systems presented are not intended to provide tight cost bounds on programs as part of its typing judgement. They are only intended to ensure that all terms (in the $\sigma = 1$ fragment) are realisable by polynomial time implementations.
+
+It was not our goal with this work to use dependent types to prove complexity bounds, or to express tight bounds on complexity in the types.
+
+Our goal is to combine *implicit* control of complexity with dependent types. Dependent types are used to reason about the extensional behaviour of programs, while the linear types ensure the complexity bounds.
+
+The purpose of the insertion sort example was to show that writing "normal" functions was actually feasible in the LFPL-style system.
+
+Where dependent types come in indispensible is in expressing complexity classes that build on PTIME, such as NP and PP, as we do in Section 4.3. These complexity classes combine polytime-ness with specific correctness criteria, something that is not expressible as a type without the combination of linear and dependent types. The correctness of polynomial time reductions also relies on dependent types to prove that the reduction does indeed reduce the problem.
+
+That said, we think that two further things are possible, building on this work:
+
+  1. The realisability semantics does provide a concrete polynomial for each term, so it might be possible to make a type system that exposes this information.
+
+  2. The natural number resource monoid (Definition 5.2, line 815) is not used in this submission, but it could be used to make a system where $\Diamond$s are explicitly counted in the types (so there'd be a type $\Diamond : \mathrm{Nat} \to \mathsf{U}$) and are used to pay for each step of computation. The user would then be able to prove tight cost bounds on the $\Diamond$ fuel provided to functions. We think this would be an interesting system to explore in a future paper, more along the lines of a fully dependently typed and explicitly resourced version of (Jan) Hoffmann et al's RAML system (POPL 2017).
+
+On the topic of more examples, please see the response to Review D below.
+
+From the detailed comments:
+
+1. *The var rule in the affine $\lambda$-calculus.*
+
+   Yes, the context could just be $\Gamma, x : A$.
+
+2. *Variable clash on lines 208-213*
+
+   The re-use of the variable name $s$ was intentional, because the one in the $\mathsf{succ}$ case represents the intermediate state being updated, while the $\lambda$-bound one is the initial state, so conceptually they are both "the state". We can see how this is confusing though. We will rename the $\lambda$-bound one to $s_0$.
+
+3. > Why is the construction of booleans cost-free?
+
+   Roughly put, there is no way to "save up" iterability from the input in a boolean because they are non-recursive. Constructors for iterable natural numbers are disallowed or controlled by $\Diamond$s because they would otherwise allow the input to be duplicated to exceed polynomial bounds. More formally, because it is justified by the realisability model.
+
+4. *Sentence missing on line 599*
+
+   The sentence ought to be: "This [the fact that the list elements are iterable naturals] is needed to account for the comparisons between elements."
+
+## Review C
+
+Thank you for the very detailed comments. We will fix the minor typos. Here are responses to the questions and comments in the *Detailed comments* section. We have paraphrased the original comments before each response.
+
+1. *No equational theory given*
+
+   This was just for brevity, but in hindsight it should have been explicitly commented on. We responded to this comment in more depth for Review A, above.
+
+2. *What does it mean to represent all polytime computations?*
+
+   We agree that it is a bit confusing. The soundness property is stated in terms of "this program can be realised by a polynomial time implementation", not "this piece of code will reduce in polynomial time in the size of the program" (which is another plausible reading, and one used elsewhere in implicit computational complexity).
+
+   We will add text explaining this point. The best place seems to be around line 103 where complexity of cut-elimination is (perhaps misleadingly) mentioned, and then elaborated upon in Section 2.2
+
+3. *Where do Nats come from?*
+
+   In the Cons-free system, all iterable natural numbers come from the input. In the case of the `iterate` function, the unstated assumption is that the input is supplied in the form of a pair of a natural number and the initial state. The natural number is intended to be the "size" of the input, e.g. the length of the initial tape (and this could be enforced using dependent types).
+
+4. *What is the status of the admissible rules?*
+
+   The $0$-ing admissible rule is more like subst/wk. It shows up explicitly in the QCwF semantics as the faithful functor $U : \mathcal{L} \to \mathcal{C}$ that drops the resource information, and the corresponding operation on semantic terms. Its presence as an admissible operation is part of the "trick" of QTT that keeps the syntactic form of the two fragments the same.
+
+   We think that a discussion of this point might be out of scope for this paper, but certainly a syntax-free description of QTT would be something worthwhile to explore. We note that the system of Fu, Kishida, and Selinger (2022) does have an explicit "forget the resources" operation in the system (called the "shape"), but the system is different in that this is also applied to the types as well as the terms, unlike in QTT.
+
+5. > In §3.5 (“Reflection of Realisability”) ...
+
+   The fragment-asymmetry is odd, and it would perhaps be better if it were decomposed into separate operations of unreflection and projection into the $0$ fragment, but that would not be compatible with the way that QTT is currently set up.
+
+   The definitional equality rules for this type state that $R^{-1}$ and $R$ are mutually inverse, and they hold in both fragments.
+
+6. *Where do proofs about PTIME(A,P) live?*
+
+   Your interpretation is correct. Proofs of `PTIME(A,P)` need to be constructed in the $0$ fragment because the proof that a problem is solved by a particular function may not be polynomial time (or it might be inconvenient to express it in such a way that polytime-ness can be verified by typing). We will make this clearer in any future revision.
+
+7. > In l. 710 it says “These explicit constructions are essential to construct a model of dependent types”
+
+   On reflection, "essential" is too strong. Using impredicative encodings in the surface type theory is not compatible with many other things that one might want to do with a type theory. However, it might be possible to construct a model that uses $\lambda$-/Church-encodings of inductive datatypes in the implementation, but we think such a construction would be less clear that the explicit first order construction.
+
+8. *Why not use the enriched category definition of resource monoid?*
+
+   We thought that the monoid + difference operator version would be more digestable to readers without some enriched category theory knowledge, and it stays closer to Dal Lago and Hofmann's original presentation. We will certainly consider making the enriched category definition primary though.
+
+9. *Why an extra slot in the closures for self-reference?*
+
+   Closures *themselves* don't have an extra slot for self-reference, their code portions expect to be supplied with a self-reference when invoked. We found this presentation made the proofs of realisability for the iterators manageable.
+
+   We're not sure what you are referring to by "the normal way"? Encoding recursion by a CBV Y-combinator?
+
+10. *In what sense is this a special case of something?*
+
+    Yes, we agree the wording is rough. There's two things going on:
+
+	 - There's a mistake in (Atkey, 2018). The category for interpreting linear contexts shouldn't be the category of assemblies, rather it should be the total category of the realizability hyperdoctrine as it is in this submisson. Thus, the construction in this submission generalises the corrected version of (Atkey, 2018).
+
+     - The second "special case" in the cited sentence was meant to refer to the fact that this construction only handles the $\mathbb{N}$-annotated system, not for an arbitrary semiring, but this got lost in an edit. We will make this more clear, or remove the reference to being a special case.
+
+## Review D
+
+Thank you for your thought provoking comments on implicit computational complexity. We have tried to address them below. We are excited that you identified cryptography as a potential application area, we are very interested in this for future work.
+
+Responses to comments from the *Assessment* section follow. We have paraphrased the questions for brevity.
+
+1. *Why hasn't Implicit Computational Complexity had a greater impact?*
+
+   We don't regard ourselves as complexity theorists, so we're perhaps not the best people to answer this question. Certainly implicit computational complexity theory ("complexity via functional programming") has not had the same impact as descriptive complexity ("complexity via logic programming").
+
+   We speculate several possible reasons that ICC hasn't taken off outside a niche in PL theory, and ways that our work may help:
+
+     - Sometimes the languages are arguably quite obscure, being based on Linear Logic sequent calculi or proof nets with impredicative encodings of data. We have tried to address this by being a restriction of normal type theory with inductive data types and eliminators.
+     - Each complexity class seems to require an overhaul of the programming language used to characterise it, and there doesn't seem to be a systematic way of doing so. We have tried to address this, at least for classes based on polynomial time, with the effects-based characterisations of NP and PP in Section 4.3 of the submission. It would be interesting to explore what the effect of other notions of computational effect would be.
+     - We have not seen any system that integrates restricted-complexity systems into larger ones that encompass non-restricted reasoning, as we have done in this submission. Our hypothesis is that this will enable reasoning about polynomial time, perhaps even with mechanised assistance.
+
+   Of course, there is no guarantee that this is enough to push ICC into the mainstream, but we think it is worth a try. We will add a discussion refining and elaborating the above points to any future revision of the submission.
+
+2. *Insertion sort has a simple resource discipline; can you do anything more complex*
+
+   One of the features/constraints of LFPL is that the output always has smaller size than the input, where the size refers to the *iterable* size. It is possible to write a function of type $\mathrm{Nat} \multimap \mathrm{List}(1) \otimes \mathrm{List}(1)$ that generates two lists whose length is the size of the input, but these lists cannot themselves be iterated over.
+
+   It is also possible to generate duplicate iterable lists by supplying $\Diamond$s: so a function of type $\mathrm{IList}(\Diamond \otimes A \otimes B) \multimap \mathrm{IList}(A) \otimes \mathrm{IList}(B)$ is implementable, by building the first output list with the $\Diamond$s from the input list and the second with the additional $\Diamond$ carried with each element.
+
+   Programming in LFPL is nicer than programming in the Cons-free system, but is still not exactly like programming in normal functional languages. We will put more material on the necessary programming style for LFPL in any revision of this submission.
+
+Comments from the *Detailed comments* section, omitting the typo corrections (thank you!)
+
+1. > The type systems in section 2 seem to be affine (Γ, 𝑥 : 𝐴, Γ′ ⊢ 𝑥 : 𝐴), whereas the type system in section 3 is linear (0Γ, 𝑥:^𝜎 𝑆, 0Γ′ ⊢ 𝑥:^𝜎 𝑆). What is the motivation for this shift?
+
+   The QTT instantiation is actually affine as well, due to the ordered semiring used, which has $1 \sqsubseteq 0$ so the $0$-annotated elements of the context in the var rule can be weakened to be $1$-annotated. We will alter the explanation of this point in Section 3.1.1. to make this clearer.
+
+2. > What is the reference for the original Cons-free type system?
+
+   We are not aware of a reference that exactly presents the same Cons-free system as in the submission.
+
+   The underlying semantic model used is the similar to the one proposed by Dal Lago and Hofmann for Lafont's Soft Affine Logic (SAL), but the surface language differs in that it has an explicit natural number type, not a combination of impredicative polymorphism and a restricted exponential modality.
+
+   Jones, 2001, described a polynomial-time system that also omits Cons, but is first order. Jones then goes on to add *unrestricted* (i.e. no linearity restriction) higher order functions which results in an exponential-time system. The system presented here restricts functions to be non-duplicable as well, which keeps the system to polynomial time.
+
+   The combination of Cons-free-ness with non-duplicable functions seems like a step that someone else might have taken, so we didn't want to outright claim it as a contribution, but we are not aware of an exact match in the literature. We will include the above points in any future revision though.
+
+3. > What about reducing pairs? That substitutes into both x and y at the same time.
+
+   Each of `x` and `y` will appear at most once in the affine system, so the $\beta$-rule will still not have to duplicate the terms being substituted in and the term gets smaller by removing the $\beta$-redex.
+
+4. > Why is it okay to duplicate natural numbers using the dupNat operator? Is this because you disallowed the constructors for Nat?
+
+   The full answer to this lies in the semantic model discussed in Section 6. Intuitively, it is because while constructors allow arbitrary numbers to be generated from the input, duplication only allows the input to be iterated over again, possibly nested.
+
+5. > line 261: "Rather the iterator I_k performs n choose k iterations". It actually performs n choose k - 1 operations.
+
+   Good point. We will fix this.
+
+6. > "Is the need for the n choose k iterations due to the absence of the duplicator operator?"
+
+   Yes. The number of diamonds available for sub-iterations is equal to the *rest* of the natural number, so the recursion pattern ends up looking like a triangle, hence the use of binomial coefficients. We will elaborate on this connection further in any future revision.
+
+7. > section 3: In the judgement for well-formed types, is it necessary to have the context of the form 0\Gamma? Couldn't we define well-formedness in \Gamma by just ignoring all annotations?"
+
+   We think the system could be reformulated in this way, but the current presentation follows the original presentation of QTT.
+
+8. > line 366: In the typing hypothesis for C, is the \pi annotation in the context necessary or can we just set it to be 0?
+
+   The $\pi$ annotation is necessary because it is part of the type. Types with different annotations are different in QTT.
+
+9. > line 456: Why is it necessary to add the dupNat construct to the 0 fragment, given that there we can just simulate it with the pair type?
+
+   We need to add it to the $\sigma=0$ fragment so that the $0$-ing rule remains admissible directly. The definitional equality on line 463 then transforms it to a pair.
+
+10. > How is the diamond different from the unit type in the 0 fragment?
+
+    They are isomorphic in the $\sigma=0$ fragment, but they are not equal-as-types because they differ in their resource components.
+
+11. > Does R^{-1}(R(M)) reduce definitionally to M?
+
+    Yes. We will add in the equality rules for $\mathbf{R}$ in any future revision.
+
+12. > 599: Sentence is incomplete.
+
+    Please see the response to review B above.

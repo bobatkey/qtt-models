@@ -1,0 +1,387 @@
+POPL 2024 Paper #453 Reviews and Comments
+===========================================================================
+Paper #453 Polynomial Time and Dependent types
+
+
+Review #453A
+===========================================================================
+
+Overall merit
+-------------
+B. Weak accept: I lean towards acceptance.
+
+Reviewer expertise
+------------------
+Y. Knowledgeable: I am knowledgeable about the topic of the paper (or at
+   least key aspects of it).
+
+Summary of the paper
+--------------------
+This paper presents two flavours of a quantitative type theory where the relevant fragment captures PTIME computations. The quantitiative annotations allow keeping track of a bound on the number of uses. The main difference between the first "cons-free" variant and the second "LFPL" variant is that the former prohibits building natural numbers but instead features a duplication operator, while the second one provides a reified proof-irrelevant notion of constructor fuel which is made avaible when performing recursive calls. Both theories are quite expressive (they contain extensional MLTT in the irrelevant fragment), and are proved to be sound for PTIME using the same kind of model. The model is basically a complexity-aware realizability layer over the usual Set CwF of MLTT. Contexts and types are annotated with elements from (indexed predicates on) a linear preorder, which generalize the fuel structure to arbitrary types, in a way reminiscent of graded linear logic. Terms are Set functions annotated with untyped programs from a low-level CBV language whose complexity must agree with the available fuel.
+
+Assessment of the paper
+-----------------------
+Despite not being an expert in implicit complexity, I found that this paper was surprisingly readable from the point of view of the type theorist. The intuitions behind the quantitative restrictions are clearly explained and make a lot of sense. Moreover, even on a type theory ground, this paper is a great showcase for QTT, which I had always found mildly unconvincing up to now. The QCwF model in itself is somewhat simple to understand, most of the complexity lying in the definition and instantiation of a linear order with enough bells and whistles. The Agda formalization is the icing on the cake, since it brings in a lot of confidence about the technical parts. My main reproach, if you can call it this way, is that this article has a strong semantic bias. There is no closed system of PTIME-QTT listed anywhere, the theory is instead defined in terms of admissible rules in the model. In particular the conversion rules are quite lacunar and there is basically no meta-theoretical statement about the theory apart from PTIME soundness. This is definitely not enough to deter me from supporting acceptance.
+
+Detailed comments for authors
+-----------------------------
+Most of my comments will be about the "semantic bias" mentioned above.
+
+Given the model, it seems clear that these theories enjoy consistency and semantic/homotopy canonicity. There is no empty type to state the former, but it is quite trivial to add. If I am not mistaken, both properties are a trivial consequence that there is a faithful projection into the Set CwF. Yet, if we want effective canonicity described w.r.t. a reduction strategy on terms, it is not clear to me how one could proceed. Is there an easy way to even define a reduction (which will be CBN to comply with the equational theory) playing along with the semantic CBV annotation in the model? And if so, is subject reduction to be hoped for? Said otherwise, does PTIME-QTT actually compute anything without having to go through an erasure semantics?
+
+Regarding conversion rules, it seems that they constitute a bit of an oversight. Even the Agda development concentrates on typing rules and many conversion rules are not proved. I am wondering how problematic it would be in Agda, since the paper takes a clearly proof-irrelevant stance on linear orders but AFAIU the Agda development does not. In the first situation, conversion is directly inherited from the underlying Set model, but in the second you would have to either 1. prove many annoying equalities which might actually not hold because *proof-relevance* or 2. add a lot of squashing on semantic annotations and liberally rely on choice axioms. To be sure you do not forget anything, I think it would be a good idea to lie down the expected typing rules of your theory as an inductive definition, and prove that the QCwF is a model of it. It would also be helpful to the reader who doesn't know if they are to expect more extensionality magic coming from the meta. Note that the 2018 QTT paper is also lacking in this respect, so it is hard to find a comprehensive reference on the matter.
+
+About synthetic complexity theory, I think that internalizing PTIME properties will require a complete rehauling of the model. The model from the paper is stratified, as Set functions live on their own without knowing anything about the complexity annotations. You'd have to turn this into an internal complexity-parametricity model instead where every quantification is internally relativized to PTIME programs, but then you're going to have a hard time keeping related the CBV semantics of the realizer annotations and the CBN equational theory of the system. In any case, this is a very interesting question.
+
+Many typos found, there are probably more:
+- 137: "proprotional"
+- 280: "annotaton"
+- 355: Π-"typed"
+- 625: "deciable"
+- 683: "to" in choice should be an arrow
+- 1044: "programs2"
+- 1222: "enodings"
+- Theorem 6.1 and 6.2: $X$ shoud probably read $T$ or some implicit semantic projection of it
+
+Questions to be addressed by author response
+--------------------------------------------
+I believe I could raise my review to a non-expert strong accept if you comment a bit about the expected equational theory and the questions around computation and canonicity.
+
+
+
+Review #453B
+===========================================================================
+
+Overall merit
+-------------
+B. Weak accept: I lean towards acceptance.
+
+Reviewer expertise
+------------------
+Y. Knowledgeable: I am knowledgeable about the topic of the paper (or at
+   least key aspects of it).
+
+Summary of the paper
+--------------------
+This paper combines linear and dependent types to capture PTIME computation. This combination is explored in two systems:
+Cons-free system and LFPL. Using a realisability technique, the authors show that the systems are sound and complete
+w.r.t. PTIME.
+
+Assessment of the paper
+-----------------------
+I enjoyed reading this paper. Despite not being an expert, I was able to understand the typing rules and examples presented
+in Section 3 and 4. The realisability technique for proving soundness by converting QTT terms into an untyped CBV $\lambda$-calculus
+is also a nice approach. The formalizations in Agda are impressive, although I did not read through them carefully.
+
+I was a bit disappointed to see the lack of examples. The whole motivation of this work is to provide a system to prove tight
+polynomial-time bounds on complexity that cannot be expressed without dependent types. However, in Section 4, the only example
+provided was insertion into a sorted list and that too with a simple linear bound. In reality, the cost of insertion depends
+on how many elements in the list are smaller than the element being inserted. I would have expected the authors express this
+bound in their types. If that is too complex, the authors should have provided a simpler example maybe where expressing
+the bound is more feasible.
+
+The authors claim that the advantage of dependent types in this example is that it is possible to prove correctness of
+the insertion sort. But proving correctness can be achieved independently using dependent types and cost bound can be
+expressed separately using linear types. In my opinion, that itself does not justify why the two should be combined.
+
+This lack of examples where cost bounds depend on the value of the input is the reason I am giving this paper a weak accept.
+I really liked all other aspects of the paper.
+
+Detailed comments for authors
+-----------------------------
+- For the var rule in the affine $\lambda$-calculus typing rules (first rule lines 122-128), there are two contexts: $\Gamma$
+before $x : A$ and $\Gamma'$ after $x : A$. Is the ordering of antecedents important? Can we just not say $\Gamma, x : A$?
+
+- In lines 208-213, when describing $I_{k+1}$, there is a variable clash $s$ which appears in $\lambda s$ and $\mathsf{succ}(s)$.
+This makes it very confusing to read. Is this intentional?
+
+- Line 402: Why is construction of boolean values cost-free?
+
+- Line 599: Sentence missing?
+
+Questions to be addressed by author response
+--------------------------------------------
+Can you provide an example program with a (tight) cost bound that can be expressed in this system but not with just linear types?
+
+
+
+Review #453C
+===========================================================================
+
+Overall merit
+-------------
+A. Strong accept: I will argue for acceptance.
+
+Reviewer expertise
+------------------
+X. Expert: I am an expert on the topic of the paper (or at least key
+   aspects of it).
+
+Summary of the paper
+--------------------
+This paper draws together deep two ideas in a productive way: implicit
+complexity à la Hofmann, and quantitative type theory à la Atkey (after
+McBride). The idea of implicit complexity is that complexity classes can
+often be shown to correspond to programming languages: for instance, you
+can have a language that is sound and complete for polytime in a certain
+technical sense; thus one can reduce questions of complexity bounds to
+programming exercises in (often substructural and highly restricted)
+programming languages. In the past, this was mainly considered in the
+case of simple lambda-calculi; dependent type theory has long promised
+to provide an integrated setting in which programs and be written and
+verified in the same language, and the input of Atkey’s quantitative
+type theory to this paper is to extend this promise to the world of
+implicit complexity. One of the reasons this is non-trivial is that
+linear dependent type theory has never had a compelling definition;
+quantitative type theory is one of several different “linearized” type
+theories, in which linear structure is layered onto an existing
+structural type theory à la refinement types.
+
+Quantitative type theory instruments variables with a “multiplicity”,
+which expresses (roughly) how many times they can be used; then,
+constructions are carried out in two modes: in one mode (the “realisable
+mode”), these multiplicities have full force whereas in another mode
+(the “erased mode”) the multiplicities are all zeroed out ignored. Types
+always live in the erased mode, and so variables can be used without any
+restrictions whatsoever to construct types (which is important for
+specification), whereas programs can live in the realisable mode. This
+paper adds to that picture an additional “reflection” modality, that
+appears to re-impose the quantitative realizability constraints within
+the erased mode.
+
+The upshot is that you can verify both behavioral and quantitative
+aspects of a program in the same language — but in different modes. By
+backing out into the erased mode, you have the full expressivity of
+Martin-Löf type theory to state and verify not only behavioral
+properties, but *also* quantitative properties (like polytime
+realizability) using the reflection modality.
+
+The language of the paper is proved sound and complete for polytime by
+means of an elegant categorical realizability construction (about which
+I had a few questions.)
+
+Assessment of the paper
+-----------------------
+I really enjoyed reading this paper, which kept on confirming my feeling
+that we really are in a golden age for type theory. There is a lot for
+us to learn from here, and I'm grateful to have had the chance to read
+it.
+
+### Strengths of the paper
+
+-   The paper is innovative, elegant, and well-motivated
+-   It makes real progress toward solving a very interesting and
+    long-standing problem in our field: a **synthetic theory of
+    complexity** along the lines of other more well-established things
+    like **synthetic domain theory** and **synthetic computability
+    theory**
+-   It develops a very interesting take on quantitative type refinements
+    with compelling applications that quite in a different direction
+    from prior papers on QTT, etc.
+-   The technical ramp-up was gentle enough to effectively introduce
+    both the ideas of (e.g.) QTT and implicit complexity
+
+### Weaknesses of the paper
+
+A few explanations went over my head at first; e.g. it would help a lot
+to be more precise earlier on about what it means for a type theory to
+be sound and complete for polytime (commented on this elsewhere). There
+were a few typos that I have marked. I made some other suggestions and
+asked some questions for clarification elsewhere in my review, and I
+think that the paper could be improved by taking these into account.
+
+I’m in favor of this paper, and hope to see it accepted.
+
+Detailed comments for authors
+-----------------------------
+### Questions and comments
+
+1.  In §§2.1–2.2 and §§3.2.1–3.2.2, no equational theory is given. Is
+    this intentional, or just for brevity? (From now on, I assume the
+    obvious beta-laws are intended to hold in all modes, and that unless
+    otherwise specified, no eta-laws are intended; please let me know if
+    this assumption is wrong.)
+2.  I initially had a very naïve confusion about what it means for a
+    given system to “represent all polytime computations.” My initial
+    assumption was that that there is an encoding `enc` of natural
+    numbers into closed terms of type `Nat`, and that for any polytime
+    function `f : Nat -> Nat`, there exists a term
+    `x : Nat |- [f](x) : Nat` such that for every natural number `n`,
+    the closed definitional equality `|- [f](enc(n)) == enc(f(n)) : Nat`
+    holds. But this (mis)interpretation of mine doesn’t sense for the
+    Cons-free language, since there is of course no encoding of natural
+    numbers as closed terms. Next, I guessed that what is meant instead
+    is something like the above, except for polytime functions
+    `List Bool -> Bool`, which potentially makes sense for the Cons-free
+    language because it does include the boolean constructors. In any
+    case, I understand that my confusion was naïve, but I think it might
+    make the paper more accessible if more is said about precisely what
+    is meant early on in the paper. No doubt all of this is very
+    familiar to people more steeped in the customs of complexity theory.
+3.  Relatedly, in the discussion of the completeness of the Cons-free
+    language (l. 206), the idea of using the iterator to “iterate `f`
+    over a `Nat` representing the size of the input” is mentioned, but
+    we have already seen that there is no such `Nat` in the Cons-free
+    language. I concluded that what is meant is that such a natural
+    number nonetheless exists in the underlying computational algebra in
+    the realisability model, but I think it would help for this to be
+    said explicitly.
+4.  l. 299 discusses admissible rules, including the usual ones like
+    weakening & substitution, but also the 0-ing rule of QTT. When a
+    rule is admissible, it often means one of two things: (1) the rule
+    is important for syntax but invalid in important
+    semantics/models; (2) the rule is important for both syntax and
+    semantics, but we have been told that it is important (for some
+    usually very unconvincing reason, e.g. implementation) that the rule
+    be admissible. Substitution and weakening are of the latter kind
+    (and indeed, many modern implementations more closely reflect
+    derivable subst/wk than admissible subst/wk, which are outrageously
+    inefficient), whereas (e.g.) many of the contextual rules of
+    Fitch-style modal type theory seem to be of the former kind. I am
+    curious whether the admissibility of 0-ing is like that of subst/wk
+    (convenient but not forced by semantics), or if it is "necessarily
+    admissible" in the sense of usefully failing in certain QTT models.
+5.  In §3.5 (“Reflection of Realisability”), I was at first little bit
+    confused by the noted asymmetry of the introduction and elimination
+    rule for the reflection modality (I see the comment about
+    admissibility of 0-ing, but I think I needed a little more
+    explanation here). Putting aside admissibility, would a version that
+    does no more or less than inverts the introduction rule be equally
+    expressive? Also, what are the beta and eta laws for this type? In
+    what modes do they apply?
+6.  In §4.2, I was a tiny bit confused about the use of the reflection
+    modality in defining `PTIME(A,P)`. The reflection modality is
+    motivated by saying that we want to be able to reason about the
+    resourced-behavior of programs in the erased fragment, but here’s
+    what I’m not getting right away. If we had define `PTIME(A,P)`
+    without this modality, a mode-1 proof of `PTIME(A,P)` would indeed
+    verify that `P` can be solved in polynomial time! It does not seem
+    to me that any aspect of the body of `PTIME` in fact depends on `f`
+    not being erased, as (indeed) the second component of this
+    definition simply checks that the extensional behavior of `f` is to
+    solve `P`. **It seemed like to me the answer was: we need to
+    construct proofs of** ` `**`PTIME(A,P)`**` ` **in 0-mode because it
+    might not be true that there is a polytime realizer of the fact that
+    a given program lies in polytime, and so once we are in the 0-mode,
+    we need reflection to get back into the 1-mode.** Is this
+    interpretation correct?
+7.  In l. 710 it says “These explicit constructions are essential to
+    construct a model of dependent types”; can you elaborate on why this
+    is the case? It sounds like an interesting technical point that
+    readers would probably enjoy understanding better.
+8.  In l. 806 (“Agda Formalisation”) it seems to indicate that, in fact,
+    the enriched-categorical definition of resource monoids is (roughly)
+    the one that is actually used in the explicit proofs. What is, then,
+    the point of introducing the much less structured Definition 5.1?
+    Usually when such a choice is made, it is because the simple
+    categorical definition presents some disadvantages for proofs and/or
+    computations — but from what is written here, it sounds like it was
+    the unstructured definition that was disadvantageous in this sense.
+    Maybe it would be best to make the categorical one the “official”
+    definition, and move the current Definition 5.1 into a remark?
+9. In the third paragraph of §5.1, I did not understand what the
+    purpose of closures having ane extra slot for a self-reference. Can
+    you explain why recursion cannot be handled the normal way, or is
+    this a matter of preference?
+10. At the beginning of §5.3, I was a little confused about what is
+    supposed to be a special case of what (it might just be the wording
+    that is tripping me up). It says “The BCI-realisability model
+    construction given by Atkey is a special case of this construction,
+    so we only sketch a special case here”. From reading this, it looks
+    something like the paper of Atkey from 2018 is developing a version
+    of realizability by building up assemblies over the quantitative
+    analogue of a pca, whereas in this paper, the current paper seems to
+    be developing realizability from the alternative perspective of (the
+    quantitative analogue to) a tripos in the sense of Hyland,
+    Johnstone, and Pitts. What I did not follow was in what sense this
+    section are sketching a special case, as it felt more like it was
+    sketching the general case. Furthermore, I am having trouble seeing
+    the precise connection between what has been done here and
+    `Atkey:2018`, as the current paper appears to be rather different
+    from the assembly model. The closest comparison I can make is that
+    in 2018, Atkey was looking at a category of assemblies, and in this
+    paper one is looking at something not really analogous to this, but
+    rather to the total category of the realizability hyperdoctrine —
+    which you can reconstruct as the restriction to SET of the subobject
+    fibration of the corresponding topos; building this hyperdoctrine
+    from a pca (for example), the total category is not the same as the
+    category of assemblies. Can please you clarify what’s going on in
+    relation to the other construction? [To be clear, this question
+    does not indicate any technical problem: just something I want to
+    better understand.]
+
+### Minor typos, etc.
+
+-   Surprising and/or inconsistent capitalization: for instance,
+    “Computer Science” is always capitalized (unnecessarily?), and
+    “[t]ype [t]heory” is sometimes capitalized. The capitalization
+    of “Implicit Computational Complexity theory” also stood out as a
+    bit unexpected. Personally I suggest not capitalizing these things
+    at all when speaking in generality (except in cases of a proper
+    name, like “Quantitative Type Theory”), but it’s up to the author’s
+    taste.
+-   l. 28: “typical type theory only speaks” => either “typically,
+    type theory only speak” or “typical type theories only speak” ?
+-   l. 887: a careless reader might misunderstand the phrasing
+    "reindexing along projections" to mean product projections, but your
+    use of `Sum(a : A).B` reveals that you are considering right
+    adjoints to base change along *arbitrary* maps in `SET`. The type
+    theoretic notation is cool and nice, but it might be helpful to
+    harmonize this with the wording.
+-   l. 930: “exists realizing expression” => “exists a realizing
+    expression”
+-   l. 625: “deciable” => “decidable”
+-   l. 1137: the `X` comes out of nowhere; should `[[X]]` be `[[T]]`?
+
+Questions to be addressed by author response
+--------------------------------------------
+None of my questions are likely to affect the outcome of my
+accept/reject decision.
+
+
+
+Review #453D
+===========================================================================
+
+Overall merit
+-------------
+A. Strong accept: I will argue for acceptance.
+
+Reviewer expertise
+------------------
+Y. Knowledgeable: I am knowledgeable about the topic of the paper (or at
+   least key aspects of it).
+
+Summary of the paper
+--------------------
+There are generally two ways to reason about the polynomial runtime of functions. In the first approach, we write down the function and prove post-hoc that it can be modeled by, e.g., Probabilistic Polynomial Time Turing Machines. This is the traditional approach used in complexity theory. The disadvantage is that abstract models of computation are difficult to reason about in a way that is fully formal (let alone formalized). Even cryptographic tools that compute concrete bounds defer their justification to on-paper developments, which rely on varying degrees of hand-waving.
+
+Implicit Computational Complexity Theory takes a different approach: it restricts the type system so that functions with non-polynomial time are not expressible. This has the obvious advantage that no post-hoc runtime analysis is needed. On the flip side, writing down functions now requires some effort as lots of things are prohibited: for example, we cannot just construct natural numbers out of the blue.
+
+This paper combines a variety of known approaches in a novel way. It takes two linear type systems that are able to soundly and completely reason about poly-time, and extends them with dependent types as in Quantitative Type Theory (QTT). It maintains linear typing by annotating each variable declaration x : A in the context by a constant \rho drawn from a semi-ring. The annotation indicates how many copies of the variable are available. Soundness and completeness results with respect to poly-time are proved, and the soundness proof is formalized in Agda.
+
+Assessment of the paper
+-----------------------
+This is a remarkable paper - well structured, clearly motivated, with rigorous technical content that has been (for the most part) formally verified. My impression is that none of the pieces individually are particularly novel - most of the ingredients already appear in the literarure - but their combination is still powerful.
+
+My main "complaint" here, if you can call it that, has more to do with implicit computational complexity as a field than with the present submission. Specifically, Hofmann's LFPL came out in the 1990s but to this day the ideas have not found mainstream acceptance among complexity theorists or cryptographers. I would have appreciated a paragraph or two that addresses the big picture: what is the main practical limitation of the poly-time type systems studied in the paper? Does the addition of dependent types in any way address this limitation? It is one thing to have a system that can reason about poly-time in theory, and quite another to have a system that can do so effectively.
+
+On a related note: the example of insertionSort is relatively simple because it constructs a list of the same size. This makes the resource discipline essentially straightforward. I would have liked to see, e.g., a function that duplicates a list - if I understand correctly, here we need twice as many diamonds as were provided by the initial list.
+
+Detailed comments for authors
+-----------------------------
+- The type systems in section 2 seem to be affine (Γ, 𝑥 : 𝐴, Γ′ ⊢ 𝑥 : 𝐴), whereas the type system in section 3 is linear (0Γ, 𝑥:^𝜎 𝑆, 0Γ′ ⊢ 𝑥:^𝜎 𝑆). What is the motivation for this shift?
+- What is the reference for the original Cons-free type system?
+- line 137: "This is because every 𝛽-redex substitutes into at most one variable". What about reducing pairs? That substitutes into both x and y at the same time.
+- line 158: a arbitrary -> an arbitrary
+- Why is it okay to duplicate natural numbers using the dupNat operator? Is this because you disallowed the constructors for Nat?
+- line 261: "Rather the iterator I_k performs n choose k iterations". It actually performs n choose k - 1 operations.
+- line 261: Is the need for the n choose k iterations due to the absence of the duplicator operator?
+- line 280: annotatons -> annotations
+- section 3: In the judgement for well-formed types, is it necessary to have the context of the form 0\Gamma? Couldn't we define well-formedness in \Gamma by just ignoring all annotations?
+- line 355: \Pi-typed -> \Pi-types
+- line 366: In the typing hypothesis for C, is the \pi annotation in the context necessary or can we just set it to be 0?
+- line 456: Why is it necessary to add the dupNat construct to the 0 fragment, given that there we can just simulate it with the pair type?
+- How is the diamond different from the unit type in the 0 fragment?
+- Does R^{-1}(R(M)) reduce definitionally to M?
+- 599: Sentence is incomplete.
