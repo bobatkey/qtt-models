@@ -16,7 +16,7 @@ open import Algebra.ResourceMonoid
 
 module LFPL.Iterator
   (M : ResourceMonoid) (M₀ : SubResourceMonoid M)
-  (open ResourceMonoid M renaming (Carrier to |M|))
+  (open ResourceMonoid M renaming (Carrier to |M|; assoc to M-assoc))
   (size         : ℕ → |M|)
   (raise        : |M| → |M|)
   (raise-ok     : ∀ {α} → M₀ .SubResourceMonoid.member α → M₀ .SubResourceMonoid.member (raise α))
@@ -120,7 +120,7 @@ recursor{Γ}{X} z s .realises (γ , n) {n₀} η α v (refl , d) = is-realisable
         is-realisable .accounted =
           pair (pair' (scale-zero (acct 8 ⊕ s .realiser .potential))) ；
           pair unit ；
-          assoc ；
+          M-assoc ；
           pair symmetry ；
           assoc-inv ；
           acct⊕- ；
@@ -147,11 +147,11 @@ recursor{Γ}{X} z s .realises (γ , n) {n₀} η α v (refl , d) = is-realisable
                   pair (pair (size-suc (suc n))) ；
                   assoc-inv ；
                   pair' assoc-inv ；
-                  assoc ；
+                  M-assoc ；
                   pair assoc-inv ；
                   pair symmetry ；
                   assoc-inv ；
-                  pair' (assoc ； r-n .accounted) ；
+                  pair' (M-assoc ； r-n .accounted) ；
                   pair symmetry ；
                   assoc-inv ；
                   assoc-inv ；
@@ -180,9 +180,9 @@ recursor{Γ}{X} z s .realises (γ , n) {n₀} η α v (refl , d) = is-realisable
       assoc-inv ；
       acct⊕- ；
       pair' symmetry ；
-      assoc ；
+      M-assoc ；
       pair (pair' (size-suc n)) ；
-      pair assoc ；
+      pair M-assoc ；
       pair (pair (raise→scale (acct 8 ⊕ s .realiser .potential) n)) ；
       pair assoc-inv ；
       pair (pair' (suc-size n)) ；

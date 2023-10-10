@@ -14,7 +14,7 @@ open import Relation.Binary.PropositionalEquality as Eq using (refl)
 
 open import AmortisedModel.Machine
 
-open ResourceMonoid ℳ renaming (Carrier to |ℳ|)
+open ResourceMonoid ℳ renaming (Carrier to |ℳ|; assoc to ℳ-assoc)
 open SubResourceMonoid ℳ₀ renaming (member to mor-potential)
 
 open import AmortisedModel.Preorder ℳ ℳ₀
@@ -61,7 +61,16 @@ _⊗_ : ∀ {Γ} → Γ -Obj → Γ -Obj → Γ -Obj
 (X ⊗ Y) γ .realises α true = ⊥
 (X ⊗ Y) γ .realises α false = ⊥
 
--- FIXME: _⊗_ commutes with reindexing
+infixl 20 _⊗_
+
+⊗-subst : ∀ {Γ Δ X Y} (f : Γ → Δ) → Γ ⊢ ⟨ f ⟩ (X ⊗ Y) ≅ (⟨ f ⟩ X) ⊗ (⟨ f ⟩ Y)
+⊗-subst {Γ}{Δ}{X}{Y} f = realised-iso fwd bwd
+  where fwd : ∀ γ α v → (⟨ f ⟩ (X ⊗ Y)) γ .realises α v → (⟨ f ⟩ X ⊗ ⟨ f ⟩ Y) γ .realises α v
+        fwd γ α (v₁ , v₂) x = x
+
+        bwd : ∀ γ α v →  (⟨ f ⟩ X ⊗ ⟨ f ⟩ Y) γ .realises α v → (⟨ f ⟩ (X ⊗ Y)) γ .realises α v
+        bwd γ α (v₁ , v₂) x = x
+
 
 swap : ∀ {Γ X Y} → Γ ⊢ (X ⊗ Y) ⇒ (Y ⊗ X)
 swap .realiser .expr _ = letpair zero then (zero , suc zero)
@@ -98,7 +107,7 @@ assoc-m .realises γ η α (vx , (vy , vz)) (α₁ , α₂ , d , vx-r , α₃ , 
           (seq (mkpair (suc (suc (suc zero))) (suc zero))
             (mkpair zero (suc zero))))
    is-realisable .result-realises =
-      α₁ ⊕ α₃ , α₄ , (d ； pair' d' ； assoc) ,
+      α₁ ⊕ α₃ , α₄ , (d ； pair' d' ； ℳ-assoc) ,
       (α₁ , α₃ , identity , vx-r , vy-r) , vz-r
    is-realisable .accounted = acct⊕-
 
@@ -120,6 +129,9 @@ assoc-inv-m .realises γ η α ((vx , vy) , vz) (α₁ , α₂ , d , (α₃ , α
    is-realisable .evaluation = letpair zero (letpair (suc zero) (seq (mkpair zero (suc (suc zero))) (mkpair (suc (suc zero)) zero)))
    is-realisable .result-realises = α₃ , α₄ ⊕ α₂ , (d ； pair d' ； assoc-inv) , vx-r , α₄ , α₂ , identity , vy-r , vz-r
    is-realisable .accounted = acct⊕-
+
+assoc : ∀ {Γ X Y Z} → Γ ⊢ (X ⊗ (Y ⊗ Z)) ≅ ((X ⊗ Y) ⊗ Z)
+assoc = assoc-m , assoc-inv-m
 
 unit-m : ∀ {Γ X} → Γ ⊢ (X ⊗ I) ⇒ X
 unit-m .realiser .expr _ = letpair zero then ` (suc zero)
@@ -181,8 +193,8 @@ _⊗m_ : ∀ {Γ X₁ X₂ Y₁ Y₂} →
               acct⊕- ；
               pair' (d ； symmetry) ；
               assoc-inv ；
-              pair' (assoc ； symmetry) ；
-              assoc ；
+              pair' (ℳ-assoc ； symmetry) ；
+              ℳ-assoc ；
               pair' (r₂ .accounted) ；
               pair (r₁ .accounted))
              (≤-reflexive (begin

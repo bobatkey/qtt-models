@@ -1,3 +1,5 @@
+{-# OPTIONS --safe #-}
+
 module IndexedLinear where
 
 open import Data.Product using (_×_; Σ; proj₁; proj₂; _,_)
@@ -45,7 +47,7 @@ record IndexedSMC (L : IndexedPreorder) : Set₁ where
     -- swapping, associativity and units
     swap  : ∀ {Γ X Y} → Γ ⊢ (X ⊗ Y) ⇒ (Y ⊗ X)
     assoc : ∀ {Γ X Y Z} → Γ ⊢ (X ⊗ (Y ⊗ Z)) ≅ ((X ⊗ Y) ⊗ Z)
-    unit  : ∀ {Γ X} → Γ ⊢ (I ⊗ X) ≅ X
+    unit  : ∀ {Γ X} → Γ ⊢ (X ⊗ I) ≅ X
 
     -- reindexing is symmetric monoidal
     -- TODO: do these only need to be lax?

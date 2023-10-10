@@ -46,9 +46,13 @@ record ResourceMonoid : Set₁ where
   repeat zero    m = ∅
   repeat (suc n) m = m ⊕ repeat n m
 
+  repeat-f' : ∀ {α β k} m → k ≤D⟨ α , β ⟩ → (m * k) ≤D⟨ repeat m α , repeat m β ⟩
+  repeat-f' zero f = identity
+  repeat-f' (suc m) f = pair f ； pair' (repeat-f' m f)
+
   repeat-f : ∀ {α β} m → 0 ≤D⟨ α , β ⟩ → 0 ≤D⟨ repeat m α , repeat m β ⟩
   repeat-f zero f = identity
-  repeat-f (suc m) f = pair' (repeat-f m f) ； pair f
+  repeat-f (suc m) f = pair' (repeat-f m f)  ； pair f
 
   repeat-monoidal : ∀ {α β} n → 0 ≤D⟨ repeat n α ⊕ repeat n β , repeat n (α ⊕ β) ⟩
   repeat-monoidal zero = term
@@ -85,6 +89,10 @@ record SubResourceMonoid (M : ResourceMonoid) : Set₁ where
     _`⊕_   : ∀ {x y} → member x → member y → member (x ⊕ y)
     `∅     : member ∅
     `acct  : ∀ {k} → member (acct k)
+
+  `repeat : ∀ n α → member α → member (repeat n α)
+  `repeat zero α α-member = `∅
+  `repeat (suc n) α α-member = α-member `⊕ (`repeat n α α-member)
 
 module _ where
   open SubResourceMonoid

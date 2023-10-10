@@ -52,8 +52,7 @@ _⊢_≅_ : (Γ : Set) → Γ -Obj → Γ -Obj → Set
 Γ ⊢ X ≅ Y = (Γ ⊢ X ⇒ Y) × (Γ ⊢ Y ⇒ X)
 
 infix 21 ⟨_⟩_
-infix 19 _⊢_⇒_
--- infixr 20 _⊗_
+infix 5 _⊢_≅_ _⊢_⇒_
 
 ------------------------------------------------------------------------------
 identity-realiser : Realiser
@@ -87,7 +86,7 @@ realised-iso X⊆Y Y⊆X .proj₁ = identity-realised X⊆Y
 realised-iso X⊆Y Y⊆X .proj₂ = identity-realised Y⊆X
 
 ------------------------------------------------------------------------
--- Part 0: Reindexing
+-- Reindexing
 
 ⟨_⟩_ : ∀ {Γ Δ} → (Γ → Δ) → Δ -Obj → Γ -Obj
 ⟨ f ⟩ X = λ γ → X (f γ)
@@ -104,7 +103,7 @@ realised-iso X⊆Y Y⊆X .proj₂ = identity-realised Y⊆X
 ⟨ f ∘ g ⟩ = realised-iso (λ _ _ _ x → x) (λ _ _ _ x → x)
 
 ------------------------------------------------------------------------
--- Part I : Identity and composition in each fibre
+-- Identity and composition in each fibre
 
 id : ∀ {Γ X} → Γ ⊢ X ⇒ X
 id = identity-realised (λ _ _ _ x → x)

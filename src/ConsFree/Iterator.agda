@@ -13,7 +13,7 @@ open import Algebra.ResourceMonoid
 
 module ConsFree.Iterator
     (M : ResourceMonoid) (M₀ : SubResourceMonoid M)
-    (open ResourceMonoid M renaming (Carrier to |M|))
+    (open ResourceMonoid M renaming (Carrier to |M|; assoc to M-assoc))
     (size         : ℕ → |M|)
     (raise        : |M| → |M|)
     (raise-ok     : ∀ {α} → M₀ .SubResourceMonoid.member α → M₀ .SubResourceMonoid.member (raise α))
@@ -116,7 +116,7 @@ recursor{Γ}{X} z s .realises (γ , n) {n₀} η α v (refl , d) = is-realisable
     is-realisable .evaluation = seq lam (app zero (suc zero) (loop n .evaluation))
     is-realisable .result-realises = loop n .result-realises
     is-realisable .accounted =
-      pair' d ； assoc-inv ； assoc-inv ； acct⊕- ； pair' symmetry ； assoc ； pair (raise→scale (acct 4 ⊕ s .realiser .potential) n) ； pair (pair' term ； unit) ； loop n .accounted
+      pair' d ； assoc-inv ； assoc-inv ； acct⊕- ； pair' symmetry ； M-assoc ； pair (raise→scale (acct 4 ⊕ s .realiser .potential) n) ； pair (pair' term ； unit) ； loop n .accounted
        -- Given: loop n .steps ≤D⟨ loop-potential n , loop n .result-potential ⟩
        -- 3 + loop n .steps ≤D⟨ γ ⊕ α , loop n .result-potential ⟩
        --                       acct 3 ⊕ raise (acct 4 ⊕ s .potential) ⊕ (acct 2 ⊕ z .potential) ⊕ α

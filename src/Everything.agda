@@ -17,6 +17,9 @@ import AmortisedModel.SMC
 import AmortisedModel.Quantifiers
 import AmortisedModel.GradedExponential
 
+-- Instantiation of the IndexedLinear records with the amortised model
+import AmortisedModel.Bundles
+
 -- Non-iterable datatypes (Section 5.4.2)
 import AmortisedModel.Bool
 
