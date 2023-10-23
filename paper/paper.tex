@@ -364,7 +364,7 @@ computational complexity classes by purely logical means. Typically, a
 logical system is described for which the process of reducing a proof
 to a normal form (often by cut elimination) is guaranteed to always be
 accomplished within a certain complexity bound. Moreover, the system
-is usually proven to be complete for the relevant complexity class, by
+is usually proven to be complete for the relevant complexity class by
 constructing a simulation of some known representation. Such systems
 that characterise polytime include Bounded Linear Logic (BLL), which
 uses explicit polynomials in the formulas \cite{bll92} and Soft Affine
@@ -373,30 +373,45 @@ information in formulas, but uses a restricted form of Linear Logic's
 $\oc$ modality instead. Light Linear Logic (LLL) \cite{lll98} is
 another ``counting-free'' system for polytime.
 
-Viewing logical systems though the lens of the Curry-Howard
-correspondence, the idea arises that one could define functional
-programming languages that characterise complexity classes such as
-polytime. SAL has been transformed into a programming language by
-\citet{BaillotM04}, and likewise for LLL by
-\citet{BaillotGM10}. \citet{hofmann99lfpl} proposed a new programming
-language, Linear Functional Programming Language (LFPL), that uses a
-novel ``payment'' system to track iteration. In this section, we
-review the use of linear types to capture polytime by presenting two
-systems, one based on ideas from SAL and the second more explicitly
-based on LFPL. With a view to extending to dependent types in
-\autoref{sec:qtt}, we take an approach slightly different to much of
-the polytime linear logic literature. We emphasise the use of explicit
-datatypes and eliminators, rather than using impredicative encodings
-via universal types. We are closer to Hofmann's original LFPL (though
-not a later presentation of it by \citet{dallago11realisability}) than
-BLL, SAL or LLL.
+Viewing logical systems though the Curry-Howard correspondence, the
+idea arises that one could define functional programming languages
+that characterise complexity classes such as polytime. SAL has been
+transformed into a programming language by \citet{BaillotM04}, and
+likewise for LLL by \citet{BaillotGM10}. \citet{hofmann99lfpl}
+proposed a new programming language, Linear Functional Programming
+Language (LFPL), that uses a novel ``payment'' system to track
+iteration.
+
+There are at least two ways that a functional programming language can
+be seen as representing polynomial time, differing in how the size of
+the input is measured. One approach is to define the input as a closed
+expression, including what we might think of as its input, and
+computation of the result is polynomial time in the combined size. A
+second approach is that the input is ``externally'' provided, so we
+consider open terms with a free variable representing the input. So a
+judgement $x : \tyNat \vdash M : A$ declares a program that computes
+results of type $A$ in time polynomial in the size of the natural
+number $x$. We take this latter approach in this paper.
+
+With a view to extending to dependent types in \autoref{sec:qtt}, we
+take an approach slightly different to much of the polytime linear
+logic literature. We use explicit datatypes and eliminators, rather
+than using impredicative encodings via universal types. We are closer
+to Hofmann's original LFPL (though not a later presentation of it by
+\citet{dallago11realisability}) than BLL, SAL or LLL.
+
+In this section, we review the use of linear types to capture polytime
+by presenting two systems, one based on ideas from SAL and the second
+more explicitly based on LFPL.
+
+\subsection{Affine Linear $\lambda$-Calculus}
 
 For this section, the affine linear $\lambda$-calculus we will use
-will have linear functions and $\otimes$-products:
+will have linear functions and $\otimes$-products:\bob{CHECK THAT THIS CHANGE TO THE VAR RULE IS OK, MENTION THAT EXCHANGE IS IMPLICIT}
 \begin{mathpar}
   \inferrule*
   { }
-  {\Gamma, x : A, \Gamma' \vdash x : A}
+  {\Gamma, x : A \vdash x : A}
 
   \inferrule*
   {\Gamma, x : A \vdash M : B}
@@ -429,8 +444,8 @@ turn to QTT when we wish to add dependent types in \autoref{sec:qtt}.
 It is not too difficult to see that reduction of linear
 $\lambda$-terms always takes a number of steps linearly proprotional
 to the size of the term. This is because every $\beta$-redex
-substitutes into at most one variable, reducing the size of the term
-by one each time.
+substitutes each term into at most one variable, reducing the size of
+the term by one each time.
 
 We can increase the expressivity, but not the computational
 complexity, of the system by adding datatypes that do not allow
@@ -531,12 +546,15 @@ constructors\footnote{Actually, $\conZero$ would be acceptable, as
 could use iteration over the input to construct addition,
 multiplication (by repeated addition), and then exponentials (by
 repeated multiplication). We therefore refer to this system as the
-\emph{Cons-Free} system.  The second prohibited feature is the ability
-to duplicate values of function type, even though we have allowed
-duplication of iterable naturals. If we were to allow this, then we
-would be able to sneak in a form of constructors for natural numbers
-by encoding them as eliminators that duplicate a function for every
-$\conSucc$ step.
+\emph{Cons-Free} system.  Because we cannot construct values of type
+$\tyNat$ within the system, complete programs in this system are open
+terms as we explained at the start of this section.
+
+The second prohibited feature is the ability to duplicate values of
+function type, even though we have allowed duplication of iterable
+naturals. If we were to allow this, then we would be able to sneak in
+a form of constructors for natural numbers by encoding them as
+eliminators that duplicate a function for every $\conSucc$ step.
 
 We will see in \autoref{sec:consfree-sound} that this system is sound
 for polytime by a realisability argument. Completeness can be seen
@@ -787,6 +805,9 @@ types are always judged in a $0$-annotated context. The variable rule
 marks unused variables as usage $0$ and the selected variable with
 usage $\sigma$.
 
+\bob{Mention equality rules, and put them in an appendix; also
+  Conversion rule is missing!}
+
 \subsubsection{$\Pi$- and $\Sigma$-types}
 
 QTT's $\Pi$-types have the form $(x \stackrel\rho: S) \to T$,
@@ -818,6 +839,8 @@ $\sigma = 0$ fragment and everything is being erased. In the
 following, when we write $S \to T$ for a non-dependent function type,
 we mean that the argument is to be used linearly:
 $(x \stackrel1: S) \to T$, where $x$ does not appear in $T$.
+
+\bob{$\beta\eta$-laws for $\Pi$-types}
 
 $\Sigma$-types are a little more involved, and demonstrate the
 flexibility in QTT in allowing additional power in the $\sigma = 0$
@@ -866,6 +889,8 @@ analogue of the $\otimes$-eliminator in \autoref{sec:linear-intro}:
 QTT also supports a unit type $I$ with constructor $*$ and
 pattern-matching \cite{atkey18qtt}.
 
+\bob{$\beta\eta$-laws for $\Sigma$-types, with wrinkle in the $\sigma = 1$ fragment}
+
 \subsubsection{The Identity Type}
 
 QTT also supports an extensional equality type with equality reflection:
@@ -907,9 +932,8 @@ same treatment to the LFPL-style system.
 \label{sec:noniter-qtt}
 
 \subsubsection{Booleans} The boolean type for QTT was described in
-\cite{atkey18qtt}, but we repeat it here for completeness. Booleans
-offer no possibility for iteration, but it is useful to see how the
-QTT rules extend the simply typed rules from
+\cite{atkey18qtt}. Booleans offer no possibility for iteration, but it
+is useful to see how the QTT rules extend the simply typed rules from
 \autoref{sec:linear-case-analysis} before moving to more complex
 types.
 \begin{mathpar}
@@ -929,6 +953,7 @@ types.
     0\Gamma_1 = 0\Gamma_2}
   {\Gamma_1 + \Gamma_2 \vdash \If_{x.P}\: M \: \Then \: N_t \: \Else \: N_f \stackrel\sigma: P[M/x]}
 \end{mathpar}
+\bob{Mention the $\beta$ law}
 The introduction rules for booleans both use a $0$-d context,
 indicating that construction of boolean values is free. Elimination of
 booleans via a dependently typed if-then-else is more subtle with its
@@ -976,6 +1001,7 @@ dependently typed case analysis on lists:
     0\Gamma_1 = 0\Gamma_2}
   {\Gamma_1 + \Gamma_2 \vdash \Match_{x.P}\,M\,\{\,\cNil \mapsto N_1; \cCons(h,t) \mapsto N_2\,\} \stackrel\sigma: P[M/x]}
 \end{mathpar}
+\bob{$\beta$ laws!}
 In the $\sigma = 0$ fragment, however, we are free to iterate on lists
 because computations in this fragment are only meant for type-level
 computation, not for the program itself. Put another way, the type
@@ -1064,6 +1090,8 @@ variable $n$ to be present in order to correctly type the induction
 hypothesis and the conclusion, but it must be marked as usage $0$ to
 ensure that the resources captured by the number are not duplicated.
 
+\bob{$\beta$ laws in the $\sigma = 0$ fragment}
+
 The reader is invited to compare this dependently typed rule with the
 simply typed linear version in \autoref{sec:cons-free-intro}. Removing
 the $0$-annotated parts of the rule, and the type dependency, yield
@@ -1143,6 +1171,8 @@ We have used $* : \Diamond$ as the value in the types for the zero and
 successor cases. By the $\eta$-rule for diamonds, we could have
 equally well used the $d$ variable that is in scope in each case.
 
+\bob{$\beta$ laws in both fragments}
+
 Just as for the Cons-free system iterator above, in the $\sigma = 0$
 fragment this rule is identical to the usual dependently typed
 recursor for the natural numbers, so it can be used in the types to
@@ -1188,6 +1218,8 @@ the premise is required to be in the $\sigma = 1$ fragment, to ensure
 that the type is realisable, while in the elimination rule, the
 conclusion is in an arbitrary fragment $\sigma'$. This flexibility is
 require to maintain the admissibility of the $0$-ing rule.
+
+\bob{Equality rules (see response)}
 
 With just the rules given here, the type $\Rtype(A)$ is no more than a
 statement that a given type is realisable with a polytime
@@ -1417,6 +1449,8 @@ under the type of polytime reductions given above.
 
 \subsubsection{Probabilistic Polynomial Time}
 
+\bob{Check PP vs BPP. Also cite Dal Lago PP-time paper}
+
 By changing the computation effects supplied to a program, we can
 change the complexity class. To capture Probabilistic Polynomial time,
 we use a (non-iterable) data structure representing trees of
@@ -1470,18 +1504,6 @@ reductions.
 \newcommand{\cstLetpair}{1}
 \newcommand{\cstSeq}{1}
 \newcommand{\cstIf}{1}
-
-% \newcommand{\cstaccess}{c_{\mathit{access}}}
-% \newcommand{\cstmkclo}{c_{\mathit{mkclo}}}
-% \newcommand{\cstapp}{c_{\mathit{app}}}
-% \newcommand{\cstmkpair}{c_{\mathit{mkpair}}}
-% \newcommand{\cstmkunit}{c_{\mathit{mkunit}}}
-% \newcommand{\cstTrue}{c_{\mathit{mktrue}}}
-% \newcommand{\cstFalse}{c_{\mathit{mkfalse}}}
-% \newcommand{\cstLetpair}{c_{\mathit{letpair}}}
-% \newcommand{\cstSeq}{c_{\mathit{seq}}}
-% \newcommand{\cstIf}{c_{\mathit{if}}}
-
 
 \newcommand{\clo}[2]{\mathsf{clo}\langle #1 , #2 \rangle}
 \newcommand{\synTrue}{\mathsf{true}}
@@ -1829,7 +1851,8 @@ it is convenient to construct them from certain indexed linear
 preorders. The BCI-realisability model construction given by
 \citet{atkey18qtt} is a special case of this construction, so we only
 sketch a special case here to concentrate on the specifics of
-complexity bounded realisability.
+complexity bounded realisability. \bob{state clearly that Atkey 2018
+  has a mistake, and this construction here is more general}
 
 \begin{definition}\label{def:indexed-linear-preorder}
   A \emph{$\mathbb{N}$-linear preorder} is a preordered set
@@ -1994,7 +2017,7 @@ resource.
 $\mathbb{N}$-Graded exponentials in each $L(A)$ are defined using the
 action of $(\mathbb{N}, \leq)$ on $M$ defined above. The modality
 $\oc_n$ has no effect on realising values. It only serves to alter the
-resource potentials.
+resource potentials.\bob{fix this to match the Agda implementation: special case $0$}
 \begin{displaymath}
   \oc_n\,X = \{(a,\alpha,v) \mid \exists \alpha'.\,M(n \cdot \alpha', \alpha) = 0 \land (a, \alpha', v) \in X \}
 \end{displaymath}
