@@ -302,7 +302,7 @@ linear dependent type theory and implicit computational complexity:
 \begin{enumerate}
 \item We formulate two systems that combine linear type theory for
   polytime computation with full dependent types, using Quantitative
-  Type Theory. The system is presented in \autoref{sec:qtt}. The
+  Type Theory. The systems are presented in \autoref{sec:qtt}. The
   linear typing discipline required for enforcing polytime is provided
   by QTT, but we also need to carefully add constructs for
   non-iterable datatypes (\autoref{sec:noniter-qtt}) and the two kinds
@@ -709,7 +709,7 @@ the conflict between the linear typing discipline regarding presence
 of a variable as only bestowing the right to use it once, and the
 dependent typing regime that uses variables both in types (for
 specification purposes) and in terms (for computational purposes),
-syntactically yield multiple uses of the same variable.
+syntactically yielding multiple uses of the same variable.
 
 QTT is a system that resolves this conflict by recording usage of
 variables with annotations from a semiring. It sits in the general
@@ -763,10 +763,11 @@ generalisation of the original presentation of QTT, we also allow
 sub-usaging via the \emph{reverse} ordering on the naturals. That is,
 if a variable is marked as usage $n$ and $m \geq n$, then we can also
 regard it as usage $m$. This makes the system more like affine linear
-logic, since $m \leq 0$ for all $m$, matching the system in
-\autoref{sec:linear-intro}. We do \emph{not} have an unrestricted
-usage $\omega$, since this would allow the possibility of unrestricted
-duplication, and hence violate our polytime soundness properties.
+logic, since $m \leq 0$\footnote{Reverse ordering!} for all $m$,
+matching the system in \autoref{sec:linear-intro}. We do \emph{not}
+have an unrestricted usage $\omega$, since this would allow the
+possibility of unrestricted duplication, and hence violate our
+polytime soundness properties.
 
 \subsubsection{Contexts, variables, and conversion}
 
@@ -859,8 +860,8 @@ fragment, where we do not need to care about polytime
 realisability. Formation and introduction are given by the rules:
 \begin{mathpar}
   \inferrule*
-  {0\Gamma \vdash S \\ 0\Gamma, x \stackrel0: S \vdash T}
-  {0\Gamma \vdash (x \stackrel\pi: S) \otimes T}
+  {0\Gamma \vdash S~\istype \\ 0\Gamma, x \stackrel0: S \vdash T~\istype}
+  {0\Gamma \vdash (x \stackrel\pi: S) \otimes T~\istype}
 
   \inferrule*
   {\Gamma_1 \vdash M \stackrel{\sigma'}: S \\
@@ -869,7 +870,7 @@ realisability. Formation and introduction are given by the rules:
     \sigma' = 0 \Leftrightarrow (\pi = 0 \lor \sigma = 0)}
   {\pi\Gamma_1 + \Gamma_2 \vdash (M, N) \stackrel\sigma: (x \stackrel\pi: S) \otimes T}
 \end{mathpar}
-As with $\Pi$-typed, the first component of a $\Sigma$ type is
+As with $\Pi$-types, the first component of a $\Sigma$-type is
 annotated with a usage for how many times it can be used, and this is
 respected by the introduction rule. Elimination of $\Sigma$-types
 depends on whether we are in the $\sigma = 0$ fragment or not. In the
@@ -1032,9 +1033,9 @@ computation, not for the program itself. Put another way, the type
 checker may perform arbitary recursion on lists to type check the
 program, but the program itself may not do so without correctly
 accounting its costs as described in the following sections. The
-$\sigma = 0$ recursor for lists has the following typing rule, which
-is the standard dependent eliminator for lists, with everything
-annotated as $0$ usage.
+$\sigma = 0$ fragment recursor for lists has the following typing
+rule, which is the standard dependent eliminator for lists, with
+everything annotated as $0$ usage.
 \begin{mathpar}
   \inferrule*
   {0\Gamma, x \stackrel0: \ListTy(T) \vdash P~\istype \\
@@ -1068,7 +1069,7 @@ have the following introduction rules, only usable in the $\sigma = 0$
 fragment:
 \begin{mathpar}
   \inferrule*
-  {\Gamma \vdash}
+  {\Gamma~\isctxt}
   {\Gamma \vdash \conZero \stackrel0: \tyNat}
 
   \inferrule*
@@ -1147,11 +1148,11 @@ the complexity guarantees of the system. It is possible construct
 diamonds in the $\sigma = 0$, though:
 \begin{mathpar}
   \inferrule*
-  {\Gamma \vdash}
+  {\Gamma~\isctxt}
   {0\Gamma \vdash \Diamond~\istype}
 
   \inferrule*
-  {\Gamma \vdash}
+  {\Gamma~\isctxt}
   {0\Gamma \vdash * \stackrel0: \Diamond}
 
   \inferrule*
@@ -1160,7 +1161,7 @@ diamonds in the $\sigma = 0$, though:
 \end{mathpar}
 The $\Diamond$ type also supports an $\eta$-rule in the $\sigma = 0$
 fragment, indicating that, in this fragment, it acts the same as a
-unit type. This allows us to use freely use diamonds in types, and to
+unit type. This allows us to freely use diamonds in types, and to
 not have to care about the identity of particular diamonds, since by
 this rule all diamonds are definitionally
 equal\footnote{\emph{Fungible}, if one wishes to use a monetary
@@ -1297,7 +1298,7 @@ types.
 We have only defined an iterable natural number datatype for both of
 our systems above. We could extend both systems to include further
 iterable inductive types, although in the \emph{Cons-free} system this
-is not particularly useful due to the prohibition of on
+is not particularly useful due to the prohibition of
 construction. However, sticking with just the natural numbers, we can
 use the power of dependent types with a universe to create further
 datatypes whose size is measured by some iterable natural
@@ -1327,7 +1328,7 @@ Using the LFPL iterator it is also possible to construct a dependently
 typed iterator for $\mathrm{IList}\,A$ values. Unfortunately, the
 current types of the LFPL system are not sufficient to type this as a
 function, as we have no way of stating that the successor case must be
-arbitrarily duplicable. Lifting this restrict by means of some
+arbitrarily duplicable. Lifting this restriction by means of some
 modality is future work. The typing rule for the derived list iterator
 is:
 \begin{mathpar}
@@ -1399,12 +1400,14 @@ given element of $a$ is in the predicate:
     (f \stackrel1: \mathbf{R}(A \to \BoolTy)) \otimes (a \stackrel1: A) \to (\mathbf{R}^{-1}(f)\, a = \cTrue) \Leftrightarrow P\,a
 \end{displaymath}
 Thus, $\mathrm{PTIME}(A,P)$ is a logical proposition stating that the
-decision problem $(A,P)$ is deciable in polytime. We make two notes
-about this definition: (i) this definition is intrinsic, in the sense
-that, whichever of the polytime systems is chosen, proving that a
-decision problem is solvable in polytime is a matter of programming,
+decision problem $(A,P)$ is deciable in polytime. We make three notes
+about this definition: (i) \emph{proofs} of $\mathrm{PTIME}(A,P)$, are
+carried out in the $\sigma = 0$ fragment, where we have the full power
+of Type Theory to aid us; (ii) this definition is intrinsic, in the
+sense that, whichever of the polytime systems is chosen, proving that
+a decision problem is solvable in polytime is a matter of programming,
 without having to reason directly about machine models and step
-counting; and (ii) we have defined problems to have arbitrary types
+counting; and (iii) we have defined problems to have arbitrary types
 $A$ as domains, rather than bitstrings, and so the notion of size
 attached to an input is intrinsic to the type $A$ chosen.
 
@@ -1423,6 +1426,7 @@ well known in dependent type theory \cite{AbbottAG05}, and speaks to a
 general conception of containers as ``problem/solution'' pairings.
 
 \subsection{Polytime-based Complexity Classes}
+\label{sec:classes}
 
 The fact that we can characterise polytime decision problems is
 perhaps to be expected from a system designed to capture polynomial
@@ -1472,7 +1476,7 @@ time as a predicate on problems:
   \mathrm{NP}(A,P) =
   \begin{array}[t]{@{}l}
     (f \stackrel1: \mathbf{R}(A \to \mathrm{ND}(\BoolTy)))\, \otimes \\
-    \quad (a \stackrel1: A) \to \left((\mathit{bs} \stackrel1: \ListTy(\BoolTy)) \otimes (\mathrm{runWithOracle}\,(\mathbf{R}^{-1}(f)\,a)\,\mathit{bs} = \mathsf{just}\,\cTrue)\right) \Leftrightarrow P\,a
+    \quad \left((a \stackrel1: A) \to \left((\mathit{bs} \stackrel1: \ListTy(\BoolTy)) \otimes (\mathrm{runWithOracle}\,(\mathbf{R}^{-1}(f)\,a)\,\mathit{bs} = \mathsf{just}\,\cTrue)\right) \Leftrightarrow P\,a\right)
   \end{array}
 \end{displaymath}
 Thus, a problem is in NP if there is a non-deterministic
@@ -1703,7 +1707,7 @@ includes a self reference to the closure being invoked, in order to
 allow recursive definitions.
 
 \paragraph{Agda Formalisation} The machine model is defined in the
-Agda module \AgdaModule{MachineModel}. We use an intrinsicaly
+Agda module \AgdaModule{MachineModel}. We use an intrinsically
 well-scoped syntax, which ensures that all variable look up operations
 are always well defined.
 
@@ -1913,7 +1917,7 @@ below. They could also be constructed from LCAs.
 
 \begin{definition}\label{def:indexed-linear-preorder}
   A \emph{$\mathbb{N}$-linear preorder}\footnote{We specialise to the semiring $\mathbb{N}$ here, but the same definition works for any suitable semiring $\mathcal{R}$.} is a preordered set
-  $(L, \leq)$ with
+  $(L, \leq)$:
   \begin{enumerate}
   \item a commutative monoid $(I, -\otimes-)$ that is monotone
     w.r.t. the order;
@@ -1956,13 +1960,13 @@ construct a QCwF model of QTT with the basic type formers from
 \item Define scaling of objects of $\cat{L}$ by
   $\pi(A,X) = (A, \oc_\pi X)$, and addition of $(A, X)$ and $(A, Y)$
   as $(A, X \otimes Y)$.
-\item For each set $A$, define the collection of semantics types
+\item For each set $A$, define the collection of semantic types
   $\Ty(A)$ as the collection of $B : A \to \Set$ and
   $X \in L(\Sigma_{a \in A}.B(a))$. Thus a QTT type consists of an
   extensional meaning $B$ and its realisability specification $X$.
 \item For each $A$ and $(B,X) \in \Ty(A)$, the $\sigma = 0$ fragment
   terms $\Tm(A,(B,X))$ are functions $\Pi_{a \in A}.\,B(a)$. For each
-  context interpretation $(A, X)$ in $\cat{L}$ and type intepretation
+  context interpretation $(A, X)$ in $\cat{L}$ and type interpretation
   $(B,Y) \in \Ty(A)$, the $\sigma = 1$ fragment terms
   $\RTm((A,X),(B,Y))$ are functions $f : \Pi_{a \in A}.\,B(a)$ such
   that $X \leq \overline{f}^*Y$, where
@@ -1985,7 +1989,7 @@ construct a QCwF model of QTT with the basic type formers from
   the universe of small types includes resource-relevant realisability
   information for each type.
 \item Realisability reflection for a type $(B,X) \in \Ty(A)$ is
-  intepreted as the type
+  interpreted as the type
   $(\lambda a. \{ b \in B(a) \mid I \leq (\lambda a. (a,b))^*X \},
   I)$. Thus the set-component of the type is restricted to the
   elements that are realisable, while the actual realisability
@@ -2139,7 +2143,7 @@ $L(\mathbb{B})$ to represent boolean values:
   \mathrm{Bool} = \{ (\mathit{tt}, \alpha, \synTrue) \mid \alpha \in M \} \cup \{ (\mathit{ff}, \alpha, \synFalse) \mid \alpha \in M \}
 \end{displaymath}
 Thus, the boolean $\mathit{tt}$ is represented by the value $\synTrue$
-and $\mathit{ff}$ is represented by $\synFalse$. In both case, we
+and $\mathit{ff}$ is represented by $\synFalse$. In both cases, we
 allow arbitrary potential $\alpha$ to be attached.
 
 Realisability of the construction and elimination of booleans amounts
@@ -2165,7 +2169,7 @@ suffices to realise the rules for QTT booleans in
 explicitly manage a context that applies to all elements of the
 list. Let $\mathrm{List}(B)$ be the set of lists with elements from a
 set $B$. If we have $A : \Set$ and $B : A \to \Set$ and
-$X \in L(\Sigma a:A.\, B a)$, then we the resourced lists predicate
+$X \in L(\Sigma a:A.\, B a)$, then the resourced lists predicate
 $\mathrm{RList}(X) \in L(\Sigma a : A.\, \mathrm{List}(B a))$ must
 satisfy the equation:
 \begin{displaymath}
@@ -2245,7 +2249,7 @@ These functions must satisfy the following properties:
   \mathit{scale}(n, \alpha))$.
 \end{enumerate}
 The first property states that $\mathit{raise}$ is suitable as
-potential for whole programs2, meaning that it does not make any
+potential for whole programs, meaning that it does not make any
 requirements on the existence of iterable data. Note that we do
 \emph{not} require $M_0$ to contain $\mathit{size}(n)$ -- programs
 themselves may not contain iterable data, all potential for iteration
@@ -2516,7 +2520,7 @@ type.
 extension of QTT, which hampers further investigation of programming
 and proving with polytime along the lines of
 \autoref{sec:programming-polytime}. Idris 2 \cite{Brady21} is an
-implemenation of QTT, but cannot be used directly because its facility
+implementation of QTT, but cannot be used directly because its facility
 for defining datatypes is too liberal, not making a distinction
 between iterable and non-iterable datatypes. A further
 implementation-focused question is whether or not the term-level
@@ -2524,15 +2528,22 @@ polytime guarantees can be turned to type-level guarantees to
 guarantee polytime typechecking.
 
 \paragraph{Other Complexity Classes, and Explicit Resource Tracking}
-It seems feasible to adapt the techniques presented here to other
-complexity classes such as LOGSPACE and ELEMENTARY, given the simply
-typed linear systems mentioned above. Also, our construction already
-includes soundness of a system with intrinsic but explicit resource
-tracking where $\Diamond$s are used to pay for every step of
-computation but never returned, via the natural number resource monoid
-defined in \autoref{sec:specific-monoids}. Investigation of such a
-system may yield a system that tracks costs intrinsically and
-precisely.
+We have been able to characterise the classes NP and BPP in terms of
+our underlying characterisation of P (\autoref{sec:classes}). It seems
+straighforward to extend this to related classes like coNP, RP,
+etc. It also seems feasible to adapt the techniques presented here to
+other complexity classes such as LOGSPACE and ELEMENTARY, given the
+simply typed linear systems mentioned above. Complexity classes based
+on circuits may be more challenging, but we do now have a way to
+characterise circuits that are generatable in polynomial
+time.
+
+Our construction already includes soundness of a system with intrinsic
+but explicit resource tracking where $\Diamond$s are used to pay for
+every step of computation but never returned, via the natural number
+resource monoid defined in
+\autoref{sec:specific-monoids}. Investigation of such a system may
+yield a system that tracks intrinsic costs precisely.
 
 \paragraph{Towards Synthetic Computational Complexity Theory?}
 
@@ -2562,8 +2573,10 @@ Church-Turing axiom for Synthetic Computability Theory \cite{Bauer06}.
 %% identification of the section in the article metadata, and the
 %% consistent spelling of the heading.
 \begin{acks}
-  This work was funded by the \grantsponsor{EPSRC}{Engineering and
-    Physical Sciences Research
+  Thanks to Anton Lorenzen and Fredrik Nordvall Forsberg for their
+  comments on an earlier revision, and to the anonymous POPL reviewers
+  for their detailed and interesting reviews. This work was funded by
+  the \grantsponsor{EPSRC}{Engineering and Physical Sciences Research
     Council}{https://www.ukri.org/about-us/epsrc/}. Grant number
   \grantnum{EPSRC}{EP/T026960/1}, \emph{AISEC: AI Secure and
     Explainable by Construction}.
