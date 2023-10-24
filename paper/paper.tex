@@ -566,7 +566,7 @@ coefficients and some single step function
 $f : \mathit{St} \multimap \mathit{St}$ over a state type
 $\mathit{St}$ that runs to completion for input of size $n$ in $p(n)$
 steps. Then, using the iterator above we can iterate $f$ over a
-$\tyNat$ representing the size of the input:
+$\tyNat$ representing the size of the input:\bob{CHECK THIS}
 \begin{displaymath}
   \begin{array}{l}
     I_1 : \tyNat \multimap \mathit{St} \multimap \mathit{St} \\
@@ -805,8 +805,18 @@ types are always judged in a $0$-annotated context. The variable rule
 marks unused variables as usage $0$ and the selected variable with
 usage $\sigma$.
 
-\bob{Mention equality rules, and put them in an appendix; also
-  Conversion rule is missing!}
+As usual, definitional equality of types impacts typing of terms via
+the conversion rule:
+\begin{displaymath}
+  \inferrule*
+  {\Gamma \vdash M : S \\ 0\Gamma \vdash S \equiv T~\istype}
+  {\Gamma \vdash M : T}
+\end{displaymath}
+Like type formation, definitional equality of types always takes place
+in $0$d contexts. We will describe the definitional equality rules for
+terms of each type as we introduce them. In QTT, it is possible for
+the definitional equality of terms to differ between the $\sigma = 0$
+and $\sigma = 1$ fragments, as we will see below.
 
 \subsubsection{$\Pi$- and $\Sigma$-types}
 
@@ -838,9 +848,9 @@ either the function does not use its argument, or we are in the
 $\sigma = 0$ fragment and everything is being erased. In the
 following, when we write $S \to T$ for a non-dependent function type,
 we mean that the argument is to be used linearly:
-$(x \stackrel1: S) \to T$, where $x$ does not appear in $T$.
-
-\bob{$\beta\eta$-laws for $\Pi$-types}
+$(x \stackrel1: S) \to T$, where $x$ does not appear in
+$T$. $\Pi$-types support the usual $\beta\eta$ definitional
+equalities.
 
 $\Sigma$-types are a little more involved, and demonstrate the
 flexibility in QTT in allowing additional power in the $\sigma = 0$
@@ -887,9 +897,15 @@ analogue of the $\otimes$-eliminator in \autoref{sec:linear-intro}:
   {\Gamma_1 + \Gamma_2 \vdash \mathrm{let}~(x,y) = M~\mathrm{in}~N \stackrel\sigma: C[M/z]}
 \end{mathpar}
 QTT also supports a unit type $I$ with constructor $*$ and
-pattern-matching \cite{atkey18qtt}.
-
-\bob{$\beta\eta$-laws for $\Sigma$-types, with wrinkle in the $\sigma = 1$ fragment}
+pattern-matching \cite{atkey18qtt}. $\Sigma$- and $I$ types support
+the usual $\beta\eta$ definitional equalities in the $\sigma = 0$
+fragment (e.g., $\mathrm{fst}(M,N) \equiv M$), but only $\beta$
+equalities (i.e.,
+$\mathrm{let}~(x,y) = (M_1,M_2)~\mathrm{in}~N \equiv N[M_1/x,M_2/y]$)
+in the $\sigma = 1$ fragment. It would also be sound to support
+commuting conversions \cite{Barber1996} for $\mathrm{let}$ in the
+$\sigma = 1$ fragment, but this would likely bring complications for
+implementation.
 
 \subsubsection{The Identity Type}
 
@@ -915,7 +931,11 @@ equality reflection only targets the $\sigma = 0$ fragment, we cannot
 use equality reflection to convey realisability information.
 
 \subsubsection{Universe} QTT has universe types $\mathsf{U}$, as in
-standard type theory \cite{atkey18qtt}.
+standard type theory \cite{atkey18qtt}. For our examples below, we do
+not explicitly mark the use of terms of type $\mathsf{U}$ as types --
+i.e., we use a Russell-style presentation. Universes are where the
+definitional equality on terms affects the definitional equality on
+types.
 
 \subsubsection{Datatypes} QTT, as we have presented it so far, has no
 interesting base types to perform computation on. Following our
@@ -953,14 +973,16 @@ types.
     0\Gamma_1 = 0\Gamma_2}
   {\Gamma_1 + \Gamma_2 \vdash \If_{x.P}\: M \: \Then \: N_t \: \Else \: N_f \stackrel\sigma: P[M/x]}
 \end{mathpar}
-\bob{Mention the $\beta$ law}
 The introduction rules for booleans both use a $0$-d context,
 indicating that construction of boolean values is free. Elimination of
 booleans via a dependently typed if-then-else is more subtle with its
 resource usage. The boolean to be eliminated must be constructed in a
 context $\Gamma_1$, while the two branches are constructed in context
 $\Gamma_2$. Since only one of the branches will be used, sharing
-resources between the branches is expected.
+resources between the branches is expected. Booleans and their
+eliminator obey the usual $\beta$ laws for definitional equality:
+$\If_{x.P}\: \cTrue \: \Then \: N_t \: \Else \: N_f \equiv N_t$, and
+similarly for $\cFalse$.
 
 One might wonder how, since constructing booleans is $0$-cost by their
 introduction rules, the $\Gamma_1$ context will ever be non-$0$. This
@@ -991,7 +1013,9 @@ rules are as follows:
 Lists do have the potential for iteration by their recursive nature,
 but in order to ensure the complexity guarantees we only permit
 matching without recursion in the full calculus. Here is the rule for
-dependently typed case analysis on lists:
+dependently typed case analysis on lists, which also obeys the usual
+$\beta$-equalities for case analysis, analogous to the ones for
+Booleans:
 \begin{mathpar}
   \inferrule*
   {0\Gamma_1, x \stackrel0: \ListTy(T) \vdash P~\istype \\
@@ -1001,7 +1025,6 @@ dependently typed case analysis on lists:
     0\Gamma_1 = 0\Gamma_2}
   {\Gamma_1 + \Gamma_2 \vdash \Match_{x.P}\,M\,\{\,\cNil \mapsto N_1; \cCons(h,t) \mapsto N_2\,\} \stackrel\sigma: P[M/x]}
 \end{mathpar}
-\bob{$\beta$ laws!}
 In the $\sigma = 0$ fragment, however, we are free to iterate on lists
 because computations in this fragment are only meant for type-level
 computation, not for the program itself. Put another way, the type
@@ -1019,6 +1042,9 @@ annotated as $0$ usage.
     0\Gamma, h \stackrel0: T, t \stackrel0: \ListTy(T), p \stackrel0: P[t/x] \vdash N_2 \stackrel0: P[\cCons(h,t)/x]}
   {0\Gamma \vdash \mathrm{recList}_{x.P}\,M\,\{\,\cNil \mapsto N_1; \cCons(h,t;p) \mapsto N_2\,\} \stackrel0: P[M/x]}
 \end{mathpar}
+This eliminator also obeys the usual $\beta$-equality laws for a list
+eliminator, using the resource freedom of the $\sigma = 0$ fragment to
+duplicate the $N_2$ term in the $\cCons$ case.
 
 \subsection{Cons-free Natural Numbers and their Recursor}
 \label{sec:cons-free-qtt}
@@ -1027,10 +1053,10 @@ The datatypes of the previous section still only allow us to write
 programs in the $\sigma = 1$ fragment that are constant time in the
 size of their input. As with the simply typed linear system, if we are
 handed a list of an unknown length, we can only explore it to a fixed
-depth determined statically. To write programs that do work
-proportional to the size of their input, we need some form of iterable
-datatype. In both our Cons-free and LFPL-style QTT systems, we use a
-natural number datatype.
+depth, determined statically by the program. To write programs that do
+work proportional to the size of their input, we need some form of
+iterable datatype. In both our Cons-free and LFPL-style QTT systems,
+we use a natural number datatype.
 
 The cons-free system cannot allow the programmer to construct natural
 numbers in the $\sigma = 1$ fragment, as this would violate the
@@ -1056,8 +1082,8 @@ simply linear typed rule we gave above:
   {\Gamma \vdash M \stackrel\sigma: \tyNat}
   {\Gamma \vdash \mathrm{dupNat}(M) \stackrel\sigma: \tyNat \otimes \tyNat}
 \end{mathpar}
-Anyone who has reasoned about the metatheory of or implemented a type
-checker for dependent types will view this rule with unease as it
+Anyone who has reasoned about the metatheory of, or implemented a type
+checker for, dependent types will view this rule with unease as it
 appears to grant the ability to construct non-canonical values of pair
 type, and consequently generate non-canonical naturals. We fix this by
 adding an equational rule to the $\sigma = 0$ fragment, ensuring
@@ -1071,9 +1097,8 @@ Note that this rule is well-typed by the $0$-needs-$0$ property of
 QTT, and the fact that $0+0=0$.
 
 The eliminator for these natural numbers takes the following
-form. Disregarding the usage annotations, this has the same type
-structure as the normal dependently typed recursor for natural
-numbers:
+form. Disregarding the usage annotations, it has the same type
+structure as the normal dependently typed recursor for naturals:
 \begin{displaymath}
   \mprset{flushleft}
   \inferrule*
@@ -1090,7 +1115,12 @@ variable $n$ to be present in order to correctly type the induction
 hypothesis and the conclusion, but it must be marked as usage $0$ to
 ensure that the resources captured by the number are not duplicated.
 
-\bob{$\beta$ laws in the $\sigma = 0$ fragment}
+This eliminator cannot have a $\beta$-equality in the $\sigma = 1$
+fragment because there is no way to construct any natural numbers to
+iterate on in this fragment. In the $\sigma = 0$ fragment, this
+eliminator obeys the usual $\beta$-equality laws for a natural number
+recursor. This allows us to use it to compute and reason about
+operations on naturals in this fragment.
 
 The reader is invited to compare this dependently typed rule with the
 simply typed linear version in \autoref{sec:cons-free-intro}. Removing
@@ -1171,7 +1201,18 @@ We have used $* : \Diamond$ as the value in the types for the zero and
 successor cases. By the $\eta$-rule for diamonds, we could have
 equally well used the $d$ variable that is in scope in each case.
 
-\bob{$\beta$ laws in both fragments}
+Unlike the natural number iterator in the Cons-free system, this
+iterator has $\beta$-equalities in both the $\sigma = 0$ and
+$\sigma = 1$ fragments. In the $\conSucc$ case, for example, we have:
+\begin{displaymath}
+  \begin{array}{cl}
+    & \tmRec\,(\conSucc(M_d,M_n)\,\{\conZero(d) \mapsto N_z; \conSucc(d,n;p) \mapsto N_s\} \\
+    \equiv & N_s[M_d/d, M_n/n, \tmRec\,M_n\,\{\conZero(d) \mapsto N_z; \conSucc(d,n;p) \mapsto N_s\}/p]
+  \end{array}
+\end{displaymath}
+Note that the fact that the variable $n$ in the $N_s$ term is
+annotated $0$, which allows us to duplicate it even when we are in the
+$\sigma = 1$ fragment.
 
 Just as for the Cons-free system iterator above, in the $\sigma = 0$
 fragment this rule is identical to the usual dependently typed
@@ -1219,7 +1260,9 @@ that the type is realisable, while in the elimination rule, the
 conclusion is in an arbitrary fragment $\sigma'$. This flexibility is
 require to maintain the admissibility of the $0$-ing rule.
 
-\bob{Equality rules (see response)}
+The equality rules for $\Rtype$ state that the two operations are
+mutually inverse: $\rIntro(\rElim(M)) \equiv M$, in both fragments,
+and $\rElim(\rIntro(M)) \equiv M$ in the $\sigma = 0$ fragment.
 
 With just the rules given here, the type $\Rtype(A)$ is no more than a
 statement that a given type is realisable with a polytime
