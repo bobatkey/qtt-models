@@ -407,7 +407,8 @@ more explicitly based on LFPL.
 \subsection{Affine Linear $\lambda$-Calculus}
 
 For this section, the affine linear $\lambda$-calculus we will use
-will have linear functions and $\otimes$-products:\bob{CHECK THAT THIS CHANGE TO THE VAR RULE IS OK, MENTION THAT EXCHANGE IS IMPLICIT}
+will have linear functions and $\otimes$-products. Contexts are
+treated up to permutation, so uses of exchange are implicit.
 \begin{mathpar}
   \inferrule*
   { }
@@ -1490,15 +1491,14 @@ under the type of polytime reductions given above.
 %   \end{array}
 % \end{displaymath}
 
-\subsubsection{Probabilistic Polynomial Time}
-
-\bob{Check PP vs BPP. Also cite Dal Lago PP-time paper}
+\subsubsection{Bounded-error Probabilistic Polynomial Time}
 
 By changing the computation effects supplied to a program, we can
-change the complexity class. To capture Probabilistic Polynomial time,
-we use a (non-iterable) data structure representing trees of
-probabilistic choices, where $\mathbb{Q}[0,1]$ is some type of
-(non-iterable) rationals in the closed interval $[0,1]$:
+change the complexity class. To capture the class BPP of Bounded-error
+Probabilistic Polynomial time \cite{aurora}, we use a (non-iterable)
+data structure representing trees of probabilistic choices, where
+$\mathbb{Q}[0,1]$ is some type of (non-iterable) rationals in the
+closed interval $[0,1]$:
 \begin{displaymath}
   \begin{array}{l}
     \textbf{data}\,\mathrm{Dist}\,(A : \mathsf{U}) : \mathsf{U}\,\textbf{where} \\
@@ -1518,17 +1518,26 @@ being true:
 \end{displaymath}
 We can now define the class of probabilistic polynomial time decision
 problems, where the decider is allowed to make probabilistic choices
-as long as it is correct with probability at least $\frac{1}{3}$:
+as long as it is correct with probability at least $\frac{2}{3}$:
 \begin{displaymath}
-  \mathrm{PP}(A,P) =
+  \mathrm{BPP}(A,P) =
   \begin{array}[t]{l}
     (f \stackrel1: \mathbf{R}(A \to \mathrm{Dist}(\BoolTy))) \, \otimes
-    (a \stackrel1: A) \to (\mathrm{probTrue}\,(\mathbf{R}^{-1}(f)\,a) \geq \frac{1}{3}) \Leftrightarrow P\,a
+    (a \stackrel1: A) \to (\mathrm{probTrue}\,(\mathbf{R}^{-1}(f)\,a) \geq \frac{2}{3}) \Leftrightarrow P\,a
   \end{array}
 \end{displaymath}
-Again, problems in PP are easily seen to be closed under polytime
+Again, problems in BPP are easily seen to be closed under polytime
 reductions.
 
+Probabilistic Polynomial time has previously been considered in the
+setting of implicit computational complexity by
+\citet{dallago_et_al:LIPIcs.MFCS.2021.35} and \citet{LagoT15}. In both
+cases, they must build probabilistic choice into the language, and
+have difficulty in directly capturing the class BPP due to its
+semantic nature \cite{aurora}, where the correctness of implementation
+is probabilistic. With a dependently-typed host language, adding
+probabilistic choice as an effect, and capturing the semantic
+constraint of BPP is straightforward.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1888,17 +1897,22 @@ $\MaxPoly_0$ and $\PlusPoly_0$.
 \label{sec:qtt-models}
 
 \citet{atkey18qtt} described a general class of QTT models termed
-\emph{Quantitative Categories with Families} (QCwFs). This class of
-models fits well with the syntax of QTT, but to actually build models
-it is convenient to construct them from certain indexed linear
-preorders. The BCI-realisability model construction given by
-\citet{atkey18qtt} is a special case of this construction, so we only
-sketch a special case here to concentrate on the specifics of
-complexity bounded realisability. \bob{state clearly that Atkey 2018
-  has a mistake, and this construction here is more general}
+\emph{Quantitative Categories with Families}
+(QCwFs). \citet{atkey18qtt} constructs QCwFs from certain Linear
+Combinatory Algebras (LCA), where terms in the $\sigma = 1$ fragment
+are realised by elements of the LCA. However, there is a mistake in
+that paper where the interpretation of contexts is stated to be the
+category of \emph{assemblies} over the LCA, where it ought to be the
+category of sets paired with realisability relations, with no
+guarantee that all elements be realisable.
+
+Here, we fix the mistake of \citet{atkey18qtt}, and provide a more
+general construction of QCwFs in terms of indexed linear preorders. We
+construct indexed linear preorders specific to our polytime setting
+below. They could also be constructed from LCAs.
 
 \begin{definition}\label{def:indexed-linear-preorder}
-  A \emph{$\mathbb{N}$-linear preorder} is a preordered set
+  A \emph{$\mathbb{N}$-linear preorder}\footnote{We specialise to the semiring $\mathbb{N}$ here, but the same definition works for any suitable semiring $\mathcal{R}$.} is a preordered set
   $(L, \leq)$ with
   \begin{enumerate}
   \item a commutative monoid $(I, -\otimes-)$ that is monotone
@@ -2058,11 +2072,16 @@ $\alpha$ here is unrestricted, so $I_A$ can consume an arbitrary
 resource.
 
 $\mathbb{N}$-Graded exponentials in each $L(A)$ are defined using the
-action of $(\mathbb{N}, \leq)$ on $M$ defined above. The modality
-$\oc_n$ has no effect on realising values. It only serves to alter the
-resource potentials.\bob{fix this to match the Agda implementation: special case $0$}
+action of $(\mathbb{N}, \leq)$ on $M$ defined above. When $n > 0$, the
+modality $\oc_n$ has no effect on realising values. It only serves to
+alter the resource potentials. In the $n = 0$, case the realising
+value must be $*$, in order to satisfy the $\oc_0 X \cong I$ condition
+in \defref{def:indexed-linear-preorder} 3(a):
 \begin{displaymath}
-  \oc_n\,X = \{(a,\alpha,v) \mid \exists \alpha'.\,M(n \cdot \alpha', \alpha) = 0 \land (a, \alpha', v) \in X \}
+  \begin{array}{lcl}
+    \oc_0\,X&=&\{(a, \alpha, *) \mid a \in A, \alpha \in M \} \\
+    \oc_n\,X&=&\{(a,\alpha,v) \mid \exists \alpha'.\,M(n \cdot \alpha', \alpha) = 0 \land (a, \alpha', v) \in X \}
+  \end{array}
 \end{displaymath}
 
 $L$ also has arbitrary $\Set$-indexed products, realised ``lazily'' as
