@@ -25,7 +25,9 @@
             cmll
             # needed for workingnote
             ntheorem mathtools todonotes titlesec bbold bbold-type1
-            tex-gyre;
+            tex-gyre
+            # diffing
+            latexdiff ulem;
         };
         agda = pkgs.agda.withPackages (ps: [ ps.standard-library ]);
       in rec {
