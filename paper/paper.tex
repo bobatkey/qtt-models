@@ -1356,7 +1356,7 @@ find the place to insert the item and need access to the remainder of
 the list. Note that, also, the function consumes a $\Diamond$ to
 construct the new element of the output list, and also that the items
 in the list are themselves iterable natural numbers. This is needed to
-account for the
+account for the comparisons between elements.
 
 Insertion sort is repeated insertion of elements from an original list
 into a new list. The new list is constructed from the $\Diamond$s
@@ -1450,9 +1450,9 @@ trees. We suppose a non-iterable datatype defined like so:
 The crucial point here is that the subtrees are represented as a
 function $\BoolTy \to \mathrm{ND}\,A$. By the typing rules of QTT,
 this means that the two branches of this function can share resources
-(see the encoding of the additive product types in
-\cite{atkey18qtt}). Thus, each branch of this tree is polynomial time,
-not the whole tree itself.
+(see the encoding of the additive product types by
+\citet{atkey18qtt}). Thus, each branch of this tree is polynomial
+time, not the whole tree itself.
 
 The type $\mathrm{ND}$ supports a monad interface via the usual free
 monad construction, as well as an effect
@@ -1477,7 +1477,7 @@ time as a predicate on problems:
 \end{displaymath}
 Thus, a problem is in NP if there is a non-deterministic
 boolean-valued polynomial time function that has a path to returning
-$\cTrue$ exactly when the input is in predicate. Moreover, it is a
+$\cTrue$ exactly when the input satisfies the predicate. Moreover, it is a
 quick matter of programming to see that problems in NP are closed
 under the type of polytime reductions given above.
 
@@ -1495,15 +1495,15 @@ under the type of polytime reductions given above.
 
 By changing the computation effects supplied to a program, we can
 change the complexity class. To capture the class BPP of Bounded-error
-Probabilistic Polynomial time \cite{aurora}, we use a (non-iterable)
-data structure representing trees of probabilistic choices, where
-$\mathbb{Q}[0,1]$ is some type of (non-iterable) rationals in the
-closed interval $[0,1]$:
+Probabilistic Polynomial time \cite{AroraBarak09}, we use a
+(non-iterable) data structure representing trees of probabilistic
+choices, where $\mathbb{Q}[0,1]$ is some type of (non-iterable)
+rationals in the closed interval $[0,1]$:
 \begin{displaymath}
   \begin{array}{l}
     \textbf{data}\,\mathrm{Dist}\,(A : \mathsf{U}) : \mathsf{U}\,\textbf{where} \\
     \quad \mathsf{return} : A \to \mathrm{Dist}\,A \\
-    \quad \mathsf{choice} : \mathbb{Q}[0,1] \to (\BoolTy\ to \mathrm{Dist}\,A) \to \mathrm{Dist}\,A
+    \quad \mathsf{choice} : \mathbb{Q}[0,1] \to (\BoolTy \to \mathrm{Dist}\,A) \to \mathrm{Dist}\,A
   \end{array}
 \end{displaymath}
 As in the non-deterministic case, a function $A \to \mathrm{Dist}\,B$
@@ -1534,10 +1534,10 @@ setting of implicit computational complexity by
 \citet{dallago_et_al:LIPIcs.MFCS.2021.35} and \citet{LagoT15}. In both
 cases, they must build probabilistic choice into the language, and
 have difficulty in directly capturing the class BPP due to its
-semantic nature \cite{aurora}, where the correctness of implementation
-is probabilistic. With a dependently-typed host language, adding
-probabilistic choice as an effect, and capturing the semantic
-constraint of BPP is straightforward.
+semantic nature \cite{AroraBarak09}, where the correctness of
+implementation is probabilistic. With a dependently-typed host
+language, adding probabilistic choice as an effect, and capturing the
+semantic constraint of BPP is straightforward.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
