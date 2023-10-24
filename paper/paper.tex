@@ -807,7 +807,7 @@ following, when we write $S \to T$ for a non-dependent function type,
 we mean that the argument is to be used linearly:
 $(x \stackrel1: S) \to T$, where $x$ does not appear in
 $T$. $\Pi$-types support the usual $\beta\eta$ definitional
-equalities.
+equalities in both the $\sigma = 0$ and $\sigma = 1$ fragments.
 
 $\Sigma$-types are a little more involved, and demonstrate the
 flexibility in QTT in allowing additional power in the $\sigma = 0$
@@ -1219,7 +1219,10 @@ require to maintain the admissibility of the $0$-ing rule.
 
 The equality rules for $\Rtype$ state that the two operations are
 mutually inverse: $\rIntro(\rElim(M)) \equiv M$, in both fragments,
-and $\rElim(\rIntro(M)) \equiv M$ in the $\sigma = 0$ fragment.
+and $\rElim(\rIntro(M)) \equiv M$ in the $\sigma = 0$ fragment. By
+congruence, the $\sigma = 1$ fragment's definitional equality affects
+the definitional equality of the $\sigma = 0$ fragment via the
+$\rIntro(-)$ constructor.
 
 With just the rules given here, the type $\Rtype(A)$ is no more than a
 statement that a given type is realisable with a polytime
@@ -1485,7 +1488,7 @@ cases, they must build probabilistic choice into the language, and
 have difficulty in directly capturing the class BPP due to its
 semantic nature \cite{AroraBarak09}, where the correctness of
 implementation is probabilistic. With a dependently-typed host
-language, adding probabilistic choice as an effect, and capturing the
+language, adding probabilistic choice as an effect and capturing the
 semantic constraint of BPP is straightforward.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
