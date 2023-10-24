@@ -2409,36 +2409,38 @@ systems that give explicit resource bounds via typing. Examples
 include \citet{HoffmannDW17}'s Resource Allocated ML (RAML) and
 \citet{RajaniG0021}, both of which are based on ideas of type-based
 amortised complexity analysis arising from \cite{hofmann99lfpl}'s
-ideas, via the work of \cite{HofmannJ03}. More details are to be found
-in the survey paper of \citet{HoffmannJ22}. A approach is to track
-costs at the value level instead of the types. \citet{Danielsson08}
-describes a system that uses a ``tick'' effect to count steps of
-computation, which can be reasoned about via dependent
-types. \citet{NiuSGH22} take this idea further by employing a
-modality-based phase separation to ensure that tick counting never
+ideas, via the work of \citet{HofmannJ03}. More details are to be
+found in the survey paper of \citet{HoffmannJ22}. Another approach is
+to track costs at the value level instead of the
+types. \citet{Danielsson08} describes a system that uses a ``tick''
+effect to count steps of computation, which can be reasoned about via
+dependent types. \citet{NiuSGH22} take this idea further by employing
+a modality-based phase separation to ensure that tick counting never
 interferes with the functional business of
 programs. \citet{McCarthyFNFF16} is another tick effect based system
-in Coq. All of these techniques rely on the programmer correctly
-annotating the program with tick effects to count the resource usage
-they are interested in, in contrast to the intrinsic approach we have
-taken here.
+in Coq. All of these tick-counting techniques rely on the programmer
+correctly annotating the program with tick effects to count the
+resource usage they are interested in, in contrast to the intrinsic
+approach we have taken here.
 
 \paragraph{Linear and Substructural Dependent Types} We chose QTT as
 the particular combination of linear and dependent types for our
 systems. Other systems include systems such as those by
-\cite{CervesatoP02,KrishnaswamiPB15,Vakar14} which all use a strict
-separation between linear and non-linear variables. This strict
-separation would mean that we could not as easily move programs from
-the linear fragment into the types, as in
+\citet{CervesatoP02}, \citet{KrishnaswamiPB15}, and \citet{Vakar14}
+which all use a strict separation between linear and non-linear
+variables. This strict separation would mean that we could not as
+easily move programs from the linear fragment into the types, as in
 \autoref{sec:programming-polytime}. Systems that are more like QTT in
 that they do not have a strict separation of variables include those
-of \cite{MoonEO21,ChoudhuryEEW21,Abel18}. These systems differ from
-QTT in that they do not include a complete copy of unrestricted type
-theory as QTT does in its $\sigma = 0$ fragment, because they all
-track usage in types as well as terms, so it is not clear how to use
-them for unrestricted reasoning as we do with QTT. \citet{FuKS22}
-present a system that is closer to QTT but does not include a universe
-type.
+of \citet{MoonEO21}, \citet{ChoudhuryEEW21}, and \citet{Abel18}. These
+systems differ from QTT in that they do not include a complete copy of
+unrestricted type theory as QTT does in its $\sigma = 0$ fragment,
+because they all track usage in types as well as terms, so it is not
+clear how to use them for unrestricted reasoning as we do with
+QTT. \citet{FuKS22} present a system that is closer to QTT but does
+not include a universe type, which we used in \autoref{sec:classes} to
+be able to characterise complexity classes as predicates decidable in
+restricted complexity.
 
 \subsection{Future Work}
 \label{sec:towards-synthetic-complexity-theory}
