@@ -349,10 +349,10 @@ iteration.
 
 There are at least two ways that a functional programming language can
 be seen as representing polynomial time, differing in how the size of
-the input is measured. One approach is to define the input as a closed
-expression, including what we might think of as its input, and
+the problem to be computed is measured. One approach is to consider
+closed expressions, combining the program with its input, and
 computation of the result is polynomial time in the combined size. A
-second approach is that the input is ``externally'' provided, so we
+second approach is that the input is ``externally'' provided, where we
 consider open terms with a free variable representing the input. So a
 judgement $x : \tyNat \vdash M : A$ declares a program that computes
 results of type $A$ in time polynomial in the size of the natural
@@ -2513,7 +2513,6 @@ Church-Turing axiom for Synthetic Computability Theory \cite{Bauer06}.
     Council}{https://www.ukri.org/about-us/epsrc/}. Grant number
   \grantnum{EPSRC}{EP/T026960/1}, \emph{AISEC: AI Secure and
     Explainable by Construction}.
-  % FIXME: add Fred, when his comments have been included.
 \end{acks}
 
 %%
