@@ -74,8 +74,8 @@
 %% the commands and values with those provided to you when you
 %% complete the rights form.
 \setcopyright{acmcopyright}
-\copyrightyear{2020}
-\acmYear{2020}
+\copyrightyear{2024}
+\acmYear{2024}
 \acmDOI{10.1145/1122445.1122456}
 
 
@@ -170,33 +170,39 @@
 %%
 \begin{CCSXML}
 <ccs2012>
- <concept>
-  <concept_id>10010520.10010553.10010562</concept_id>
-  <concept_desc>Computer systems organization~Embedded systems</concept_desc>
-  <concept_significance>500</concept_significance>
- </concept>
- <concept>
-  <concept_id>10010520.10010575.10010755</concept_id>
-  <concept_desc>Computer systems organization~Redundancy</concept_desc>
-  <concept_significance>300</concept_significance>
- </concept>
- <concept>
-  <concept_id>10010520.10010553.10010554</concept_id>
-  <concept_desc>Computer systems organization~Robotics</concept_desc>
-  <concept_significance>100</concept_significance>
- </concept>
- <concept>
-  <concept_id>10003033.10003083.10003095</concept_id>
-  <concept_desc>Networks~Network reliability</concept_desc>
-  <concept_significance>100</concept_significance>
- </concept>
-</ccs2012>
+   <concept>
+       <concept_id>10003752.10003790.10003801</concept_id>
+       <concept_desc>Theory of computation~Linear logic</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10003752.10003790.10011740</concept_id>
+       <concept_desc>Theory of computation~Type theory</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10003752.10003777.10003778</concept_id>
+       <concept_desc>Theory of computation~Complexity classes</concept_desc>
+       <concept_significance>500</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10003752.10003777.10003787</concept_id>
+       <concept_desc>Theory of computation~Complexity theory and logic</concept_desc>
+       <concept_significance>300</concept_significance>
+       </concept>
+   <concept>
+       <concept_id>10003752.10010124.10010131.10010137</concept_id>
+       <concept_desc>Theory of computation~Categorical semantics</concept_desc>
+       <concept_significance>100</concept_significance>
+       </concept>
+ </ccs2012>
 \end{CCSXML}
 
-\ccsdesc[500]{Computer systems organization~Embedded systems}
-\ccsdesc[300]{Computer systems organization~Redundancy}
-\ccsdesc{Computer systems organization~Robotics}
-\ccsdesc[100]{Networks~Network reliability}
+\ccsdesc[500]{Theory of computation~Linear logic}
+\ccsdesc[500]{Theory of computation~Type theory}
+\ccsdesc[500]{Theory of computation~Complexity classes}
+\ccsdesc[300]{Theory of computation~Complexity theory and logic}
+\ccsdesc[100]{Theory of computation~Categorical semantics}
 
 %%
 %% Keywords. The author(s) should pick words that accurately describe
@@ -710,6 +716,12 @@ it for specification purposes in types. As we add novel rules to QTT
 in the following sections, we will be careful to maintain the
 admissibility of this rule.
 
+In this section, we give an overview of the rules of QTT.
+
+The full rules are presented in \autoref{sec:rules}.
+
+The full rules are presented in the online appendix at
+
 \subsubsection{Natural-number usages}
 
 We use an instantiation of QTT with the natural number semiring, with
@@ -718,7 +730,7 @@ generalisation of the original presentation of QTT, we also allow
 sub-usaging via the \emph{reverse} ordering on the naturals. That is,
 if a variable is marked as usage $n$ and $m \geq n$, then we can also
 regard it as usage $m$. This makes the system more like affine linear
-logic, since $m \leq 0$\footnote{Reverse ordering!} for all $m$,
+logic, since $m \sqsubseteq 0$\footnote{Reverse ordering!} for all $m$,
 matching the system in \autoref{sec:linear-intro}. We do \emph{not}
 have an unrestricted usage $\omega$, since this would allow the
 possibility of unrestricted duplication, and hence violate our
@@ -811,7 +823,7 @@ equalities in both the $\sigma = 0$ and $\sigma = 1$ fragments.
 
 $\Sigma$-types are a little more involved, and demonstrate the
 flexibility in QTT in allowing additional power in the $\sigma = 0$
-fragment, where we do not need to care about polytime
+fragment where we do not need to care about polytime
 realisability. Formation and introduction are given by the rules:
 \begin{mathpar}
   \inferrule*
@@ -1358,7 +1370,7 @@ given element of $a$ is in the predicate:
     (f \stackrel1: \mathbf{R}(A \to \BoolTy)) \otimes (a \stackrel1: A) \to (\mathbf{R}^{-1}(f)\, a = \cTrue) \Leftrightarrow P\,a
 \end{displaymath}
 Thus, $\mathrm{PTIME}(A,P)$ is a logical proposition stating that the
-decision problem $(A,P)$ is deciable in polytime. We make three notes
+decision problem $(A,P)$ is decidable in polytime. We make three notes
 about this definition: (i) \emph{proofs} of $\mathrm{PTIME}(A,P)$, are
 carried out in the $\sigma = 0$ fragment, where we have the full power
 of Type Theory to aid us; (ii) this definition is intrinsic, in the
@@ -1963,7 +1975,7 @@ reformulation of \citet{dallago11realisability}'s realisability models
 suitable for modelling dependent types. For a set $A$, the carrier of
 $L(A)$ is the set of ternary relations
 $X \subseteq A \times M \times \ValSet$ and we define the ordering
-$X \leq Y$ to hold iff there exists realising expression
+$X \leq Y$ to hold iff there exists a realising expression
 $E \in \ExpSet$ and potential $\gamma \in M_0$ such that for all
 $a \in A$, $\alpha \in M$ and $v \in \ValSet$ with
 $(a,\alpha,v) \in X$, we have that there exists a result
@@ -2288,7 +2300,7 @@ time for all inputs:
   $k \in \mathbb{N}$ such that
   $E, [\mathrm{natValue}(n)] \Downarrow_k v$, $k \leq p(n)$ and $v$ is
   a realising value for
-  $\llbracket M \rrbracket(n) \in \llbracket X \rrbracket(n)$.
+  $\llbracket M \rrbracket(n) \in \llbracket T \rrbracket(n)$.
 \end{theorem}
 
 \paragraph{Agda Formalisation} The realisability of the
@@ -2347,7 +2359,7 @@ constructor.
   $k \in \mathbb{N}$ such that
   $E, [\mathrm{natValue}(n)] \Downarrow_k v$, $k \leq p(n+1)$ and $v$
   is a realising value for
-  $\llbracket M \rrbracket(n) \in \llbracket X \rrbracket(n)$.
+  $\llbracket M \rrbracket(n) \in \llbracket T \rrbracket(n)$.
 \end{theorem}
 
 The proofs of well-accounted realisability for the LFPL iterator, and
@@ -2475,7 +2487,8 @@ but explicit resource tracking where $\Diamond$s are used to pay for
 every step of computation but never returned, via the natural number
 resource monoid defined in
 \autoref{sec:specific-monoids}. Investigation of such a system may
-yield a system that tracks intrinsic costs precisely.
+yield a system that tracks the intrinsic cost of programs precisely
+and explicitly.
 
 \paragraph{Towards Synthetic Computational Complexity Theory?}
 
@@ -2495,7 +2508,7 @@ program solving an NP problem and then encoding that program in
 soundness property (\thmref{thm:lfpl-soundness}) as an axiom, stating
 that for a realisable polytime function there (merely) exists a
 realising expression $E$ that completes in polynomial time, and then
-writing polytime enodings into 3-SAT. We hope that the addition of
+writing polytime encodings into 3-SAT. We hope that the addition of
 such an axiom to our system would lead to an expressive machine-free
 \emph{Synthetic Computational Complexity Theory}, analogous to the
 Church-Turing axiom for Synthetic Computability Theory \cite{Bauer06}.
@@ -2524,7 +2537,8 @@ Church-Turing axiom for Synthetic Computability Theory \cite{Bauer06}.
 
 \appendix
 
-\section{Typing Rules for QTT}
+\section{Typing Rules for QTT/Cons-free and QTT/LFPL}
+\label{sec:rules}
 
 The judgements of Quantitative Type Theory are as follows:
 \begin{mathpar}
