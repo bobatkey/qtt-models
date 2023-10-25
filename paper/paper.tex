@@ -532,7 +532,7 @@ coefficients and some single step function
 $f : \mathit{St} \multimap \mathit{St}$ over a state type
 $\mathit{St}$ that runs to completion for input of size $n$ in $p(n)$
 steps. Then, using the iterator above we can iterate $f$ over a
-$\tyNat$ representing the size of the input:\bob{CHECK THIS}
+$\tyNat$ representing the size of the input:
 \begin{displaymath}
   \begin{array}{l}
     I_1 : \tyNat \multimap \mathit{St} \multimap \mathit{St} \\
@@ -629,10 +629,10 @@ iterators. To raise the degree, we again use a nesting iterator:
   \end{array}
 \end{displaymath}
 Unlike in the \emph{Cons-free} system, this iterator does not raise
-the degree of the nested iterator directly. Rather the iterator $I_k$
-performs $\binom{n}{k}$ iterations. As observed by Aelhig and
-Schwictenberg, this is sufficient because the binomials form a basis
-for the vector space of all polynomials.
+the degree of the nested iterator directly. Rather, the iterator $I_k$
+on the input $n$ performs $\binom{n}{k}$ iterations. As observed by
+Aelhig and Schwictenberg, this is sufficient because the binomials
+form a basis for the vector space of all polynomials.
 
 Despite this slightly more involved completeness construction, the
 advantage of LFPL is that it is now easy to have arbitrary iterable
