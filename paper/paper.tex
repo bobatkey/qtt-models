@@ -230,7 +230,7 @@ lacks the ability to talk about the very thing that makes Computer
 Science interesting -- the fact that computation is everywhere bounded
 by the resources in time and space that we can afford to give it.
 
-Typical Type Theory only speaks of the public face that programs
+Typically, Type Theory only speaks of the public face that programs
 present to the world -- if you input things like this, you get things
 that look like that -- but cannot bring itself to mention the true
 cost of programs' execution. One can encode costs by embedding another
@@ -379,7 +379,8 @@ more explicitly based on LFPL.
 
 For this section, the affine linear $\lambda$-calculus we will use
 will have linear functions and $\otimes$-products. Contexts are
-treated up to permutation, so uses of exchange are implicit.
+treated up to permutation of entries, so uses of exchange are
+implicit.
 \begin{mathpar}
   \inferrule*
   { }
@@ -630,7 +631,7 @@ iterators. To raise the degree, we again use a nesting iterator:
     I_{k+1} = \lambda (n,s).\,\tmRec\,n\,\{
     \begin{array}[t]{@{}lcl}
       \conZero(d)&\mapsto&(\conZero(d),s); \\
-      \conSucc(d,(n,s)) &\mapsto& \Let\,(n,s)=I_k\,(n,s)\,\In\,(\conSucc(d,n), f\,s) \}
+      \conSucc(d,(n,s)) &\mapsto& \Let\,(n,s)=I_k\,(n,s)\,\In\,(\conSucc(d,n), s) \}
     \end{array}
   \end{array}
 \end{displaymath}
@@ -716,11 +717,10 @@ it for specification purposes in types. As we add novel rules to QTT
 in the following sections, we will be careful to maintain the
 admissibility of this rule.
 
-In this section, we give an overview of the rules of QTT.
+In this section, we give an overview of the rules of QTT. The full
+rules are presented in \autoref{sec:rules}.
 
-The full rules are presented in \autoref{sec:rules}.
-
-The full rules are presented in the online appendix at
+\bob{The full rules are presented in the online appendix at}
 
 \subsubsection{Natural-number usages}
 
@@ -1446,7 +1446,7 @@ time as a predicate on problems:
   \mathrm{NP}(A,P) =
   \begin{array}[t]{@{}l}
     (f \stackrel1: \mathbf{R}(A \to \mathrm{ND}(\BoolTy)))\, \otimes \\
-    \quad \left((a \stackrel1: A) \to \left((\mathit{bs} \stackrel1: \ListTy(\BoolTy)) \otimes (\mathrm{runWithOracle}\,(\mathbf{R}^{-1}(f)\,a)\,\mathit{bs} = \mathsf{just}\,\cTrue)\right) \Leftrightarrow P\,a\right)
+    \, \left((a \stackrel1: A) \to \left((\mathit{bs} \stackrel1: \ListTy(\BoolTy)) \otimes (\mathrm{runWithOracle}\,(\mathbf{R}^{-1}(f)\,a)\,\mathit{bs} = \mathsf{just}\,\cTrue)\right) \Leftrightarrow P\,a\right)
   \end{array}
 \end{displaymath}
 Thus, a problem is in NP if there is a non-deterministic
@@ -2789,12 +2789,6 @@ Introduction (also with introduction rules for all other type formers except $\T
   {\Gamma \vdash (x \stackrel\pi: M) \otimes N \stackrel\sigma: \TySet}
 
   \ldots
-
-  \inferrule* [right=Tm-U-Eq]
-  {\Gamma \vdash M \stackrel\sigma: \TySet \\
-    \Gamma \vdash N_1 \stackrel\sigma: \TyEl(M) \\
-    \Gamma \vdash N_2 \stackrel\sigma: \TyEl(M)}
-  {\Gamma \vdash N_1 =_M N_2 \stackrel\sigma: \TySet}
 \end{mathpar}
 Elimination:
 \begin{displaymath}
@@ -2804,21 +2798,20 @@ Elimination:
 \end{displaymath}
 Equality:
 \begin{mathpar}
-  \inferrule* [right=Ty-Eq-El-Pi]
-  {0\Gamma \vdash M \stackrel0: \TySet \\
-    0\Gamma, x \stackrel0: \TyEl(M) \vdash N \stackrel0: \TySet}
-  {0\Gamma \vdash \TyEl((x \stackrel\rho: M) \to N) \equiv (x \stackrel\rho: \TyEl(M)) \to \TyEl(N)}
+  % \inferrule* [right=Ty-Eq-El-Pi]
+  % {0\Gamma \vdash M \stackrel0: \TySet \\
+  %   0\Gamma, x \stackrel0: \TyEl(M) \vdash N \stackrel0: \TySet}
+  % {0\Gamma \vdash \TyEl((x \stackrel\rho: M) \to N) \equiv (x \stackrel\rho: \TyEl(M)) \to \TyEl(N)~\istype}
 
-  \inferrule* [right=Ty-Eq-El-Bool]
-  {0\Gamma~\isctxt}
-  {0\Gamma \vdash \TyEl(\BoolTy) \equiv \BoolTy}
+  % \inferrule* [right=Ty-Eq-El-Bool]
+  % {0\Gamma~\isctxt}
+  % {0\Gamma \vdash \TyEl(\BoolTy) \equiv \BoolTy~\istype}
 
-  \ldots
+  % \ldots
 
-  \inferrule* [right=Tm-Eq-Set-Pi-Cong]
-  {0\Gamma \vdash M \equiv M' \stackrel0: \TySet \\
-    0\Gamma, x \stackrel0: \TyEl(M) \vdash N \equiv N' \stackrel0: \TySet}
-  {0\Gamma \vdash (x \stackrel\pi: M) \to N \equiv (x \stackrel\pi: M') \to N' \stackrel0: \TySet}
+  \inferrule* [right=Ty-Eq-El-Cong]
+  {0\Gamma \vdash M \equiv N \stackrel0: \TySet}
+  {0\Gamma \vdash \TyEl(M) \equiv \TyEl(N)~\istype}
 \end{mathpar}
 
 \subsection{Booleans}
