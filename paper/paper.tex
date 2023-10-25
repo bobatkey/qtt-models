@@ -243,7 +243,7 @@ computation, the commonly used standard for feasible resource usage,
 and extend these systems to dependent types. The additional
 expressivity of dependent types allows us use these characterisations
 of polytime to further functionally characterise the classes of
-non-deterministic and probabilistic polynomial time.
+non-deterministic and bounded-error probabilistic polynomial time.
 
 We use techniques from \emph{Implicit Computational Complexity}
 theory, which provides intrinsic characterisations of complexity
@@ -294,10 +294,10 @@ linear dependent type theory and implicit computational complexity:
   polytime reductions between them, as dependent pairs
   (\autoref{sec:polytime-problems}). Our final examples use dependent
   types to give monadic presentations of the complexity classes of
-  Non-deterministic Polynomial (NP) time and Probabilistic Polynomial
-  (PP) time. Since these classes rely on specific correctness
-  criteria, it is not possible to capture them in a simply typed
-  system for polytime.
+  Non-deterministic Polynomial (NP) time and Bounded-error
+  Probabilistic Polynomial (BPP) time. Since these classes rely on
+  specific correctness criteria, it is not possible to capture them in
+  a simply typed system for polytime.
 \item We prove the polytime soundness of our systems via a
   realisability argument in \autoref{sec:soundness}. Our construction
   is an extension of the amortised complexity realisability
