@@ -1,8 +1,6 @@
-## Changes between submitted and revised version
-
 Thanks again to the reviewers for their detailed suggestions and comments.
 
-The revised version is now 27 pages, not including acknowledgments and bibliography.
+The revised version is now 27 pages, not including acknowledgments and bibliography. The revised paper (`paper.pdf`), the extended version with full type rules (`paper-extended.pdf`), and the diff between the submitted and revised version (`paper-diffpopl2024-submission-HEAD.pdf`) are attached to this comment.
 
 Mandatory changes made:
 
@@ -15,7 +13,7 @@ Mandatory changes made:
    1. The conversion rule, which was missing before, is given at the end of Section 3.1.2, with a short discussion of definitional equality in QTT.
    2. For description of each type, the definitional equality rules are briefly discussed. The are changes in Sections 3.1.3 ($\Pi$- and $\Sigma$-types), 3.1.5 (Universe type), 3.2.1 (Booleans), 3.2.2 (Lists), 3.3 (Cons-free naturals), 3.4 (LFPL naturals), and 3.5 (Reflection).
 
-   The complete typing rules for the system will be made available in an online extended version on ArXiv, currently referred to as "Atkey 2023" in the main paper. The whole appendix in 7 pages long, so it goes way over the allowed POPL page limit. The extended version is attached to this comment.
+   The complete typing rules for the system will be made available in an online extended version on ArXiv, currently referred to as "Atkey 2023" in the main paper. The whole appendix is 7 pages long, so it goes way over the allowed POPL page limit. The extended version is attached to this comment.
 
 3. The characterisation of polytime in terms of open programs of type $\mathbb{N} \to A$ is clarified in the introduction to Section 2, and it is made clear how this applies to the Cons-free and LFPL systems presented.
 
