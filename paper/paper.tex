@@ -47,6 +47,8 @@
 \newcommand{\cat}[1]{\mathcal{#1}}
 \newcommand{\op}{\mathsf{op}}
 
+\newcommand{\ConsFree}{\emph{Cons-free}}
+
 \newcommand{\LinPreorder}{\mathrm{LinPreorder}}
 
 \newcommand{\bob}[1]{\textcolor{purple}{FIXME: #1}}
@@ -115,7 +117,7 @@
 %% The "title" command has an optional parameter,
 %% allowing the author to define a "short title" to be used in page headers.
 \title{Polynomial Time and Dependent Types}
-% \subtitle{Extended Version}
+%\subtitle{Extended Version}
 
 %%
 %% The "author" command and its associated commands are used to define
@@ -297,25 +299,26 @@ linear dependent type theory and implicit computational complexity:
   the simply typed world, we have an expressive language for writing
   polytime programs. With the additional power of dependent types, we
   can also prove properties of these programs. A simple example is
-  proving that a sorting program actually sorts. Using QTT reflection,
+  proving that a polytime sorting program actually sorts. Using QTT reflection,
   we can go further and represent the class of polytime problems, with
   polytime reductions between them, as dependent pairs
   (\autoref{sec:polytime-problems}). Our final examples use dependent
   types to give monadic presentations of the complexity classes of
   Non-deterministic Polynomial (NP) time and Bounded-error
   Probabilistic Polynomial (BPP) time. Since these classes rely on
-  specific correctness criteria, it is not possible to capture them in
+  specific semantic correctness criteria, it is not possible to capture them in
   a simply typed system for polytime.
 \item We prove the polytime soundness of our systems via a
-  realisability argument in \autoref{sec:soundness}. Our construction
-  is an extension of the amortised complexity realisability
-  constructions of \citet{dallago11realisability}. We extend their
-  work to our dependently typed setting, and also give a realisability
+  realisability argument in \autoref{sec:soundness} and
+  \autoref{sec:realising-iteration}. Our construction is an extension
+  of the amortised complexity realisability constructions of
+  \citet{dallago11realisability}. We extend their work to our
+  dependently typed setting, and also give a realisability
   interpretation of datatypes directly, instead of via second-order
-  impredicative encodings. The technical content of this section has
+  impredicative encodings. The technical content of these sections has
   been formalised in the Agda proof assistant
-  \cite{norell2008dependently}, and is included in the supplementary
-  material.
+  \cite{norell2008dependently}, and is included in the associated
+  artefact \cite{atkey2023polydep-artefact}.
 \end{enumerate}
 
 Before we get to the contributions above, we present, in
@@ -417,18 +420,18 @@ turn to QTT when we wish to add dependent types in \autoref{sec:qtt}.
 \label{sec:linear-case-analysis}
 
 It is not too difficult to see that reduction of linear
-$\lambda$-terms always takes a number of steps linearly proprotional
+$\lambda$-terms always takes a number of steps linearly proportional
 to the size of the term. This is because every $\beta$-redex
 substitutes each term into at most one variable, reducing the size of
 the term by one each time.
 
 We can increase the expressivity, but not the computational
 complexity, of the system by adding datatypes that do not allow
-iteration. These can be used for representation, but not for driving
-computation. We include the rules here, to show how linearity must be
-preserved in these rules, and to foreshadow their dependently typed
+iteration. These can be used for representation but not for driving
+computation. We include the rules here to show how linearity must be
+preserved in these rules and to foreshadow their dependently typed
 counterparts in \autoref{sec:noniter-qtt}. The first type is the
-booleans, which are anyway non-recursive and so would not allow
+booleans, which are non-recursive and so would not allow
 iteration anyway:
 \begin{mathpar}
   \inferrule*
@@ -521,7 +524,7 @@ constructors\footnote{Actually, $\conZero$ would be acceptable, as
 could use iteration over the input to construct addition,
 multiplication (by repeated addition), and then exponentials (by
 repeated multiplication). We therefore refer to this system as the
-\emph{Cons-Free} system.  Because we cannot construct values of type
+\ConsFree{} system.  Because we cannot construct values of type
 $\tyNat$ within the system, complete programs in this system are open
 terms as we explained at the start of this section.
 
@@ -561,13 +564,13 @@ To achieve higher degrees, we can use $\dupNat$ to nest iterations:
 \end{displaymath}
 By further use of $\dupNat$ and composition to handle addition of
 polynomials, the function $f$ can now be iterated $p(n)$ many times,
-where $n$ is the input $\tyNat$. Thus, the \emph{Cons-free} system can
+where $n$ is the input $\tyNat$. Thus, the \ConsFree{} system can
 represent all polytime computations.
 
 \subsection{Diamond Trading with LFPL}
 \label{sec:lfpl-intro}
 
-The Cons-free system is sound and complete for polytime, but is quite
+The \ConsFree{} system is sound and complete for polytime, but is quite
 awkward from the point of view of functional programming. It allows us
 to iterate over natural numbers that come from the input but does not
 allow us to build further values to do iteration on. For example, if
@@ -594,7 +597,7 @@ and likewise, to construct a $\conSucc$ we must pay a $\Diamond$. We
 can think of $\Diamond$s as an unit of iterable data. Iterability is
 ``saved up'' in data during construction, and released during
 iteration. Diamonds cannot be created by a program itself, for the
-same reason that constructors were prohibited in the \emph{Cons-free}
+same reason that constructors were prohibited in the \ConsFree{}
 system, but they are released from iterable data during iteration. The
 LFPL natural number iterator has the following typing rule:
 \begin{displaymath}
@@ -602,7 +605,7 @@ LFPL natural number iterator has the following typing rule:
   {d : \Diamond \vdash M_z : A \\ d : \Diamond, x : A \vdash M_s : A \\ \Gamma \vdash N : \tyNat}
   {\Gamma \vdash \tmRec\,N\,\{\conZero(d) \mapsto M_z; \conSucc(d,x) \mapsto M_s \} : A}
 \end{displaymath}
-The difference with the \emph{Cons-free} iterator above is that the
+The difference with the \ConsFree{} iterator above is that the
 $\conZero$ and $\conSucc$ cases now both have an additional binding of
 type $\Diamond$. This allows some form nesting of iterations: during
 an iteration over the input, the program can accumulate $\Diamond$s to
@@ -637,10 +640,10 @@ iterators. To raise the degree, we again use a nesting iterator:
     \end{array}
   \end{array}
 \end{displaymath}
-Unlike in the \emph{Cons-free} system, this iterator does not raise
+Unlike in the \ConsFree{} system, this iterator does not raise
 the degree of the nested iterator directly. Rather, the iterator $I_k$
 on the input $n$ performs $\binom{n}{k}$ iterations. As observed by
-Aelhig and Schwictenberg, this is sufficient because the binomials
+Aehlig and Schwictenberg, this is sufficient because the binomials
 form a basis for the vector space of all polynomials.
 
 Despite this slightly more involved completeness construction, the
@@ -657,7 +660,7 @@ to the eliminators.
 \section{Polytime Quantitative Type Theory}
 \label{sec:qtt}
 
-We have now seen the \emph{Cons-free} and \emph{LFPL} systems for
+We have now seen the \ConsFree{} and LFPL systems for
 capturing polytime by means of linear typing and restricted
 iteration. We now look to extend these systems to include dependent
 types by building upon \emph{Quantitative Type Theory} (QTT)
@@ -722,7 +725,7 @@ admissibility of this rule.
 In this section, we give an overview of the rules of QTT. The full
 rules, including all equality rules, are presented in
 %\autoref{sec:rules}.
-the online appendix \cite{atkey2023polydep-online}.
+the exteneded version of this paper \cite{atkey2023polydep-online}.
 
 \subsubsection{Natural-number Usages}
 
@@ -914,10 +917,11 @@ presentation of the simply typed linear systems in
 \autoref{sec:linear-intro}, we add two kinds of datatype to
 QTT. First, in \autoref{sec:noniter-qtt}, we add non-iterable
 datatypes that allow construction and case analysis, but no
-recursion. In \autoref{sec:cons-free-qtt} we describe how to extend
-QTT to be a dependently typed adaptation of the Cons-free system of
-\autoref{sec:cons-free-intro}. In \autoref{sec:lfpl-qtt}, we apply the
-same treatment to the LFPL-style system.
+recursion. Then, in \autoref{sec:cons-free-qtt} we describe how to
+extend QTT to be a dependently typed adaptation of the \ConsFree{}
+system of \autoref{sec:cons-free-intro} by adding a type of iterable
+naturals. In \autoref{sec:lfpl-qtt} we apply the same treatment to
+the LFPL-style system.
 
 \subsection{Non-iterable Data Types}
 \label{sec:noniter-qtt}
@@ -982,11 +986,11 @@ rules are as follows:
   {\Gamma_1 + \Gamma_2 \vdash \cCons(M,N) \stackrel\sigma: \ListTy(T)}
 \end{mathpar}
 Lists do have the potential for iteration by their recursive nature,
-but in order to ensure the complexity guarantees we only permit
-matching without recursion in the full calculus. Here is the rule for
+but in order to ensure the polytime complexity guarantees we only permit
+matching without recursion in the $\sigma = 1$ fragment. Here is the rule for
 dependently typed case analysis on lists, which also obeys the usual
 $\beta$-equalities for case analysis, analogous to the ones for
-Booleans:
+booleans:
 \begin{mathpar}
   \inferrule*
   {0\Gamma_1, x \stackrel0: \ListTy(T) \vdash P~\istype \\
@@ -1003,7 +1007,7 @@ checker may perform arbitary recursion on lists to type check the
 program, but the program itself may not do so without correctly
 accounting its costs as described in the following sections. The
 $\sigma = 0$ fragment recursor for lists has the following typing
-rule, which is the standard dependent eliminator for lists, with
+rule, which is the standard dependent eliminator for lists except that
 everything annotated as $0$ usage.
 \begin{mathpar}
   \inferrule*
@@ -1026,10 +1030,10 @@ size of their input. As with the simply typed linear system, if we are
 handed a list of an unknown length, we can only explore it to a fixed
 depth, determined statically by the program. To write programs that do
 work proportional to the size of their input, we need some form of
-iterable datatype. In both our Cons-free and LFPL-style QTT systems,
+iterable datatype. In both our \ConsFree{} and LFPL-style QTT systems,
 we use a natural number datatype.
 
-The cons-free system cannot allow the programmer to construct natural
+The \ConsFree{} system cannot allow the programmer to construct natural
 numbers in the $\sigma = 1$ fragment, as this would violate the
 complexity guarantees. However, we can use the flexibility of QTT to
 allow free construction of naturals in the $\sigma = 0$ fragment,
@@ -1058,7 +1062,7 @@ checker for, dependent types will view this rule with unease as it
 appears to grant the ability to construct non-canonical values of pair
 type, and consequently generate non-canonical naturals. We fix this by
 adding an equational rule to the $\sigma = 0$ fragment, ensuring
-\emph{definitionally} that $\mathrm{dupNat}$ acts as its name implies:
+definitionally that $\mathrm{dupNat}$ acts as its name implies:
 \begin{mathpar}
   \inferrule*
   {\Gamma \vdash M \stackrel0: \tyNat}
@@ -1107,10 +1111,10 @@ by polynomial-time computation, and so is sound for polynomial time.
 \label{sec:lfpl-qtt}
 
 As explained in \autoref{sec:lfpl-intro}, the LFPL system differs from
-the Cons-free system in that it is possible to construct natural
+the \ConsFree{} system in that it is possible to construct natural
 numbers (and other iterable datatypes), provided one has the necessary
 diamonds to pay for the construction. As with the natural number type
-in the Cons-free system, it ought not be possible to construct
+in the \ConsFree{} system, it ought not be possible to construct
 diamonds in the $\sigma = 1$ fragment, as this would amount to the
 free distribution of diamonds to all which would lead to a collapse in
 the complexity guarantees of the system. It is possible construct
@@ -1154,7 +1158,7 @@ $\conZero$ and a $\Diamond$ and a predecessor for $\conSucc$:
 \end{mathpar}
 In the $\sigma = 0$ fragment, we can construct $\Diamond$s for free,
 and so construct natural numbers freely as well just as we did for the
-Cons-free system above.
+\ConsFree{} system above.
 
 The dependently typed recursor for LFPL-style natural numbers again
 augments the simply typed linear recursor from
@@ -1172,7 +1176,7 @@ We have used $* : \Diamond$ as the value in the types for the zero and
 successor cases. By the $\eta$-rule for diamonds, we could have
 equally well used the $d$ variable that is in scope in each case.
 
-Unlike the natural number iterator in the Cons-free system, this
+Unlike the natural number iterator in the \ConsFree{} system, this
 iterator has $\beta$-equalities in both the $\sigma = 0$ and
 $\sigma = 1$ fragments. In the $\conSucc$ case, for example, we have:
 \begin{displaymath}
@@ -1182,10 +1186,10 @@ $\sigma = 1$ fragments. In the $\conSucc$ case, for example, we have:
   \end{array}
 \end{displaymath}
 Note that the fact that the variable $n$ in the $N_s$ term is
-annotated $0$, which allows us to duplicate it even when we are in the
-$\sigma = 1$ fragment.
+annotated $0$, which allows us to use $M_n$ twice even when we are in
+the $\sigma = 1$ fragment.
 
-Just as for the Cons-free system iterator above, in the $\sigma = 0$
+Just as for the \ConsFree{} system iterator above, in the $\sigma = 0$
 fragment this rule is identical to the usual dependently typed
 recursor for the natural numbers, so it can be used in the types to
 reason about programs. Moreover, we will see in
@@ -1269,7 +1273,7 @@ types.
 
 We have only defined an iterable natural number datatype for both of
 our systems above. We could extend both systems to include further
-iterable inductive types, although in the \emph{Cons-free} system this
+iterable inductive types, although in the \ConsFree{} system this
 is not particularly useful due to the prohibition of
 construction. However, sticking with just the natural numbers, we can
 use the power of dependent types with a universe to create further
@@ -1369,7 +1373,7 @@ realisable boolean-value predicate that reports true exactly when the
 given element of $a$ is in the predicate:
 \begin{displaymath}
   \mathrm{PTIME}(A,P) =
-    (f \stackrel1: \mathbf{R}(A \to \BoolTy)) \otimes (a \stackrel1: A) \to (\mathbf{R}^{-1}(f)\, a = \cTrue) \Leftrightarrow P\,a
+    (f \stackrel1: \mathbf{R}(A \to \BoolTy)) \otimes \left((a \stackrel1: A) \to (\mathbf{R}^{-1}(f)\, a = \cTrue) \Leftrightarrow P\,a\right)
 \end{displaymath}
 Thus, $\mathrm{PTIME}(A,P)$ is a logical proposition stating that the
 decision problem $(A,P)$ is decidable in polytime. We make three notes
@@ -1387,7 +1391,7 @@ We can also declare a type of polytime \emph{reductions} between
 problems. A problem $(A, P)$ can be polytime reduced to a problem
 $(B,Q)$ if there is an inhabitant of the following type:
 \begin{displaymath}
-  (A,P) \stackrel{\textsc{Poly}}\Rightarrow (B,Q) = (f \stackrel1: \mathbf{R}(A \to B)) \otimes (a \stackrel1: A) \to Q(\mathbf{R}^{-1}(f)\,a) \Leftrightarrow P\,a
+  (A,P) \stackrel{\textsc{Poly}}\Rightarrow (B,Q) = (f \stackrel1: \mathbf{R}(A \to B)) \otimes \left((a \stackrel1: A) \to Q(\mathbf{R}^{-1}(f)\,a) \Leftrightarrow P\,a\right)
 \end{displaymath}
 In words, there must be a polytime function $f$ that preserves and
 reflects decisions. With this definition, it is possible to prove in
@@ -1395,7 +1399,8 @@ our systems that polytime computations are closed under polytime
 reductions. We note that this definition is, up to the reflection
 modality, the same as the definition of cartesian container morphism,
 well known in dependent type theory \cite{AbbottAG05}, and speaks to a
-general conception of containers as ``problem/solution'' pairings.
+general conception of containers as ``problem/solution'' pairings and
+container morphisms as problem reductions.
 
 \subsection{Polytime-based Complexity Classes}
 \label{sec:classes}
@@ -1406,7 +1411,7 @@ time realisable programs. However, we can go further to capture the
 complexity classes of Non-deterministic Polynomial time (NP) and
 Probabilistic Polynomial time (PP), both of which are based on
 polytime. We do this by augmenting our polytime functions with
-additional power in the form of computation effects.
+additional power in the form of computational effects.
 
 \subsubsection{Non-deterministic Polynomial Time}
 \label{sec:np-class}
@@ -1414,8 +1419,8 @@ additional power in the form of computation effects.
 To capture the complexity class NP, we use polynomial time programs
 augmented with non-determinism, as one might expect. We will not need
 to reason about equality of these non-deterministic programs, so we
-can represent non-deterministic choices as \emph{additive} binary
-trees. We suppose a non-iterable datatype defined like so:
+can represent non-deterministic choices as binary trees. We suppose a
+non-iterable datatype defined like so:
 \begin{displaymath}
   \begin{array}{l}
     \textbf{data}\,\mathrm{ND}\,(A : \mathsf{U}) : \mathsf{U}\,\textbf{where} \\
@@ -1427,8 +1432,8 @@ The crucial point here is that the subtrees are represented as a
 function $\BoolTy \to \mathrm{ND}\,A$. By the typing rules of QTT,
 this means that the two branches of this function can share resources
 (see the encoding of the additive product types by
-\citet{atkey18qtt}). Thus, each branch of this tree is polynomial
-time, not the whole tree itself.
+\citet{atkey18qtt}). Thus, each branch of this tree can be explored in
+polynomial time, but not the whole tree itself.
 
 The type $\mathrm{ND}$ supports a monad interface via the usual free
 monad construction, as well as an effect
@@ -1500,10 +1505,10 @@ setting of implicit computational complexity by
 \citet{dallago_et_al:LIPIcs.MFCS.2021.35} and \citet{LagoT15}. In both
 cases, they must build probabilistic choice into the language, and
 have difficulty in directly capturing the class BPP due to its
-semantic nature \cite{AroraBarak09}, where the correctness of
-implementation is probabilistic. With a dependently-typed host
-language, adding probabilistic choice as an effect and capturing the
-semantic constraint of BPP is straightforward.
+semantic nature, where the correctness of implementation is
+probabilistic. With a dependently-typed host language, adding
+probabilistic choice as an effect and capturing the semantic
+constraint of BPP is straightforward.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1549,16 +1554,15 @@ into \emph{resource monoids} that we define in
 we explicitly construct realisers for inductive datatypes (both
 iterable and non-iterable) instead of relying on second-order
 polymorphic encodings and special $\oc$-style modalities. These
-explicit constructions are essential to construct a model of dependent
-types.
+explicit constructions are essential to construct models of our systems.
 
 \paragraph{Agda Formalisation} The key soundness results in this
 section have been formalised in the Agda proof assistant
 \cite{norell2008dependently}. The Agda formalisation can be found in
-the supplementary material. After each definition and result we
-provide a pointer to the Agda modules where the corresponding
-formalisation can be found, and note interesting features of the
-mechanisation.
+the associated artefact \cite{atkey2023polydep-artefact}. After each
+definition and result we provide a pointer to the Agda modules where
+the corresponding formalisation can be found, and note interesting
+features of the mechanisation.
 
 \subsection{Machine Model and Operational Semantics}
 \label{sec:machine-model}
@@ -1820,7 +1824,7 @@ special case of the difference $\MaxPoly((m,p),(0,0)) = p(m)$. I.e.,
 if we have code that contains data of size $m$ and a program with
 complexity $p$, then running the combination with no expectation of
 remaining potential yields $p(m)$ available steps. The $\MaxPoly$ and
-$\PlusPoly$ resource monoids will be used for the \emph{Cons-free} and
+$\PlusPoly$ resource monoids will be used for the \ConsFree{} and
 LFPL-style systems respectively, as we explain in
 \autoref{sec:realising-iteration} and show how these resource monoids
 yield the required polytime bounds on programs.
@@ -1974,7 +1978,7 @@ We now define an indexed linear poset $L$ of realisers over $\Set$
 that ties together our ``mathematical'' model of types in $\Set$ with
 our machine model and resource monoid. This construction is a
 reformulation of \citet{dallago11realisability}'s realisability models
-suitable for modelling dependent types. For a set $A$, the carrier of
+to make it suitable for dependent types. For a set $A$, the carrier of
 $L(A)$ is the set of ternary relations
 $X \subseteq A \times M \times \ValSet$ and we define the ordering
 $X \leq Y$ to hold iff there exists a realising expression
@@ -2088,7 +2092,7 @@ properties of resource monoids that we introduce in
 Before that, we show how to define realisers for the representative
 examples of non-iterable types from \autoref{sec:linear-case-analysis}
 and \autoref{sec:noniter-qtt}. Booleans are the simplest case, with
-only two cases and no chance of iteration. Lists are more complex; we
+only two cases and no chance of iteration. Lists are more complex: we
 can have non-iterable lists containing iterable data.
 
 \paragraph{Booleans} Fix $\mathbb{B} = \{ \mathit{tt}, \mathit{ff} \}$
@@ -2158,7 +2162,7 @@ booleans and lists are carried out in the Agda modules
 
 The models constructed in the previous section only allow for
 constant-time programs to be realised. To interpret the iterators of
-the \emph{Cons-free} and LFPL-style systems, we need to use the
+the \ConsFree{} and LFPL-style systems, we need to use the
 $\MaxPoly$ and $\PlusPoly$ resource monoids. We do this in this
 section, where first we establish some operations that will be useful
 to see how they capture the nesting of iterations inherent to polytime
@@ -2249,14 +2253,14 @@ $\mathit{size}(n+1)$ potential (we add one to make the LFPL soundness
 proof easier).  This gives us the ability to represent natural numbers
 as a type in QTT, but in order to iterate (and construct in the case
 of LFPL), we need to construct specific realisers for the
-\emph{Cons-free} and LFPL systems.
+\ConsFree{} and LFPL systems.
 
 \subsection{The Cons-Free System}
 \label{sec:consfree-sound}
 
-The \emph{Cons-free} system uses the $\MaxPoly$ resource monoid, with
+The \ConsFree{} system uses the $\MaxPoly$ resource monoid, with
 the distinguished sub-monoid being those elements that are $0$ in the
-size component. We enumerate the features of the \emph{Cons-free}
+size component. We enumerate the features of the \ConsFree{}
 system and justify their realisability with the $\MaxPoly$ resource
 monoid:
 \begin{enumerate}
@@ -2290,13 +2294,13 @@ monoid:
   expression, plus some administrative set up costs, is the required
   potential for the whole iterator.
 \end{enumerate}
-Together, we have a soundness result for the \emph{Cons-free} system,
+Together, we have a soundness result for the \ConsFree{} system,
 that ensures that every term in the $\sigma = 1$ fragment is
 realisable by a \emph{correct} program that terminates in polynomial
 time for all inputs:
-\begin{theorem}[Soundness for the Cons-free System]
+\begin{theorem}[Soundness for the \ConsFree{} System]
   \label{thm:cons-free-soundness}
-  If we have a term $n : \tyNat \vdash M \stackrel1: T(n)$ then there
+  If we have a term $n \stackrel1: \tyNat \vdash M \stackrel1: T(n)$ then there
   exists a realising expression $E$ and polynomial $p$ such that for
   all $n \in \mathbb{N}$, there exists $v \in \ValSet$ and
   $k \in \mathbb{N}$ such that
@@ -2306,7 +2310,7 @@ time for all inputs:
 \end{theorem}
 
 \paragraph{Agda Formalisation} The realisability of the
-\emph{Cons-free} system iterator and the soundness property of the
+\ConsFree{} system iterator and the soundness property of the
 whole system are formalised in the Agda modules \AgdaModule{ConsFree}
 and \AgdaModule{ConsFree.Iterator}. The soundness theorem is a
 combination of this and the QTT model sketched in
@@ -2335,11 +2339,11 @@ offered at the QTT level are altered:
   natural numbers. By the additive combination of size resources we
   get $1$ from the diamond and $n+1$ from the predecessor to total
   $n+2$ for a new number. Note that, even if we add a $\Diamond$ type
-  to the \emph{Cons-free} system, it would still not be possible to
+  to the \ConsFree{} system, it would still not be possible to
   realise the constructors, because we would only have
   $1 \sqcup (n+1) = n+1$ size resource for the output.
 \item The construction of the recursor follows a very similar proof to
-  the realisability of \emph{Cons-free} iterator, up to some
+  the realisability of \ConsFree{} iterator, up to some
   additional work to make sure that the dummy $*$ values representing
   the diamond components end up in the right places. This additional
   work is revealed in the required potential for the LFPL iterator
@@ -2349,13 +2353,13 @@ offered at the QTT level are altered:
   slightly higher in the successor case.
 \end{enumerate}
 
-Soundness for the LFPL system is similar to the \emph{Cons-free}
+Soundness for the LFPL system is similar to the \ConsFree{}
 system, except for a $+1$ to the input to the polynomial, to account
 for the fact that we cost one size unit for the $\conZero$
 constructor.
 \begin{theorem}[Soundness for the LFPL-style System]
   \label{thm:lfpl-soundness}
-  If we have a term $n : \tyNat \vdash M \stackrel1: T(n)$ then there
+  If we have a term $n \stackrel1: \tyNat \vdash M \stackrel1: T(n)$ then there
   exists a realising expression $E$ and polynomial $p$ such that for
   all $n \in \mathbb{N}$, there exists $v \in \ValSet$ and
   $k \in \mathbb{N}$ such that
@@ -2365,7 +2369,7 @@ constructor.
 \end{theorem}
 
 The proofs of well-accounted realisability for the LFPL iterator, and
-the \emph{Cons-free} iterator, could be adapted to any other
+the \ConsFree{} iterator, could be adapted to any other
 inductively defined type that is finitely branching. This is not
 immediately necessary, as evidenced by the construction of other
 datatypes in \autoref{sec:prog-datatypes}. Nevertheless, native tree
@@ -2384,12 +2388,11 @@ in the Agda modules \AgdaModule{LFPL} and \AgdaModule{LFPL.Iterator}.
 \label{sec:conclusion}
 
 We have presented two extensions of Quantitative Type Theory that
-soundly and completely capture polynomial time. We have seen that this
-allows for an expressive combination of verification and complexity
-constrained computation. We now discuss some related work in implicit
-computational complexity and linear dependent types, and take a look
-at where the combination of resource conciousness and dependent types
-could take us.
+soundly and completely capture polynomial time. This allows for an
+expressive combination of verification and complexity constrained
+computation, including characterisations of the classes P, NP, and
+BPP. We now discuss related work, and take a look at where the
+combination of polytime and dependency could take us.
 
 \subsection{Related Work}
 
@@ -2401,7 +2404,7 @@ Light Linear Logic \cite{lll98} and LFPL \cite{hofmann99lfpl} systems,
 which all use linear typing to implicitly capture polynomial
 time. \citet{Jones01} characterises polynomial time using first-order
 functional programs without constructors. Thus it shares a method with
-our \emph{Cons-free} system, but we use linear typing to permit
+our \ConsFree{} system, but we use linear typing to permit
 controlled use of higher-order functions. Other approaches to
 polynomial time use stratification or information flow tracking to
 ensure that the outputs of iteration may not be used unrestrictedly to
@@ -2425,7 +2428,7 @@ contrast to the implicit systems, previous works have constructed
 systems that give explicit resource bounds via typing. Examples
 include \citet{HoffmannDW17}'s Resource Allocated ML (RAML) and
 \citet{RajaniG0021}, both of which are based on ideas of type-based
-amortised complexity analysis arising from \cite{hofmann99lfpl}'s
+amortised complexity analysis arising from \citet{hofmann99lfpl}'s
 ideas, via the work of \citet{HofmannJ03}. More details are to be
 found in the survey paper of \citet{HoffmannJ22}. Another approach is
 to track costs at the value level instead of the
@@ -2437,8 +2440,8 @@ interferes with the functional business of
 programs. \citet{McCarthyFNFF16} is another tick effect based system
 in Coq. All of these tick-counting techniques rely on the programmer
 correctly annotating the program with tick effects to count the
-resource usage they are interested in, in contrast to the intrinsic
-approach we have taken here.
+resource usage they are interested in, in contrast our intrinsic
+approach.
 
 \paragraph{Linear and Substructural Dependent Types} We chose QTT as
 the particular combination of linear and dependent types for our
@@ -2449,7 +2452,7 @@ variables. This strict separation would mean that we could not as
 easily move programs from the linear fragment into the types, as in
 \autoref{sec:programming-polytime}. Systems that are more like QTT in
 that they do not have a strict separation of variables include those
-of \citet{MoonEO21}, \citet{ChoudhuryEEW21}, and \citet{Abel18}. These
+of \citet{MoonEO21}, \citet{ChoudhuryEEW21}, and \citet{Abel23}. These
 systems differ from QTT in that they do not include a complete copy of
 unrestricted type theory as QTT does in its $\sigma = 0$ fragment,
 because they all track usage in types as well as terms, so it is not
@@ -2473,7 +2476,7 @@ implementation-focused question is whether or not the term-level
 polytime guarantees can be turned to type-level guarantees to
 guarantee polytime typechecking.
 
-\paragraph{Other Complexity Classes, and Explicit Resource Tracking}
+\paragraph{Other Complexity Classes}
 We have been able to characterise the classes NP and BPP in terms of
 our underlying characterisation of P (\autoref{sec:classes}). It seems
 straighforward to extend this to related classes like coNP, RP,
@@ -2484,6 +2487,7 @@ on circuits may be more challenging, but we do now have a way to
 characterise circuits that are generatable in polynomial
 time.
 
+\paragraph{Explicit Resource Tracking}
 Our construction already includes soundness of a system with intrinsic
 but explicit resource tracking where $\Diamond$s are used to pay for
 every step of computation but never returned, via the natural number
@@ -2492,7 +2496,7 @@ resource monoid defined in
 yield a system that tracks the intrinsic cost of programs precisely
 and explicitly.
 
-\paragraph{Towards Synthetic Computational Complexity Theory?}
+\paragraph{Towards a Synthetic Computational Complexity Theory?}
 
 The realisability type $\mathbf{R}(A)$ described in
 \autoref{sec:qtt-reflection} allows us to internalise the
@@ -2504,7 +2508,7 @@ from standard Computational Complexity theory. Even though we can
 characterise the class NP, as we did in \autoref{sec:np-class}, and it
 is a ``matter of programming'' to show that 3-SAT is in NP, we cannot
 prove the Cook-Levin theorem that 3-SAT is NP-complete. This is
-because the proofs relies on obtaining the \emph{source code} of the
+because the proof relies on obtaining the \emph{source code} of the
 program solving an NP problem and then encoding that program in
 3-SAT. To do this in our setting, we would need to internalise the
 soundness property (\thmref{thm:lfpl-soundness}) as an axiom, stating
@@ -2513,7 +2517,8 @@ realising expression $E$ that completes in polynomial time, and then
 writing polytime encodings into 3-SAT. We hope that the addition of
 such an axiom to our system would lead to an expressive machine-free
 \emph{Synthetic Computational Complexity Theory}, analogous to the
-Church-Turing axiom for Synthetic Computability Theory \cite{Bauer06}.
+Church-Turing axiom for Synthetic Computability Theory as described by
+\citet{Bauer06}.
 
 %%
 %% The acknowledgments section is defined using the "acks" environment
@@ -2530,6 +2535,13 @@ Church-Turing axiom for Synthetic Computability Theory \cite{Bauer06}.
   \grantnum{EPSRC}{EP/T026960/1}, \emph{AISEC: AI Secure and
     Explainable by Construction}.
 \end{acks}
+
+\section*{Data Availability Statement}
+
+The Agda source files and rendered HTML for this paper is available
+from Zenodo \cite{atkey2023polydep-artefact}. The source files are
+also available online at GitHub:
+\url{https://github.com/bobatkey/qtt-models}.
 
 %%
 %% The next two lines define the bibliography style to be used, and

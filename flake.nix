@@ -38,10 +38,10 @@
             src = self;
             buildInputs = [ pkgs.coreutils pkgs.gnumake pkgs.bash tex ];
             phases = ["unpackPhase" "buildPhase" "installPhase"];
-            buildPhase = "make paper/paper.pdf";
+            buildPhase = "make paper/paper.pdf paper/paper-extended.pdf";
             installPhase = ''
       mkdir -p $out;
-      cp paper/paper.pdf $out/
+      cp paper/paper.pdf paper/paper-extended.pdf $out/
     '';
           };
           supplementary-material = pkgs.stdenvNoCC.mkDerivation rec {
