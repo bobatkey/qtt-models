@@ -73,19 +73,20 @@
 %% values in them; it is your responsibility as an author to replace
 %% the commands and values with those provided to you when you
 %% complete the rights form.
-\setcopyright{acmcopyright}
-\copyrightyear{2024}
+%\setcopyright{ACMUNKNOWN}
+
+\setcopyright{rightsretained}
+\acmDOI{10.1145/3632918}
 \acmYear{2024}
-\acmDOI{10.1145/1122445.1122456}
-
-
-%%
-%% These commands are for a JOURNAL article.
+\copyrightyear{2024}
+\acmSubmissionID{popl24main-p453-p}
 \acmJournal{PACMPL}
-\acmVolume{1}
-\acmNumber{CONF}
-\acmArticle{1}
-\acmMonth{8}
+\acmVolume{8}
+\acmNumber{POPL}
+\acmArticle{76}
+\acmMonth{1}
+\received{2023-07-11}
+\received[accepted]{2023-11-07}
 
 %%
 %% Submission ID.
@@ -114,6 +115,7 @@
 %% The "title" command has an optional parameter,
 %% allowing the author to define a "short title" to be used in page headers.
 \title{Polynomial Time and Dependent Types}
+% \subtitle{Extended Version}
 
 %%
 %% The "author" command and its associated commands are used to define
@@ -470,7 +472,7 @@ $\ListTy(\BoolTy) \otimes \BoolTy \otimes \ListTy(\BoolTy)$,
 representing a position on the tape with the items before, under, and
 after the head.
 
-\subsection{The Cons-free system}
+\subsection{The Cons-free System}
 \label{sec:cons-free-intro}
 
 Polynomial time is usually seen as a proxy for ``feasible''
@@ -718,12 +720,11 @@ in the following sections, we will be careful to maintain the
 admissibility of this rule.
 
 In this section, we give an overview of the rules of QTT. The full
-rules, including all equality rules, are presented in the online
-appendix for this paper \cite{atkey2023polydep-online}.
+rules, including all equality rules, are presented in
+%\autoref{sec:rules}.
+the online appendix \cite{atkey2023polydep-online}.
 
-%The full rules are presented in \autoref{sec:rules}.
-
-\subsubsection{Natural-number usages}
+\subsubsection{Natural-number Usages}
 
 We use an instantiation of QTT with the natural number semiring, with
 the usual semiring structure of addition and multiplication. In a mild
@@ -737,7 +738,7 @@ have an unrestricted usage $\omega$, since this would allow the
 possibility of unrestricted duplication, and hence violate our
 polytime soundness properties.
 
-\subsubsection{Contexts, variables, and conversion}
+\subsubsection{Contexts, Variables, and Conversion}
 
 As we saw above, contexts in QTT are comprised of variable
 $\stackrel\rho:$ type triples, where $\rho$ is a natural number
@@ -907,7 +908,7 @@ i.e., we use a Russell-style presentation. Universes are where the
 definitional equality on terms affects the definitional equality on
 types.
 
-\subsubsection{Datatypes} QTT, as we have presented it so far, has no
+\subsubsection{Data Types} QTT, as we have presented it so far, has no
 interesting base types to perform computation on. Following our
 presentation of the simply typed linear systems in
 \autoref{sec:linear-intro}, we add two kinds of datatype to
@@ -918,7 +919,7 @@ QTT to be a dependently typed adaptation of the Cons-free system of
 \autoref{sec:cons-free-intro}. In \autoref{sec:lfpl-qtt}, we apply the
 same treatment to the LFPL-style system.
 
-\subsection{Non-iterable Datatypes}
+\subsection{Non-iterable Data Types}
 \label{sec:noniter-qtt}
 
 \subsubsection{Booleans} The boolean type for QTT was described in
@@ -1263,7 +1264,7 @@ We now explore the possibilities afforded by the combination of
 polytime guarantees with the specification expressivity of dependent
 types.
 
-\subsection{Building Datatypes}
+\subsection{Building Data Types}
 \label{sec:prog-datatypes}
 
 We have only defined an iterable natural number datatype for both of
@@ -1488,7 +1489,7 @@ as long as it is correct with probability at least $\frac{2}{3}$:
   \mathrm{BPP}(A,P) =
   \begin{array}[t]{l}
     (f \stackrel1: \mathbf{R}(A \to \mathrm{Dist}(\BoolTy))) \, \otimes
-    (a \stackrel1: A) \to (\mathrm{probTrue}\,(\mathbf{R}^{-1}(f)\,a) \geq \frac{2}{3}) \Leftrightarrow P\,a
+    \left((a \stackrel1: A) \to (\mathrm{probTrue}\,(\mathbf{R}^{-1}(f)\,a) \geq \frac{2}{3}) \Leftrightarrow P\,a\right)
   \end{array}
 \end{displaymath}
 Again, problems in BPP are easily seen to be closed under polytime
@@ -1857,14 +1858,14 @@ $\MaxPoly_0$ and $\PlusPoly_0$.
 \citet{atkey18qtt} described a general class of QTT models termed
 \emph{Quantitative Categories with Families}
 (QCwFs). \citet{atkey18qtt} constructs QCwFs from certain Linear
-Combinatory Algebras (LCA), where terms in the $\sigma = 1$ fragment
+Combinatory Algebras (LCAs), where terms in the $\sigma = 1$ fragment
 are realised by elements of the LCA. However, there is a mistake in
 that paper where the interpretation of contexts is stated to be the
 category of \emph{assemblies} over the LCA, where it ought to be the
 category of sets paired with realisability relations, with no
 guarantee that all elements be realisable.
 
-Here, we fix the mistake of \citet{atkey18qtt}, and provide a more
+Here, we fix the mistake of \citet{atkey18qtt} and provide a more
 general construction of QCwFs in terms of indexed linear preorders. We
 construct indexed linear preorders specific to our polytime setting
 below. They could also be constructed from LCAs.
@@ -2535,6 +2536,8 @@ Church-Turing axiom for Synthetic Computability Theory \cite{Bauer06}.
 %% the bibliography file.
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{bibliography}
+
+%\input{appendix-rules.tex}
 
 \end{document}
 \endinput
