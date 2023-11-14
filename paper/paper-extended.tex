@@ -297,25 +297,26 @@ linear dependent type theory and implicit computational complexity:
   the simply typed world, we have an expressive language for writing
   polytime programs. With the additional power of dependent types, we
   can also prove properties of these programs. A simple example is
-  proving that a sorting program actually sorts. Using QTT reflection,
+  proving that a polytime sorting program actually sorts. Using QTT reflection,
   we can go further and represent the class of polytime problems, with
   polytime reductions between them, as dependent pairs
   (\autoref{sec:polytime-problems}). Our final examples use dependent
   types to give monadic presentations of the complexity classes of
   Non-deterministic Polynomial (NP) time and Bounded-error
   Probabilistic Polynomial (BPP) time. Since these classes rely on
-  specific correctness criteria, it is not possible to capture them in
+  specific semantic correctness criteria, it is not possible to capture them in
   a simply typed system for polytime.
 \item We prove the polytime soundness of our systems via a
-  realisability argument in \autoref{sec:soundness}. Our construction
-  is an extension of the amortised complexity realisability
-  constructions of \citet{dallago11realisability}. We extend their
-  work to our dependently typed setting, and also give a realisability
+  realisability argument in \autoref{sec:soundness} and
+  \autoref{sec:realising-iteration}. Our construction is an extension
+  of the amortised complexity realisability constructions of
+  \citet{dallago11realisability}. We extend their work to our
+  dependently typed setting, and also give a realisability
   interpretation of datatypes directly, instead of via second-order
-  impredicative encodings. The technical content of this section has
+  impredicative encodings. The technical content of these sections has
   been formalised in the Agda proof assistant
-  \cite{norell2008dependently}, and is included in the supplementary
-  material.
+  \cite{norell2008dependently}, and is included in the associated
+  artefact \cite{atkey2023polydep-artefact}.
 \end{enumerate}
 
 Before we get to the contributions above, we present, in
@@ -417,18 +418,18 @@ turn to QTT when we wish to add dependent types in \autoref{sec:qtt}.
 \label{sec:linear-case-analysis}
 
 It is not too difficult to see that reduction of linear
-$\lambda$-terms always takes a number of steps linearly proprotional
+$\lambda$-terms always takes a number of steps linearly proportional
 to the size of the term. This is because every $\beta$-redex
 substitutes each term into at most one variable, reducing the size of
 the term by one each time.
 
 We can increase the expressivity, but not the computational
 complexity, of the system by adding datatypes that do not allow
-iteration. These can be used for representation, but not for driving
-computation. We include the rules here, to show how linearity must be
-preserved in these rules, and to foreshadow their dependently typed
+iteration. These can be used for representation but not for driving
+computation. We include the rules here to show how linearity must be
+preserved in these rules and to foreshadow their dependently typed
 counterparts in \autoref{sec:noniter-qtt}. The first type is the
-booleans, which are anyway non-recursive and so would not allow
+booleans, which are non-recursive and so would not allow
 iteration anyway:
 \begin{mathpar}
   \inferrule*
@@ -640,7 +641,7 @@ iterators. To raise the degree, we again use a nesting iterator:
 Unlike in the \emph{Cons-free} system, this iterator does not raise
 the degree of the nested iterator directly. Rather, the iterator $I_k$
 on the input $n$ performs $\binom{n}{k}$ iterations. As observed by
-Aelhig and Schwictenberg, this is sufficient because the binomials
+Aehlig and Schwictenberg, this is sufficient because the binomials
 form a basis for the vector space of all polynomials.
 
 Despite this slightly more involved completeness construction, the
@@ -2449,7 +2450,7 @@ variables. This strict separation would mean that we could not as
 easily move programs from the linear fragment into the types, as in
 \autoref{sec:programming-polytime}. Systems that are more like QTT in
 that they do not have a strict separation of variables include those
-of \citet{MoonEO21}, \citet{ChoudhuryEEW21}, and \citet{Abel18}. These
+of \citet{MoonEO21}, \citet{ChoudhuryEEW21}, and \citet{Abel23}. These
 systems differ from QTT in that they do not include a complete copy of
 unrestricted type theory as QTT does in its $\sigma = 0$ fragment,
 because they all track usage in types as well as terms, so it is not
@@ -2530,6 +2531,10 @@ Church-Turing axiom for Synthetic Computability Theory \cite{Bauer06}.
   \grantnum{EPSRC}{EP/T026960/1}, \emph{AISEC: AI Secure and
     Explainable by Construction}.
 \end{acks}
+
+\section*{Data Availability Statement}
+
+The Agda source files and rendered HTML for this paper is available from Zenodo \cite{atkey2023polydep-artefact}. The source files are also available online at GitHub: \url{https://github.com/bobatkey/qtt-models}, commit SHA1
 
 %%
 %% The next two lines define the bibliography style to be used, and
