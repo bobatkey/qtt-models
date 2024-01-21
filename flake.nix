@@ -26,6 +26,14 @@
             # needed for workingnote
             ntheorem mathtools todonotes titlesec bbold bbold-type1
             tex-gyre
+            # beamer
+            xetex beamer frankenstein
+            colortbl euler fontspec tools extsizes
+            minibox varwidth fragments psnfss csquotes
+            xltxtra realscripts
+            pdfcomment datetime2 tracklang zref marginnote
+            soulpos appendixnumberbeamer soulutf8
+            tikzpagenodes ifoddpage pagecolor
             # diffing
             latexdiff ulem;
         };

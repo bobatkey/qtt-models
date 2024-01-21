@@ -1,0 +1,683 @@
+% -*- TeX-engine: xetex -*-
+
+\documentclass[xetex,aspectratio=169,14pt,hyperref={pdfpagelabels=true,pdflang={en-GB}}]{beamer}
+
+\definecolor{LinkBlue}{RGB}{53,72,207}
+\definecolor{SlideBackground}{RGB}{251,247,240}
+%\definecolor{GridColour}{RGB}{
+\definecolor{TitleRed}{rgb}{0.6,0,0}
+\definecolor{Constructor}{RGB}{221,34,221}
+
+
+\newcommand{\tmRec}{\mathrm{rec}}
+\newcommand{\tyNat}{\mathrm{Nat}}
+\newcommand{\conZero}{\mathsf{zero}}
+\newcommand{\conSucc}{\mathsf{succ}}
+\newcommand{\conRefl}{\mathsf{refl}}
+
+\usepackage[pattern=tri,fullpage,minorcolor=SlideBackground!50!black!15,majorcolor=black!10]{gridpapers}
+\usepackage{euler}
+\usepackage[cm-default]{fontspec}
+\usepackage{xunicode}
+\usepackage[normalem]{ulem}
+\usepackage{mathpartir}
+
+\usepackage{xltxtra}
+
+\defaultfontfeatures{Ligatures=TeX}
+
+\renewcommand{\arraystretch}{1.2}
+\usepackage{booktabs}
+
+\setmainfont{Linux Biolinum O}
+
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamercolor{background canvas}{bg=SlideBackground}
+\usecolortheme[rgb={0.6,0,0}]{structure}
+\usefonttheme{serif}
+\usefonttheme{structurebold}
+\setbeamercolor{description item}{fg=black}
+
+\newcommand{\mailto}[1]{\textcolor{LinkBlue}{\href{mailto:#1}{#1}}}
+
+\newcommand{\deemph}[1]{\textcolor{black!60}{#1}}
+
+\title{Polynomial Time and Dependent Types}
+\author{{\bf Robert Atkey} \\
+  {\it Mathematically Structured Programming group} \\
+  {\it University of Strathclyde} \\
+  \mailto{robert.atkey@strath.ac.uk}}
+\date{Principles of Programming Languages (POPL)\\ \deemph{19th January 2024}}
+
+\newenvironment{typings}%
+{\begin{array}{@{}l@{\hspace{0.3em}}c@{\hspace{0.3em}}l}\ignorespaces}%
+{\end{array}\ignorespacesafterend}
+
+\newenvironment{lines}%
+{\begin{array}{@{}l}\ignorespaces}%
+{\end{array}\ignorespacesafterend}
+
+\definecolor{kwcolour}{rgb}{0.5,0.5,0.8}
+
+\newcommand{\Data}{\textcolor{kwcolour}{\bf\mathsf{data}}}
+\newcommand{\Where}{\textcolor{kwcolour}{\bf\mathsf{where}}}
+\newcommand{\Set}{\mathrm{Set}}
+\newcommand{\Not}{\mathsf{not}}
+\newcommand{\dname}[1]{\mathrm{#1}}
+\newcommand{\String}{\dname{String}}
+\newcommand{\cnstr}[1]{\textcolor{Constructor}{\mathsf{#1}}}
+\newcommand{\Chu}{\mathrm{Chu}}
+\newcommand{\defnd}{\stackrel{\mathit{def}}=}
+\newcommand{\op}{\mathsf{op}}
+
+\newcommand{\heading}[1]{\textcolor{TitleRed}{#1}}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage {\scriptsize Funded by EPSRC: EP/T026960/1 \emph{AISEC:
+      AI Secure and Explainable by Construction}}
+\end{frame}
+
+\begin{frame}
+  \textcolor{TitleRed}{Dependent Type Theory is}
+
+  \bigskip
+
+  A programming language
+
+  \raggedleft \only<2->{So we can write programs}\only<1>{~}
+
+  \raggedright
+
+  \medskip
+
+  {\it and} a proof language
+
+  \raggedleft \only<3->{and reason about their extensional behaviour}\only<-2>{~}
+
+%  \only<4->{but only the ``extensional behaviour''}\only<-3>{~}
+
+  \pause \pause
+\end{frame}
+
+\newcommand{\comment}[1]{\textcolor{black!60}{#1}}
+\newcommand{\hl}[1]{\textcolor{TitleRed}{\it #1}}
+
+\begin{frame}
+  What if we want to talk about programs' complexity?
+\end{frame}
+
+\begin{frame}
+
+  Are costs \hl{Extrinsic} or \hl{Intrinsic}? \\
+  \qquad \comment{do programs consume resources by a ``tick'' effect?} \\
+  \qquad \comment{or simply by existing and executing?}
+
+  \bigskip
+
+  \hl{Explicit} or \hl{Implicit} accounting? \\
+  \qquad \comment{``this program takes $n^2+3\frac{12}{27}n$ steps if the input is size $n$'', or} \\
+  \qquad \comment{``this program is polytime for all inputs''}
+
+  \bigskip
+
+  How to mediate \hl{Intensional} and \hl{Extensional} meanings? \\
+  \qquad \comment{How to stop costs interfering with extensional behaviour?}
+\end{frame}
+
+\begin{frame}
+  \heading{This work:}
+
+  \bigskip
+
+  \begin{center}
+    {\bf Implicit polynomial time} by linear typing
+
+    $+$
+
+    Extensional program reasoning with dependent types
+  \end{center}
+
+  \bigskip
+  \pause
+
+  \begin{center}
+    Goal: {\it Synthetic} Computational Complexity Theory\pause(?)
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \begin{center}
+    {\bf Implicit polynomial time} by linear typing
+
+    \pause
+
+    \comment{two different ways}
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \hl{\bf Polynomial time} is \emph{feasible} computation
+
+  \bigskip
+  \pause
+
+  Feasible computation should be closed under:
+  \begin{enumerate}
+  \item<3-> Iteration over the input
+  \item<4-> Composition
+  \item<5-> Nesting of iterations
+  \end{enumerate}
+
+  \pause\pause\pause\pause
+  \bigskip
+
+  Let's build a type system for polynomial time using linear types.
+\end{frame}
+
+\newcommand{\TyNat}{\textsc{Nat}}
+
+\begin{frame}
+  Separate \hl{iterable} and \hl{non-iterable} types.
+
+  \bigskip
+
+  Iterable $\TyNat$:
+\begin{displaymath}
+  \inferrule*
+  {\vdash M_z : A \\ x : A \vdash M_s : A \\ \Gamma \vdash N : \tyNat}
+  {\Gamma \vdash \tmRec\,N\,\{\conZero \mapsto M_z; \conSucc(x) \mapsto M_s\} : A}
+\end{displaymath}
+
+  \bigskip
+
+  Non-iterable $\TyNat^\circ$:
+  \begin{displaymath}
+    \inferrule*
+    {\Gamma_1 \vdash M_z : A \\ \Gamma_2, x : \TyNat^\circ \vdash M_s : A \\ \Gamma_3 \vdash N : \TyNat^\circ}
+    {\Gamma_1, \Gamma_2, \Gamma_3 \vdash \mathrm{case}\,N\,\{\conZero \mapsto M_z; \conSucc(x) \mapsto M_s\} : A}
+  \end{displaymath}
+\end{frame}
+
+\begin{frame}
+  \hl{NIMBYism}: {\bf Ban} construction \pause of $\TyNat$ values \\
+  \qquad \comment{all $\TyNat$ must come from the ``outside''}
+
+  \bigskip
+  \pause
+
+  Non-iterable $\TyNat^\circ$ may be constructed:
+  \begin{mathpar}
+    \mathit{zero} : \TyNat^\circ
+
+    \mathit{succ} : \TyNat^\circ \multimap \TyNat^\circ
+  \end{mathpar}
+
+  Duplication of $\TyNat$ is permitted: $\mathit{dupNat} : \TyNat \multimap \TyNat \otimes \TyNat$ \\
+  \qquad \comment{allows for nesting of iterations}
+
+  \bigskip
+  \pause
+
+  Call this the \hl{Cons-free system}. \\
+  \quad \hl{Sound} and \hl{Complete} for Polytime. \\
+  \quad \comment{non-duplication of functions prevents encoding of constructors}
+\end{frame}
+
+\begin{frame}
+  The \hl{Cons-free} system is not much fun to program in.
+
+  \pause
+  \bigskip
+
+  \hl{LFPL} system: allow transmission of iterability via a $\Diamond$ type \\
+  \qquad \comment{(Hofmann, 1999)} % FIXME: check
+
+  \pause
+  \bigskip
+
+  Construction consumes $\Diamond$s:
+  \begin{mathpar}
+    \mathit{zero} : \Diamond \multimap \TyNat
+
+    \mathit{succ} : \Diamond \multimap \TyNat \multimap \TyNat
+  \end{mathpar}
+
+  \pause
+
+  Iteration yields $\Diamond$s:
+  \begin{displaymath}
+    \inferrule*
+    {d : \Diamond \vdash M_z : A \\
+      d : \Diamond, x : A \vdash M_s : A \\
+      \Gamma \vdash N : \TyNat}
+    {\Gamma \vdash \mathrm{iter}(d.~M_z, d~x.~M_s, N) : A}
+  \end{displaymath}
+
+  \pause
+
+  \hl{Sound} and \hl{Complete} for Polytime. \comment{(retain non-iterable types.)}
+\end{frame}
+
+\begin{frame}
+  \begin{center}
+    Linear Dependent Types
+  \end{center}
+\end{frame}
+
+\begin{frame}
+  \emph{In} Type Theory
+
+  \begin{displaymath}
+    x_1 : S_1, \dots, x_n : S_n \vdash M : T
+  \end{displaymath}
+
+  \begin{center}
+    variables $x_1, \dots, x_n$ are mixed usage
+
+    some \emph{logical}, some \emph{computational}
+  \end{center}
+
+  \pause
+  \bigskip
+
+  \emph{In} Linear Logic
+
+  \begin{displaymath}
+    x_1 : X_1, \dots, x_n : X_n \vdash M : Y
+  \end{displaymath}
+
+  \begin{center}
+    the presence of a variable $x$ records its usage
+
+    each $x_i$ must be ``used'' by $M$ exactly once
+  \end{center}
+
+\end{frame}
+
+% \begin{frame}
+%   \begin{displaymath}
+%     n : \mathit{Nat}, x : \mathsf{Fin}(n) \vdash x : \mathsf{Fin}(n)
+%   \end{displaymath}
+
+%   \pause
+%   \bigskip
+
+%   \hspace{15.5em}$x$ is used \hl{computationally}
+
+%   \pause
+%   \bigskip
+
+%   \hspace{12em}$n$ is used \hl{logically}
+% \end{frame}
+
+\begin{frame}
+\end{frame}
+
+% \begin{frame}
+%   \begin{displaymath}
+%     n : \mathsf{Nat}, x : \mathsf{Fin}(n) \vdash x : \mathsf{Fin}(n)
+%   \end{displaymath}
+
+%   \bigskip
+
+%   Can we read this judgement linearly?
+
+%   \pause
+%   \bigskip
+
+%   $n$ appears in the context, but is not used computationally
+
+%   \pause
+%   \bigskip
+
+%   $n$ appears \emph{twice} in types
+
+%   \pause
+%   \bigskip
+
+%   Is $n$ even used at all?
+% \end{frame}
+
+% \begin{frame}
+%   \begin{displaymath}
+%     n : \mathsf{Nat} \mid x : \mathsf{Fin}(n) \vdash x : \mathsf{Fin}(n)
+%   \end{displaymath}
+
+%   \bigskip
+%   \pause
+
+%   Separate \emph{intuitionistic} / \emph{unrestricted} uses and \emph{linear} uses
+
+%   \bigskip
+
+%   Types can depend on intuitionistic data, but not linear data
+
+%   % \raggedleft
+%   % \textcolor{black!60}{\it will come back to this...}
+
+%   % \raggedright
+
+%   \bigskip
+
+%   {\footnotesize
+%     \textcolor{black!60}{(Barber, 1996)} \\
+%     \textcolor{black!60}{(Cervesato and Pfenning, 2002)} \\
+%     \textcolor{black!60}{(Krishnaswami, Pradic, and Benton, 2015)} \\
+%     \textcolor{black!60}{(V{\'a}k{\'a}r, 2015)}\\
+%   }
+% \end{frame}
+
+
+\newcommand{\point}{\textcolor{TitleRed}{$\rhd$}~}
+
+\begin{frame}
+  \begin{center}
+    \hl{Quantitative Type Theory}
+
+    \textcolor{black!60}{(McBride, 2016) (Atkey, 2018)}
+  \end{center}
+\end{frame}
+
+% \begin{frame}
+%   Quantitative Coeffect calculi:
+
+%   \begin{displaymath}
+%     x_1 \stackrel{\rho_1}: S_1, \dots, x_n \stackrel{\rho_n}: S_n \vdash M : T
+%   \end{displaymath}
+
+%   \bigskip
+
+%   The $\rho_i$ record usage from some semiring $R$ \\
+%   \quad . $1 \in R$ --- a use \\
+%   \quad . $0 \in R$ --- not used \\
+%   \quad . $\rho_1 + \rho_2$ --- adding up uses (e.g., in an application) \\
+%   \quad . $\rho_1\rho_2$ --- nested uses
+
+%   \bigskip
+
+%   {\footnotesize
+%     \textcolor{black!60}{(Petricek, Orchard, and Mycroft, 2014)} \\
+%     \textcolor{black!60}{(Brunel, Gaboardi, Mazza, and Zdancewic, 2014)} \\
+%     \textcolor{black!60}{(Ghica and Smith, 2014)} \\
+%   }
+% \end{frame}
+
+\begin{frame}
+  \hl{Quantitative} (non-dependent) calculi:
+  \begin{displaymath}
+    x_1 \stackrel{\rho_1}: S_1, \dots, x_n \stackrel{\rho_n}: S_n \vdash M : T
+  \end{displaymath}
+  The $\rho_i$ record usage from some semiring $R$ \\
+
+  \bigskip
+  \pause
+
+  \hl{QTT}: allow $0$-usage data to appear in types.
+  \textcolor{black!60}{(McBride, 2016)}
+
+  \begin{displaymath}
+    x_1 \stackrel{\rho_1}: S_1, \dots, x_n \stackrel{\rho_n}: S_n \vdash M \stackrel\sigma: T
+  \end{displaymath}
+  where $\sigma \in \{0,1\}$. \\
+  \qquad \point $\sigma = 1$ --- the ``real'' computational world \\
+  \qquad \point $\sigma = 0$ --- the types world \\
+  {\footnotesize \textcolor{black!60}{(allowing arbitrary $\rho$ yields a system where substitution is inadmissible (Atkey, 2018))}}
+\end{frame}
+
+% \begin{frame}
+%   \heading{Zero-ing is admissible}
+
+%   \begin{displaymath}
+%     \inferrule*
+%     {\Gamma \vdash M \stackrel{1}: T}
+%     {0\Gamma \vdash M \stackrel{0}: T}
+%   \end{displaymath}
+
+%   \bigskip
+
+%   means that every linear term has an ``extensional'' counterpart (or constitutent)
+
+%   \bigskip
+
+%   which can be used at type checking time to construct types
+
+%   \bigskip
+
+%   has the effect of making the linear system a restriction of the intuitionistic
+% \end{frame}
+
+\begin{frame}
+  \begin{center}
+    QTT/LFPL
+  \end{center}
+\end{frame}
+
+\newcommand{\istype}{\mathrm{type}}
+\newcommand{\isctxt}{\mathrm{ctxt}}
+
+\begin{frame}
+  \begin{mathpar}
+    \inferrule*
+    {\Gamma~\isctxt}
+    {0\Gamma \vdash \Diamond~\istype}
+
+    \inferrule*
+    {\Gamma~\isctxt}
+    {0\Gamma \vdash * \stackrel0: \Diamond}
+
+    \inferrule*
+    {\Gamma \vdash M \stackrel0: \Diamond}
+    {\Gamma \vdash M \equiv * \stackrel0: \Diamond}
+  \end{mathpar}
+
+  \bigskip
+
+  In the $\sigma=0$ fragment, $\Diamond$s are free.
+\end{frame}
+
+\begin{frame}
+  \begin{mathpar}
+    \inferrule*
+    {\Gamma \vdash M \stackrel\sigma: \Diamond}
+    {\Gamma \vdash \conZero(M) \stackrel\sigma: \tyNat}
+
+    \inferrule*
+    {\Gamma_1 \vdash M \stackrel\sigma: \Diamond \\
+      \Gamma_2 \vdash N \stackrel\sigma: \tyNat \\
+      0\Gamma_1 = 0\Gamma_2}
+    {\Gamma_1 + \Gamma_2 \vdash \conSucc(M,N) \stackrel\sigma: \tyNat}
+  \end{mathpar}
+\end{frame}
+
+\newcommand{\redzero}{\textcolor{TitleRed}{\mathbf{0}}}
+\newcommand{\redstar}{\colorbox{TitleRed}{\textcolor{white}{$*$}}}
+
+\begin{frame}
+  \begin{mathpar}
+    \mprset{flushleft}
+    \inferrule*
+    {\redzero\Gamma, x \stackrel\redzero: \tyNat \vdash P~\istype \\\\
+      \Gamma \vdash M \stackrel\sigma: \tyNat \\\\
+      \redzero\Gamma, d \stackrel\sigma: \Diamond \vdash N_z \stackrel\sigma: P[\conZero(*)/x] \\\\
+      \redzero\Gamma, d \stackrel\sigma: \Diamond, n \stackrel\redzero: \tyNat, p \stackrel\sigma: P[n/x] \vdash N_s \stackrel\sigma : P[\conSucc(*,n)/x]}
+    {\Gamma \vdash \tmRec\,M\,\{\conZero(d) \mapsto N_z; \conSucc(d,n;p) \mapsto N_s\} \stackrel\sigma: P[M/x]}
+  \end{mathpar}
+
+  Remember: $\sigma \in \{0,1\}$.
+
+  \bigskip
+
+  When $\sigma = 0$, $\Diamond$s are free so this acts like the normal $\TyNat$-iterator.
+\end{frame}
+
+\begin{frame}
+  \begin{mathpar}
+    \mprset{flushleft}
+    \inferrule*
+    {\redzero\Gamma, x \stackrel\redzero: \tyNat \vdash P~\istype \\\\
+      \Gamma \vdash M \stackrel\sigma: \tyNat \\\\
+      \redzero\Gamma, d \stackrel\sigma: \Diamond \vdash N_z \stackrel\sigma: P[\conZero(\redstar)/x] \\\\
+      \redzero\Gamma, d \stackrel\sigma: \Diamond, n \stackrel\redzero: \tyNat, p \stackrel\sigma: P[n/x] \vdash N_s \stackrel\sigma : P[\conSucc(\redstar,n)/x]}
+    {\Gamma \vdash \tmRec\,M\,\{\conZero(d) \mapsto N_z; \conSucc(d,n;p) \mapsto N_s\} \stackrel\sigma: P[M/x]}
+  \end{mathpar}
+
+  Remember: $\sigma \in \{0,1\}$.
+
+  \bigskip
+
+  When $\sigma = 0$, $\Diamond$s are free so this acts like the normal $\TyNat$-iterator.
+\end{frame}
+
+\begin{frame}
+  \hl{Soundness} (simplified)
+
+  \begin{displaymath}
+    0\Gamma, x \stackrel1: \tyNat \vdash M \stackrel1: \tyNat
+  \end{displaymath}
+
+  \bigskip
+
+  Exists a realiser that always terminates in time polynomial in $x$.
+
+  \quad \comment{Extension of Dal Lago and Hofmann (\comment{2011}) realisability}
+\end{frame}
+
+\newcommand{\Rtype}{\mathbf{R}}
+\newcommand{\rIntro}{\mathbf{R}}
+\newcommand{\rElim}{\mathbf{R}^{-1}}
+
+\begin{frame}
+  \textcolor{TitleRed}{Reflecting Realisability}
+
+  \begin{mathpar}
+    \inferrule*
+    {0\Gamma \vdash A~\istype}
+    {0\Gamma \vdash \Rtype(A)~\istype}
+
+    \inferrule*
+    {0\Gamma \vdash M \stackrel1: A}
+    {0\Gamma \vdash \rIntro(M) \stackrel\sigma: \Rtype(A)}
+
+    \inferrule*
+    {\Gamma \vdash M \stackrel\sigma: \Rtype(A)}
+    {\Gamma \vdash \rElim(M) \stackrel{\sigma'}: A}
+  \end{mathpar}
+\end{frame}
+
+\begin{frame}
+  \begin{center}
+    Using QTT/LFPL for Complexity Theory
+  \end{center}
+\end{frame}
+
+\newcommand{\BoolTy}{\mathrm{Bool}}
+\newcommand{\cTrue}{\mathsf{true}}
+\newcommand{\cFalse}{\mathsf{false}}
+\newcommand{\ListTy}{\mathrm{List}}
+\newcommand{\cNil}{\mathsf{nil}}
+\newcommand{\cCons}{\mathsf{cons}}
+
+\begin{frame}
+  A \hl{problem} is a pair $(A : \mathsf{U}, P : A \to \mathsf{U})$.\\
+  \qquad $A$ are the instances \\
+  \qquad $P$ are the solutions
+
+  \bigskip
+  \pause
+
+  $\begin{array}{@{}l}
+      \mathrm{PTIME}(A,P) = \\
+      \quad (f \stackrel1: \mathbf{R}(A \to \BoolTy)) \otimes \left((a \stackrel1: A) \to (\mathbf{R}^{-1}(f)\, a = \cTrue) \Leftrightarrow P\,a\right)
+    \end{array}$
+
+  \bigskip
+  \pause
+
+  $\begin{array}{@{}l}
+    (A,P) \stackrel{\textsc{Poly}}\Rightarrow (B,Q) = \\
+    \quad (f \stackrel1: \mathbf{R}(A \to B)) \otimes \left((a \stackrel1: A) \to Q(\mathbf{R}^{-1}(f)\,a) \Leftrightarrow P\,a\right)
+  \end{array}$
+\end{frame}
+
+\begin{frame}
+  $\begin{array}{l}
+    \textbf{data}\,\mathrm{ND}\,(A : \mathsf{U}) : \mathsf{U}\,\textbf{where} \\
+    \quad \mathsf{return} : A \to \mathrm{ND}\,A \\
+    \quad \mathsf{choice} : (\BoolTy \to \mathrm{ND}\,A) \to \mathrm{ND}\,A
+  \end{array}$
+
+  \pause
+  \bigskip
+
+  $\mathrm{runWithOracle} \stackrel0: \mathrm{ND}\,A \to \ListTy(\BoolTy) \to \mathrm{Maybe}\,A$
+
+  \pause
+  \bigskip
+
+  $\begin{array}[t]{@{}l}
+      \mathrm{NP}(A,P) = \\
+      (f \stackrel1: \mathbf{R}(A \to \mathrm{ND}(\BoolTy)))\, \otimes \\
+      \, (a \stackrel1: A) \to \\
+      \, \left((\mathit{bs} \stackrel1: \ListTy(\BoolTy)) \otimes (\mathrm{runWithOracle}\,(\mathbf{R}^{-1}(f)\,a)\,\mathit{bs} = \mathsf{just}\,\cTrue)\right) \Leftrightarrow P\,a
+    \end{array}$
+\end{frame}
+
+\begin{frame}
+  $\begin{array}{@{}l}
+    \textbf{data}\,\mathrm{Dist}\,(A : \mathsf{U}) : \mathsf{U}\,\textbf{where} \\
+    \quad \mathsf{return} : A \to \mathrm{Dist}\,A \\
+    \quad \mathsf{choice} : \mathbb{Q}[0,1] \to (\BoolTy \to \mathrm{Dist}\,A) \to \mathrm{Dist}\,A
+  \end{array}$
+
+  \bigskip
+  \pause
+
+  $\mathrm{probTrue} \stackrel0: \mathrm{Dist}\,\BoolTy \to \mathbb{Q}[0,1]$
+
+  \bigskip
+  \pause
+
+  $\begin{array}[t]{@{}l}
+      \mathrm{BPP}(A,P) = \\
+      \quad (f \stackrel1: \mathbf{R}(A \to \mathrm{Dist}(\BoolTy))) \, \otimes \\
+      \qquad (a \stackrel1: A) \to
+      (\mathrm{probTrue}\,(\mathbf{R}^{-1}(f)\,a) \geq \frac{2}{3}) \Leftrightarrow P\,a
+    \end{array}$
+
+\end{frame}
+
+\begin{frame}
+  % Summary
+\end{frame}
+
+\begin{frame}
+  \textcolor{TitleRed}{What's in the paper?}
+
+  \begin{enumerate}
+  \item \hl{QTT/Cons-free} and \hl{QTT/LFPL} \comment{full rules, more datatypes}
+
+  \item Programming with QTT/LFPL.
+
+  \item Synthetic definitions of \hl{P}, \hl{NP}, \hl{BPP}, using effects.
+
+  \item Soundness proof with Agda formalisation \\
+    \comment{Realisability proof extending Dal Lago and Hofmann (2011)}
+
+  \end{enumerate}
+
+  \bigskip
+
+  \textcolor{TitleRed}{What next?}
+  \begin{enumerate}
+  \item More complexity classes (\textsc{coNP}, \textsc{PSpace}, ...)
+  \item Polytime circuit generators?
+  \item What is needed for a proof of NP-completeness of 3-SAT?
+  \item Application to formalised cryptography?
+  \item Explicit resource accounting (counting diamonds)
+  \end{enumerate}
+\end{frame}
+
+\end{document}
