@@ -272,7 +272,7 @@ to theoretical use as a form of \emph{synthetic computational
   complexity theory}. We discuss these possibilities further in
 \autoref{sec:conclusion}.
 
-\subsection{Contributions and Content}
+\paragraph{Contributions and Content}
 
 This paper makes the following contributions to the theory and use of
 linear dependent type theory and implicit computational complexity:
@@ -475,7 +475,7 @@ $\ListTy(\BoolTy) \otimes \BoolTy \otimes \ListTy(\BoolTy)$,
 representing a position on the tape with the items before, under, and
 after the head.
 
-\subsection{The Cons-free System}
+\subsection{The Cons-Free System}
 \label{sec:cons-free-intro}
 
 Polynomial time is usually seen as a proxy for ``feasible''
@@ -727,7 +727,7 @@ rules, including all equality rules, are presented in
 \autoref{sec:rules}.
 %the online appendix \cite{atkey2023polydep-online}.
 
-\subsubsection{Natural-number Usages}
+\subsubsection{Natural-Number Usages}
 
 We use an instantiation of QTT with the natural number semiring, with
 the usual semiring structure of addition and multiplication. In a mild
@@ -923,7 +923,7 @@ system of \autoref{sec:cons-free-intro} by adding a type of iterable
 naturals. In \autoref{sec:lfpl-qtt} we apply the same treatment to
 the LFPL-style system.
 
-\subsection{Non-iterable Data Types}
+\subsection{Non-Iterable Data Types}
 \label{sec:noniter-qtt}
 
 \subsubsection{Booleans} The boolean type for QTT was described in
@@ -1021,7 +1021,7 @@ This eliminator also obeys the usual $\beta$-equality laws for a list
 eliminator, using the resource freedom of the $\sigma = 0$ fragment to
 duplicate the $N_2$ term in the $\cCons$ case.
 
-\subsection{Cons-free Natural Numbers and their Recursor}
+\subsection{Cons-Free Natural Numbers and their Recursor}
 \label{sec:cons-free-qtt}
 
 The datatypes of the previous section still only allow us to write
@@ -1107,7 +1107,7 @@ prove properties of programs just as we do in normal type theory. We
 will see in \autoref{sec:consfree-sound} that this rule is realisable
 by polynomial-time computation, and so is sound for polynomial time.
 
-\subsection{LFPL-style Diamonds, Natural Numbers, and a Recursor that Gives Back}
+\subsection{LFPL-Style Diamonds, Natural Numbers, and a Recursor that Gives Back}
 \label{sec:lfpl-qtt}
 
 As explained in \autoref{sec:lfpl-intro}, the LFPL system differs from
@@ -1402,7 +1402,7 @@ well known in dependent type theory \cite{AbbottAG05}, and speaks to a
 general conception of containers as ``problem/solution'' pairings and
 container morphisms as problem reductions.
 
-\subsection{Polytime-based Complexity Classes}
+\subsection{Polytime-Based Complexity Classes}
 \label{sec:classes}
 
 The fact that we can characterise polytime decision problems is
@@ -1462,7 +1462,7 @@ $\cTrue$ exactly when the input satisfies the predicate. Moreover, it is a
 quick matter of programming to see that problems in NP are closed
 under the type of polytime reductions given above.
 
-\subsubsection{Bounded-error Probabilistic Polynomial Time}
+\subsubsection{Bounded-Error Probabilistic Polynomial Time}
 
 By changing the computation effects supplied to a program, we can
 change the complexity class. To capture the class BPP of Bounded-error
@@ -1554,7 +1554,7 @@ into \emph{resource monoids} that we define in
 we explicitly construct realisers for inductive datatypes (both
 iterable and non-iterable) instead of relying on second-order
 polymorphic encodings and special $\oc$-style modalities. These
-explicit constructions are essential to construct models of our systems.
+explicit constructions are essential for constructing models of our systems.
 
 \paragraph{Agda Formalisation} The key soundness results in this
 section have been formalised in the Agda proof assistant
@@ -1665,17 +1665,16 @@ environment for the closure, unit values, pairs and booleans.
 Costed evaluation of expressions in environments is defined by a
 big-step operational semantics $E, \eta \Downarrow_k V$, where $k$ is
 the number of steps. For simplicity, all operations cost $1$ unit,
-though this could be generalised to allow for different operations to
-have different costs. We use $\eta[i]$ to access the $i$th variable in
-the environment, counting from the right. The evaluation rules are
-mostly as one would expect, except for the application rule which
-includes a self reference to the closure being invoked, in order to
+though this could be generalised. We use $\eta[i]$ to access the $i$th
+variable in the environment, counting from the right. The evaluation
+rules are mostly as one would expect, except that the application rule
+includes a self reference to the closure being invoked in order to
 allow recursive definitions.
 
 \paragraph{Agda Formalisation} The machine model is defined in the
 Agda module \AgdaModule{MachineModel}. We use an intrinsically
-well-scoped syntax, which ensures that all variable look up operations
-are always well defined.
+well-scoped syntax, which ensures that all variable accesses are well
+defined.
 
 \subsection{Resource Monoids}
 \label{sec:resource-monoids}
@@ -1836,7 +1835,7 @@ monoids are both defined in
 parameterised by the ``size monoid'' operation (either $\sqcup$ or
 $+$) used to compose sizes.
 
-\subsubsection{Resource sub-monoids}
+\subsubsection{Resource Sub-Monoids}
 
 The separation between sizes of data and complexity of code in the
 polynomial resource monoids motivates the use of resource sub-monoids
@@ -2080,7 +2079,7 @@ preorder and the proof of \propref{prop:realisability-model} are
 formalised in the Adga module
 \AgdaModule{AmortisedRealisabilityModel}.
 
-\subsubsection{Non-iterable Data Types}
+\subsubsection{Non-Iterable Data Types}
 \label{sec:noniter-model}
 
 The model of QTT constructed in \propref{prop:realisability-model}
