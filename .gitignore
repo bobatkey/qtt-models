@@ -19,3 +19,4 @@ result
 /.direnv/
 /arxiv.tar.gz
 /paper-src.zip
+/ptr-idris/build
